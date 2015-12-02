@@ -2,7 +2,7 @@
 
 var nemesis = require('./');
 var argv = require('yargs')
-  .usage('$0 {command} --region "aws_region" --group "group_name" --launch-config "launch_config" [--spot-group "spot_group"]')
+  .usage('nemesis {command} --region "aws_region" --group "group_name" --launch-config "launch_config" [--spot-group "spot_group"]')
   .demand(1)
   .command('command', 'Can be one of: replace')
   .alias('r', 'region')
