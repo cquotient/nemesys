@@ -56,33 +56,24 @@ function replace(region, asg_name, lc_name) {
     if(!asg) {
       return Promise.reject(new Error(`No ASG found for name ${asg_name}`));
     }
-    // make sure we have space to grow, so we can spin up new instances before dropping old ones
-    if(asg.DesiredCapacity >= asg.MaxSize) {
-      return Promise.reject(new Error(`ASG ${asg_name} DesiredCapacity is at maximum of ${asg.MaxSize}`))
-    }
-    return asg;
-    //
-  })
-  .then(function(asg){
     console.log(`current launch config: ${asg.LaunchConfigurationName}`);
     console.log(`current instance count: ${asg.Instances.length}`);
     console.log(`Replacing launch config with ${lc_name}`);
     return AS.updateAutoScalingGroupAsync({
       AutoScalingGroupName: asg_name,
       LaunchConfigurationName: lc_name
+    }).then(function(){
+      // get updated asg data, in case an instance was added since we updated the launch config
+      return _get_asg(AS, asg_name);
     });
-    //
-  })
-  .then(function(){
-    // get updated asg data, in case an instance was added since we updated the launch config
-    return _get_asg(AS, asg_name);
     //
   })
   .then(function(asg){
     console.log(`launch config updated, increasing capacity and replacing instances...`)
     return AS.updateAutoScalingGroupAsync({
       AutoScalingGroupName: asg_name,
-      DesiredCapacity: asg.DesiredCapacity + 1
+      DesiredCapacity: asg.DesiredCapacity + 1,
+      MaxSize: asg.MaxSize + 1
     }).then(function(){
       return BB.delay(_delay_ms);
     });
@@ -115,7 +106,8 @@ function replace(region, asg_name, lc_name) {
             console.log('all instances updated, lowering capacity');
             AS.updateAutoScalingGroupAsync({
               AutoScalingGroupName: asg_name,
-              DesiredCapacity: asg.DesiredCapacity - 1
+              DesiredCapacity: asg.DesiredCapacity - 1,
+              MaxSize: asg.MaxSize - 1
             }).then(resolve).catch(reject);
           } else {
             // this means the new instances are ready, so we need to get rid of
