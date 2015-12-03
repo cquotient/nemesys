@@ -3,13 +3,33 @@
 var nemesis = require('./');
 var argv = require('yargs')
   .usage('nemesis {command} --regions "us-east-1" "us-west-2" --group "group_name" --launch-config "launch_config" [--spot-group "spot_group"]')
+  .example('nemesis replace -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
+    'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
   .demand(1)
-  .command('command', 'Can be one of: replace')
-  .alias('r', 'regions')
-  .alias('g', 'group')
-  .alias('l', 'launch-config')
-  .alias('s', 'spot-group')
-  .array('r')
+  .command('command', 'Can be one of: replace, create')
+  .option('r', {
+    alias: 'regions',
+    describe: 'EC2 regions to operate in',
+    array: true,
+    choices: ['us-east-1', 'us-west-2', 'eu-west-1']
+  })
+  .option('g', {
+    alias: 'group',
+    describe: 'Name of the EC2 Autoscaling Group being created or updated'
+  })
+  .option('l', {
+    alias: 'launch-config',
+    describe: 'Name of the EC2 Launch Configuration to apply to the given ASG'
+  })
+  .option('t', {
+    alias: 'instance-tags',
+    describe: 'Tags to apply to instances launched from this ASG. Only applies to `create` command',
+    array: true
+  })
+  .option('e', {
+    alias: 'error-topic',
+    describe: 'SNS topic to notify of ASG errors'
+  })
   .demand(['regions', 'group', 'launch-config'])
   .help('h')
   .alias('h', 'help')
@@ -23,6 +43,21 @@ switch(argv._[0]) {
       argv['launch-config']
     ).then(function(result){
       console.log('Update complete');
+      process.exit(0);
+    }).catch(function(err){
+      console.error(err);
+      process.exit(1);
+    });
+    break;
+  case 'create':
+    nemesis.create(
+      argv['regions'],
+      argv['group'],
+      argv['launch-config'],
+      argv['instance-tags'],
+      argv['error-topic']
+    ).then(function(result){
+      console.log('Create complete');
       process.exit(0);
     }).catch(function(err){
       console.error(err);
