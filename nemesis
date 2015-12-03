@@ -2,14 +2,15 @@
 
 var nemesis = require('./');
 var argv = require('yargs')
-  .usage('nemesis {command} --region "aws_region" --group "group_name" --launch-config "launch_config" [--spot-group "spot_group"]')
+  .usage('nemesis {command} --regions "us-east-1" "us-west-2" --group "group_name" --launch-config "launch_config" [--spot-group "spot_group"]')
   .demand(1)
   .command('command', 'Can be one of: replace')
-  .alias('r', 'region')
+  .alias('r', 'regions')
   .alias('g', 'group')
   .alias('l', 'launch-config')
   .alias('s', 'spot-group')
-  .demand(['region', 'group', 'launch-config'])
+  .array('r')
+  .demand(['regions', 'group', 'launch-config'])
   .help('h')
   .alias('h', 'help')
   .argv;
@@ -17,7 +18,7 @@ var argv = require('yargs')
 switch(argv._[0]) {
   case 'replace':
     nemesis.replace(
-      argv['region'],
+      argv['regions'],
       argv['group'],
       argv['launch-config']
     ).then(function(result){
