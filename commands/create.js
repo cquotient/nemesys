@@ -49,6 +49,8 @@ function _do_create(region, asg_name, lc_name, instance_tags, error_topic){
       LaunchConfigurationName: lc_name,
       VPCZoneIdentifier: subnets.join(','),
       Tags: tags,
+      TerminationPolicies: ['ClosestToNextInstanceHour'],
+      // TODO i want the size to vary by region...
       MaxSize: 1,
       MinSize: 0,
       DesiredCapacity: 0,
