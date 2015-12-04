@@ -2,13 +2,13 @@
 
 var nemesis = require('./');
 var argv = require('yargs')
-  .usage('nemesis {command} --regions "us-east-1" "us-west-2" --group "group_name" --launch-config "launch_config" [--spot-group "spot_group"]')
-  .example('nemesis update -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
-    'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
-  .example('nemesis create -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
-    'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
+  .usage('nemesis {command} --regions us-east-1 us-west-2 --group group_name --launch-config launch_config')
+  // commands
+  .command('update', 'Update the Launch Configuration used by an Autoscaling Group')
+  .command('create', 'Create a new Autoscaling Group')
+  .command('replace', 'Replace an existing Autoscaling Group with a new one')
   .demand(1)
-  .command('command', 'Can be one of: update, create')
+  // parameters
   .option('r', {
     alias: 'regions',
     describe: 'EC2 regions to operate in',
@@ -17,7 +17,11 @@ var argv = require('yargs')
   })
   .option('g', {
     alias: 'group',
-    describe: 'Name of the EC2 Autoscaling Group being created or updated'
+    describe: 'Name of the Autoscaling Group to create or update'
+  })
+  .option('o', {
+    alias: 'old-group',
+    describe: 'Name of the Autoscaling Group to replace. Only applies to `replace` command'
   })
   .option('l', {
     alias: 'launch-config',
@@ -35,6 +39,13 @@ var argv = require('yargs')
   .demand(['regions', 'group', 'launch-config'])
   .help('h')
   .alias('h', 'help')
+  // command examples
+  .example('nemesis update -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
+    'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
+  .example('nemesis create -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
+    'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
+  .example('nemesis replace -o tracking_asg_2015_12_03 -g tracking_asg_2015_12_04 -l tracking_2015_12_04_spot -r eu-west-1',
+    'Replaces ASG tracking_asg_2015_12_03 with a new one called tracking_asg_2015_12_04, with launch config tracking_2015_12_04_spot')
   .argv;
 
 switch(argv._[0]) {
@@ -44,10 +55,10 @@ switch(argv._[0]) {
       argv['group'],
       argv['launch-config']
     ).then(function(result){
-      console.log('Update complete');
+      console.log('update complete');
       process.exit(0);
     }).catch(function(err){
-      console.error(err);
+      console.error(err.stack);
       process.exit(1);
     });
     break;
@@ -59,10 +70,24 @@ switch(argv._[0]) {
       argv['instance-tags'],
       argv['error-topic']
     ).then(function(result){
-      console.log('Create complete');
+      console.log('create complete');
       process.exit(0);
     }).catch(function(err){
-      console.error(err);
+      console.error(err.stack);
+      process.exit(1);
+    });
+    break;
+  case 'replace':
+    nemesis.replace(
+      argv['regions'],
+      argv['old-group'],
+      argv['group'],
+      argv['launch-config']
+    ).then(function(result){
+      console.log('replace complete');
+      process.exit(0);
+    }).catch(function(err){
+      console.error(err.stack);
       process.exit(1);
     });
     break;
