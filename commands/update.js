@@ -3,15 +3,9 @@
 var AWS = require('aws-sdk');
 var BB = require('bluebird');
 
-var _delay_ms = 30000;
+var AWSUtil = require('../aws_util');
 
-function _get_asg(as, asg_name) {
-  return as.describeAutoScalingGroupsAsync({
-    AutoScalingGroupNames: [asg_name]
-  }).then(function(data){
-    return data.AutoScalingGroups[0];
-  });
-}
+var _delay_ms = 30000;
 
 function _do_update(region, asg_name, lc_name) {
   var AS = BB.promisifyAll(new AWS.AutoScaling({
@@ -26,7 +20,7 @@ function _do_update(region, asg_name, lc_name) {
     if(lc_resp.LaunchConfigurations.length !== 1) {
       return Promise.reject(new Error(`No Launch Configuration found for name "${lc_name}" in ${region}`));
     };
-    return _get_asg(AS, asg_name);
+    return AWSUtil.get_asg(AS, asg_name);
     //
   })
   .then(function(asg){
@@ -42,7 +36,7 @@ function _do_update(region, asg_name, lc_name) {
       LaunchConfigurationName: lc_name
     }).then(function(){
       // get updated asg data, in case an instance was added since we updated the launch config
-      return _get_asg(AS, asg_name);
+      return AWSUtil.get_asg(AS, asg_name);
     });
     //
   })
@@ -57,7 +51,7 @@ function _do_update(region, asg_name, lc_name) {
     });
   })
   .then(function(){
-    return _get_asg(AS, asg_name);
+    return AWSUtil.get_asg(AS, asg_name);
   })
   .then(function(asg){
     return new Promise(function(resolve, reject){
@@ -96,7 +90,7 @@ function _do_update(region, asg_name, lc_name) {
               ShouldDecrementDesiredCapacity: false
             }).then(function(){
               timeout = setTimeout(function(){
-                _get_asg(AS, asg_name).then(function(_asg){
+                AWSUtil.get_asg(AS, asg_name).then(function(_asg){
                   asg = _asg;
                 }).then(_check);
               }, _delay_ms);
@@ -109,7 +103,7 @@ function _do_update(region, asg_name, lc_name) {
           // we havent waited long enough or there is a problem with the new launch config
           console.log(`${region}: waiting for ${new_not_ready.length} instance(s) with new launch config to come online...`);
           timeout = setTimeout(function(){
-            _get_asg(AS, asg_name).then(function(_asg){
+            AWSUtil.get_asg(AS, asg_name).then(function(_asg){
               asg = _asg;
             }).then(_check);
           }, _delay_ms);

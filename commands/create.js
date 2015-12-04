@@ -3,6 +3,8 @@
 var BB = require('bluebird');
 var AWS = require('aws-sdk');
 
+var AWSUtil = require('../aws_util');
+
 var vpcs = {
   'us-east-1': 'vpc-47415125',
   'us-west-2': 'vpc-c08e67a5',
@@ -59,6 +61,8 @@ function _do_create(region, asg_name, lc_name, instance_tags, error_topic){
       AutoScalingGroupName: asg_name,
       NotificationTypes: ['autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'],
       TopicARN: `arn:aws:sns:${region}:117684984046:${error_topic}`
+    }).then(function(){
+      return AWSUtil.get_asg(AS,asg_name);
     });
   });
 }
