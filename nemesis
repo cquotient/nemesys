@@ -6,7 +6,7 @@ var argv = require('yargs')
   .example('nemesis replace -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
     'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
   .demand(1)
-  .command('command', 'Can be one of: replace, create')
+  .command('command', 'Can be one of: update, create')
   .option('r', {
     alias: 'regions',
     describe: 'EC2 regions to operate in',
@@ -36,8 +36,8 @@ var argv = require('yargs')
   .argv;
 
 switch(argv._[0]) {
-  case 'replace':
-    nemesis.replace(
+  case 'update':
+    nemesis.update(
       argv['regions'],
       argv['group'],
       argv['launch-config']

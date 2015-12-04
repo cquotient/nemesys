@@ -13,7 +13,7 @@ function _get_asg(as, asg_name) {
   });
 }
 
-function _do_replace(region, asg_name, lc_name) {
+function _do_update(region, asg_name, lc_name) {
   var AS = BB.promisifyAll(new AWS.AutoScaling({
     region: region,
     apiVersion: '2011-01-01'
@@ -124,11 +124,11 @@ function _do_replace(region, asg_name, lc_name) {
   });
 }
 
-function replace(regions, asg_name, lc_name) {
+function update(regions, asg_name, lc_name) {
   var region_promises = regions.map(function(region){
-    return _do_replace(region, asg_name, lc_name);
+    return _do_update(region, asg_name, lc_name);
   });
   return BB.all(region_promises);
 }
 
-module.exports = replace;
+module.exports = update;
