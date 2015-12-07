@@ -6,7 +6,7 @@ var AWS = require('aws-sdk');
 var AWSUtil = require('../aws_util');
 var create = require('./create');
 
-var _delay = 30000;
+var _delay_ms = 30000;
 
 function _do_replace(region, replace_asg, with_asg, lc_name) {
   var AS = BB.promisifyAll(new AWS.AutoScaling({
@@ -60,7 +60,7 @@ function _do_replace(region, replace_asg, with_asg, lc_name) {
             AWSUtil.get_asg(AS, with_asg).then(function(asg){
               new_asg = asg;
             }).then(_check);
-          }, _delay);
+          }, _delay_ms);
         }
       }
       _check();
@@ -84,7 +84,7 @@ function _do_replace(region, replace_asg, with_asg, lc_name) {
             AWSUtil.get_asg(AS, replace_asg).then(function(asg){
               old_asg = asg;
             }).then(_check);
-          }, _delay);
+          }, _delay_ms);
         } else {
           console.log(`${region}: all instances terminated`);
           resolve();
@@ -97,6 +97,13 @@ function _do_replace(region, replace_asg, with_asg, lc_name) {
     console.log(`${region}: deleting ${replace_asg}`);
     return AS.deleteAutoScalingGroupAsync({
       AutoScalingGroupName: replace_asg
+    }).catch(function(err){
+      console.error(`${region}: ${err.message}, sleeping and retrying one time...`)
+      return BB.delay(_delay_ms).then(function(){
+        return AS.deleteAutoScalingGroupAsync({
+          AutoScalingGroupName: replace_asg
+        });
+      });
     });
   });
 }
