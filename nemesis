@@ -90,7 +90,7 @@ var argv = require('yargs')
       })
       .option('i', {
         alias: 'ingress-rules',
-        description: 'Security Group ingress rules',
+        description: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
         array: true
       })
 
