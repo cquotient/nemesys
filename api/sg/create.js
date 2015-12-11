@@ -23,14 +23,14 @@ function _get_ip_permissions(EC2, ingress) {
       groups_to_lookup = [];
   ingress.forEach(function(obj){
     var parts = obj.split(':');
-    if(validator.isIP(parts[0])) {
+    if(validator.isIP(parts[0]) || parts[0] === '0.0.0.0/0') {
       perms.push({
         FromPort: parts[1],
         ToPort: parts[1],
         IpProtocol: 'tcp',
         IpRanges: [
           {
-            CidrIp: parts[0] + '/32'
+            CidrIp: parts[0]
           }
         ]
       });
