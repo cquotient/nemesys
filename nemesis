@@ -1,51 +1,96 @@
 #!/usr/bin/env node
 
+//TODO use yargs auto completion feature!
+
+var group_opt = {
+  alias: 'group',
+  describe: 'Name of the Autoscaling Group to create or update'
+};
+
+var lc_opt = {
+  alias: 'launch-config',
+  describe: 'Name of the EC2 Launch Configuration to apply to the given ASG'
+};
+
+var tags_opt = {
+  alias: 'instance-tags',
+  describe: 'Tags to apply to instances launched from this ASG',
+  array: true
+};
+
 var nemesis = require('./');
 var argv = require('yargs')
-  .usage('nemesis {command} --regions us-east-1 us-west-2 --group group_name --launch-config launch_config')
-  // commands
-  .command('update', 'Update the Launch Configuration used by an Autoscaling Group')
-  .command('create', 'Create a new Autoscaling Group')
-  .command('replace', 'Replace an existing Autoscaling Group with a new one')
-  .demand(1)
-  // parameters
+  .usage('nemesis {command}')
   .option('r', {
     alias: 'regions',
     describe: 'EC2 regions to operate in',
     array: true,
-    choices: ['us-east-1', 'us-west-2', 'eu-west-1']
+    choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
   })
-  .option('g', {
-    alias: 'group',
-    describe: 'Name of the Autoscaling Group to create or update'
+  // commands
+
+  .command('update', 'Update an EC2 resource', function(yargs, argv){
+    argv = yargs.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function(yargs, argv){
+      argv = yargs
+      .option('g', group_opt)
+      .option('l', lc_opt)
+      .demand(['group', 'launch-config'])
+      .example('nemesis update asg -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
+        'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
+      .help('h')
+      .alias('h', 'help')
+      .argv;
+    })
+    .help('h')
+    .alias('h', 'help')
+    .argv;
   })
-  .option('o', {
-    alias: 'old-group',
-    describe: 'Name of the Autoscaling Group to replace. Only applies to `replace` command'
+
+  .command('create', 'Create an EC2 resource', function(yargs, argv){
+    argv = yargs.command('asg', 'Create an Autoscaling Group', function(yargs, argv){
+      argv = yargs
+      .option('g', group_opt)
+      .option('l', lc_opt)
+      .option('t', tags_opt)
+      .option('e', {
+        alias: 'error-topic',
+        describe: 'SNS topic to notify of ASG errors'
+      })
+      .demand(['group', 'launch-config'])
+      .example('nemesis create -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
+        'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
+      .help('h')
+      .alias('h', 'help')
+      .argv;
+    })
+    .help('h')
+    .alias('h', 'help')
+    .argv;
   })
-  .option('l', {
-    alias: 'launch-config',
-    describe: 'Name of the EC2 Launch Configuration to apply to the given ASG'
+
+  .command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
+    argv = yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
+      argv = yargs
+      .option('g', group_opt)
+      .option('l', lc_opt)
+      .option('o', {
+        alias: 'old-group',
+        describe: 'Name of the Autoscaling Group to replace. Only applies to `replace` command'
+      })
+      .demand(['group', 'launch-config', 'old-group'])
+      .example('nemesis replace -o tracking_asg_2015_12_03 -g tracking_asg_2015_12_04 -l tracking_2015_12_04_spot -r eu-west-1',
+        'Replaces ASG tracking_asg_2015_12_03 with a new one called tracking_asg_2015_12_04, with launch config tracking_2015_12_04_spot')
+        .help('h')
+        .alias('h', 'help')
+    })
+    .help('h')
+    .alias('h', 'help')
+    .argv;
   })
-  .option('t', {
-    alias: 'instance-tags',
-    describe: 'Tags to apply to instances launched from this ASG. Only applies to `create` command',
-    array: true
-  })
-  .option('e', {
-    alias: 'error-topic',
-    describe: 'SNS topic to notify of ASG errors'
-  })
-  .demand(['regions', 'group', 'launch-config'])
+  .demand(2)
+  .demand(['regions'])
   .help('h')
   .alias('h', 'help')
-  // command examples
-  .example('nemesis update -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
-    'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
-  .example('nemesis create -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
-    'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
-  .example('nemesis replace -o tracking_asg_2015_12_03 -g tracking_asg_2015_12_04 -l tracking_2015_12_04_spot -r eu-west-1',
-    'Replaces ASG tracking_asg_2015_12_03 with a new one called tracking_asg_2015_12_04, with launch config tracking_2015_12_04_spot')
   .argv;
 
 switch(argv._[0]) {
