@@ -1,5 +1,4 @@
 'use strict';
 
-exports.update = require('./commands/update');
-exports.create = require('./commands/create');
-exports.replace = require('./commands/replace');
+exports.asg = require('./api/asg');
+exports.sg = require('./api/sg');

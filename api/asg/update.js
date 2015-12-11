@@ -3,7 +3,7 @@
 var AWS = require('aws-sdk');
 var BB = require('bluebird');
 
-var AWSUtil = require('../aws_util');
+var AWSUtil = require('../../aws_util');
 
 var _delay_ms = 30000;
 

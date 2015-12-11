@@ -3,7 +3,7 @@
 var BB = require('bluebird');
 var AWS = require('aws-sdk');
 
-var AWSUtil = require('../aws_util');
+var AWSUtil = require('../../aws_util');
 
 var vpcs = {
   'us-east-1': 'vpc-47415125',
