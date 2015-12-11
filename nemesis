@@ -18,14 +18,29 @@ var tags_opt = {
   array: true
 };
 
-var argv = require('yargs')
-  .usage('nemesis {command}')
+function _regions(yargs) {
+  return yargs
   .option('r', {
     alias: 'regions',
     describe: 'EC2 regions to operate in',
     array: true,
     choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
   })
+  .option('c', {
+    alias: 'regions-config',
+    describe: 'Region configuration JSON file'
+  })
+  .demand(['regions', 'regions-config']);
+}
+
+function _help(yargs) {
+  return yargs
+  .help('h')
+  .alias('h', 'help');
+}
+
+var argv = require('yargs')
+  .usage('nemesis {command}')
   // commands
 
   .command('update', 'Update an EC2 resource', function(yargs, argv){
@@ -45,6 +60,7 @@ var argv = require('yargs')
 
   .command('create', 'Create an EC2 resource', function(yargs, argv){
     yargs
+
     .command('asg', 'Create an Autoscaling Group', function(yargs, argv){
       yargs
       .option('g', group_opt)
@@ -60,8 +76,10 @@ var argv = require('yargs')
       .help('h')
       .alias('h', 'help');
     })
+
     .command('sg', 'Create a Security Group', function(yargs, argv){
-      yargs
+      _regions(yargs)
+
       .option('s', {
         alias: 'security-group',
         describe: 'Name of the Security Group'
@@ -70,9 +88,15 @@ var argv = require('yargs')
         alias: 'description',
         describe: 'Description of the Security Group'
       })
+      .option('i', {
+        alias: 'ingress-rules',
+        description: 'Security Group ingress rules',
+        array: true
+      })
+
       .demand(['security-group'])
-      .help('h')
-      .alias('h', 'help');
+      .example('nemesis create sg -s ssh-access -c ~/x6/Automation/nemesis/regions.json -r ap-southeast-1',
+        'Creates a security group in ap-southeast-1 called "ssh-access", using regions.json to discover the vpc to use');
     })
     .help('h')
     .alias('h', 'help');
@@ -97,7 +121,7 @@ var argv = require('yargs')
     .alias('h', 'help');
   })
   .demand(2)
-  .demand(['regions'])
+  .demand(['regions', 'regions-config'])
   .help('h')
   .alias('h', 'help')
   .argv;

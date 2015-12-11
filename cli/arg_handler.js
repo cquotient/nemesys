@@ -3,6 +3,8 @@
 var nemesis = require('../');
 
 function _handle(argv) {
+  var regions_config = require(argv['regions-config']);
+
   switch(argv._[0]) {
     case 'update':
 
@@ -28,6 +30,7 @@ function _handle(argv) {
 
     case 'create':
       switch(argv._[1]) {
+
         case 'asg':
           nemesis.asg.create(
             argv['regions'],
@@ -43,6 +46,23 @@ function _handle(argv) {
             process.exit(1);
           });
           break;
+
+        case 'sg':
+          nemesis.sg.create(
+            regions_config,
+            argv['regions'],
+            argv['security-group'],
+            argv['description'],
+            argv['ingress-rules']
+          ).then(function(result){
+            console.log('create complete');
+            process.exit(0);
+          }).catch(function(err){
+            console.error(err.stack);
+            process.exit(1);
+          });
+          break;
+
         default:
           console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
           process.exit(1);
