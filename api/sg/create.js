@@ -33,13 +33,16 @@ function _do_create(region_config, region, sg_name, desc, ingress) {
   })
   .then(function(result){
     console.log(`${region}: created security group ${sg_name} (${result.GroupId})`)
-    return EC2.authorizeSecurityGroupIngressAsync({
-      DryRun: false,
-      GroupId: result.GroupId,
-      IpPermissions: _get_ip_permissions(ingress)
-    });
-  }).then(function(result){
-    console.log(`${region}: successfully applied ${ingress.length} sg ingress rules to ${sg_name}`);
+    if(ingress && ingress.length > 0) {
+      return EC2.authorizeSecurityGroupIngressAsync({
+        DryRun: false,
+        GroupId: result.GroupId,
+        IpPermissions: _get_ip_permissions(ingress)
+      })
+      .then(function(result){
+        console.log(`${region}: successfully applied ${ingress.length} sg ingress rules to ${sg_name}`);
+      });
+    }
   });
 }
 
