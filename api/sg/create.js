@@ -2,21 +2,67 @@
 
 var AWS = require('aws-sdk');
 var BB = require('bluebird');
+var validator = require('validator');
 
-function _get_ip_permissions(ingress) {
-  return ingress.map(function(obj){
-    var parts = obj.split(':');
-    return {
-      FromPort: parts[1],
-      ToPort: parts[1],
-      IpProtocol: 'tcp',
-      IpRanges: [
-        {
-          CidrIp: parts[0] + '/32'
-        }
-      ]
-    };
+function _get_sg_id(EC2, group_name) {
+  return EC2.describeSecurityGroupsAsync({
+    DryRun: false,
+    Filters: [
+      {
+        Name: 'group-name',
+        Values: [group_name]
+      }
+    ]
+  }).then(function(result){
+    return result.SecurityGroups[0].GroupId;
   });
+}
+
+function _get_ip_permissions(EC2, ingress) {
+  var perms = [],
+      groups_to_lookup = [];
+  ingress.forEach(function(obj){
+    var parts = obj.split(':');
+    if(validator.isIP(parts[0])) {
+      perms.push({
+        FromPort: parts[1],
+        ToPort: parts[1],
+        IpProtocol: 'tcp',
+        IpRanges: [
+          {
+            CidrIp: parts[0] + '/32'
+          }
+        ]
+      });
+    } else {
+      groups_to_lookup.push(obj);
+    }
+  });
+
+  if(groups_to_lookup.length > 0) {
+    var group_id_proms = groups_to_lookup.map(function(obj){
+      var parts = obj.split(':');
+      return _get_sg_id(EC2, parts[0])
+      .then(function(group_id) {
+        perms.push({
+          FromPort: parts[1],
+          ToPort: parts[1],
+          IpProtocol: 'tcp',
+          UserIdGroupPairs: [
+            {
+              GroupId: group_id
+            }
+          ]
+        });
+      });
+    });
+    return BB.all(group_id_proms)
+    .then(function(){
+      return perms;
+    });
+  } else {
+    return Promise.resolve(perms);
+  }
 }
 
 function _do_create(region_config, region, sg_name, desc, ingress) {
@@ -32,12 +78,15 @@ function _do_create(region_config, region, sg_name, desc, ingress) {
     VpcId: region_config.vpc
   })
   .then(function(result){
-    console.log(`${region}: created security group ${sg_name} (${result.GroupId})`)
+    console.log(`${region}: created security group ${sg_name} (${result.GroupId})`);
     if(ingress && ingress.length > 0) {
-      return EC2.authorizeSecurityGroupIngressAsync({
-        DryRun: false,
-        GroupId: result.GroupId,
-        IpPermissions: _get_ip_permissions(ingress)
+      return _get_ip_permissions(EC2, ingress)
+      .then(function(ip_perms){
+        return EC2.authorizeSecurityGroupIngressAsync({
+          DryRun: false,
+          GroupId: result.GroupId,
+          IpPermissions: ip_perms
+        });
       })
       .then(function(result){
         console.log(`${region}: successfully applied ${ingress.length} sg ingress rules to ${sg_name}`);
