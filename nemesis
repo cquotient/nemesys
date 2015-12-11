@@ -30,25 +30,23 @@ var argv = require('yargs')
   // commands
 
   .command('update', 'Update an EC2 resource', function(yargs, argv){
-    argv = yargs.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function(yargs, argv){
-      argv = yargs
+    yargs.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function(yargs, argv){
+      yargs
       .option('g', group_opt)
       .option('l', lc_opt)
       .demand(['group', 'launch-config'])
       .example('nemesis update asg -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
         'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
       .help('h')
-      .alias('h', 'help')
-      .argv;
+      .alias('h', 'help');
     })
     .help('h')
-    .alias('h', 'help')
-    .argv;
+    .alias('h', 'help');
   })
 
   .command('create', 'Create an EC2 resource', function(yargs, argv){
-    argv = yargs.command('asg', 'Create an Autoscaling Group', function(yargs, argv){
-      argv = yargs
+    yargs.command('asg', 'Create an Autoscaling Group', function(yargs, argv){
+      yargs
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('t', tags_opt)
@@ -60,17 +58,15 @@ var argv = require('yargs')
       .example('nemesis create -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
         'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
       .help('h')
-      .alias('h', 'help')
-      .argv;
+      .alias('h', 'help');
     })
     .help('h')
-    .alias('h', 'help')
-    .argv;
+    .alias('h', 'help');
   })
 
   .command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
-    argv = yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
-      argv = yargs
+    yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
+      yargs
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('o', {
@@ -84,8 +80,7 @@ var argv = require('yargs')
         .alias('h', 'help')
     })
     .help('h')
-    .alias('h', 'help')
-    .argv;
+    .alias('h', 'help');
   })
   .demand(2)
   .demand(['regions'])
