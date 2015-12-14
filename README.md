@@ -12,6 +12,12 @@ nemesis replace asg -o tracking_asg_2015_12_04 -g tracking_asg_2015_12_07 -l tra
 ```
 This will copy tags and autoscaling actions from tracking_asg_2015_12_04 to a new ASG called tracking_asg_2015_12_07, using launch config tracking_2015_12_03 in the 3 regions specified
 
-To create a security group:
+To create an ELB security group, allowing access from any ip:
 ```
-nemesis create sg -s
+nemesis create sg -s tracking-elb -i 0.0.0.0/0:80 0.0.0.0/0:443 -c ~/x6/Automation/nemesis/regions.json -r ap-southeast-1
+```
+
+To create a corresponding instance security group, only allowing access from the previous ELB group:
+```
+nemesis create sg -s tracking-server -i tracking-elb:3000 -c ~/x6/Automation/nemesis/regions.json -r ap-southeast-1
+```
