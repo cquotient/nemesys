@@ -62,7 +62,8 @@ var argv = require('yargs')
     yargs
 
     .command('asg', 'Create an Autoscaling Group', function(yargs, argv){
-      yargs
+      _regions(yargs)
+
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('t', tags_opt)
@@ -98,6 +99,7 @@ var argv = require('yargs')
       .example('nemesis create sg -s ssh-access -c ~/x6/Automation/nemesis/regions.json -r ap-southeast-1',
         'Creates a security group in ap-southeast-1 called "ssh-access", using regions.json to discover the vpc to use');
     })
+    .demand(2)
     .help('h')
     .alias('h', 'help');
   })
@@ -121,7 +123,6 @@ var argv = require('yargs')
     .alias('h', 'help');
   })
   .demand(2)
-  .demand(['regions', 'regions-config'])
   .help('h')
   .alias('h', 'help')
   .argv;

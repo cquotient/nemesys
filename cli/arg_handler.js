@@ -33,6 +33,7 @@ function _handle(argv) {
 
         case 'asg':
           nemesis.asg.create(
+            regions_config,
             argv['regions'],
             argv['group'],
             argv['launch-config'],

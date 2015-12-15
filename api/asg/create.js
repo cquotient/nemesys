@@ -5,12 +5,6 @@ var AWS = require('aws-sdk');
 
 var AWSUtil = require('../../aws_util');
 
-var vpcs = {
-  'us-east-1': 'vpc-47415125',
-  'us-west-2': 'vpc-c08e67a5',
-  'eu-west-1': 'vpc-13b62476'
-};
-
 function _apply_default_options(optional) {
   optional = optional || {};
   if(!optional.min) optional.min = 0;
@@ -20,7 +14,7 @@ function _apply_default_options(optional) {
   return optional;
 }
 
-function _do_create(region, asg_name, lc_name, instance_tags, error_topic, optional){
+function _do_create(regions_config, region, asg_name, lc_name, instance_tags, error_topic, optional){
   optional = _apply_default_options(optional);
   var AS = BB.promisifyAll(new AWS.AutoScaling({
     region: region,
@@ -34,7 +28,7 @@ function _do_create(region, asg_name, lc_name, instance_tags, error_topic, optio
   return EC2.describeSubnetsAsync({
     Filters: [{
       Name: 'vpc-id',
-      Values: [vpcs[region]]
+      Values: [regions_config[region].vpc]
     }]
   })
   .then(function(subnets){
@@ -103,9 +97,9 @@ function _do_create(region, asg_name, lc_name, instance_tags, error_topic, optio
   });
 }
 
-function create(regions, asg_name, lc_name, instance_tags, error_topic, optional){
+function create(regions_config, regions, asg_name, lc_name, instance_tags, error_topic, optional){
   var region_promises = regions.map(function(region){
-    return _do_create(region, asg_name, lc_name, instance_tags, error_topic, optional);
+    return _do_create(regions_config, region, asg_name, lc_name, instance_tags, error_topic, optional);
   });
   return BB.all(region_promises);
 }
