@@ -106,7 +106,7 @@ var argv = require('yargs')
 
   .command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
     yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
-      yargs
+      _regions(yargs)
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('o', {
@@ -119,6 +119,7 @@ var argv = require('yargs')
         .help('h')
         .alias('h', 'help')
     })
+    .demand(2)
     .help('h')
     .alias('h', 'help');
   })

@@ -73,7 +73,8 @@ function _handle(argv) {
     case 'replace':
       switch(argv._[1]) {
         case 'asg':
-          nemesis.replace(
+          nemesis.asg.replace(
+            regions_config,
             argv['regions'],
             argv['old-group'],
             argv['group'],
@@ -90,6 +91,7 @@ function _handle(argv) {
         console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
         process.exit(1);
       }
+      break;
     default:
       console.log(`Unrecognized command: ${argv._[0]}`);
       process.exit(1);

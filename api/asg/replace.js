@@ -8,7 +8,7 @@ var create = require('./create');
 
 var _delay_ms = 30000;
 
-function _do_replace(region, replace_asg, with_asg, lc_name) {
+function _do_replace(regions_config, region, replace_asg, with_asg, lc_name) {
   var AS = BB.promisifyAll(new AWS.AutoScaling({
     region: region,
     apiVersion: '2011-01-01'
@@ -39,7 +39,7 @@ function _do_replace(region, replace_asg, with_asg, lc_name) {
       return `${tag.Key}=${tag.Value}`;
     });
     var error_topic = old_notifications.NotificationConfigurations[0].TopicARN.split(':')[5];
-    return create([region], with_asg, lc_name, instance_tags, error_topic, options).then(function(){
+    return create(regions_config, [region], with_asg, lc_name, instance_tags, error_topic, options).then(function(){
       return AWSUtil.get_asg(AS, with_asg);
     });
   })
@@ -108,9 +108,9 @@ function _do_replace(region, replace_asg, with_asg, lc_name) {
   });
 }
 
-function replace(regions, replace_asg, with_asg, lc_name) {
+function replace(regions_config, regions, replace_asg, with_asg, lc_name) {
   var region_promises = regions.map(function(region){
-    return _do_replace(region, replace_asg, with_asg, lc_name);
+    return _do_replace(regions_config, region, replace_asg, with_asg, lc_name);
   });
   return BB.all(region_promises);
 }
