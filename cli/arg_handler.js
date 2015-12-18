@@ -1,6 +1,6 @@
 'use strict';
 
-var nemesis = require('../');
+var nemesys = require('../');
 
 function _handle(argv) {
   var regions_config = require(argv['regions-config']);
@@ -10,7 +10,7 @@ function _handle(argv) {
 
       switch(argv._[1]) {
         case 'asg':
-          nemesis.asg.update(
+          nemesys.asg.update(
             argv['regions'],
             argv['group'],
             argv['launch-config']
@@ -32,7 +32,7 @@ function _handle(argv) {
       switch(argv._[1]) {
 
         case 'asg':
-          nemesis.asg.create(
+          nemesys.asg.create(
             regions_config,
             argv['regions'],
             argv['group'],
@@ -49,7 +49,7 @@ function _handle(argv) {
           break;
 
         case 'sg':
-          nemesis.sg.create(
+          nemesys.sg.create(
             regions_config,
             argv['regions'],
             argv['security-group'],
@@ -73,7 +73,7 @@ function _handle(argv) {
     case 'replace':
       switch(argv._[1]) {
         case 'asg':
-          nemesis.asg.replace(
+          nemesys.asg.replace(
             regions_config,
             argv['regions'],
             argv['old-group'],
