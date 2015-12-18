@@ -1,6 +1,8 @@
 {
   "name": "nemesys",
   "version": "0.0.1",
+  "author": "CQuotient Engineering",
+  "repository": "cquotient/nemesys",
   "dependencies": {
     "aws-sdk": "2.2.19",
     "bluebird": "3.0.6",
