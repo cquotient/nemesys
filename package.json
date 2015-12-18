@@ -1,7 +1,6 @@
 {
   "name": "nemesys",
   "version": "0.0.0",
-  "private": true,
   "dependencies": {
     "aws-sdk": "2.2.19",
     "bluebird": "3.0.6",
