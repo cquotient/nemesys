@@ -1,9 +1,24 @@
+#nemesys#
+
 nemesys is a tool for managing EC2 resources in multiple regions.
 
-The name nemesys is related to the Greek word νέμειν némein, meaning "to give what is due",[2] from Proto-Indo-European nem- "distribute". (https://en.wikipedia.org/wiki/nemesis_(mythology)). Unfortunately the correct spelling 'nemesis' was already taken
+The name nemesys is related to the Greek word νέμειν némein, meaning "to give what is due",[2] from Proto-Indo-European nem- "distribute". (https://en.wikipedia.org/wiki/nemesis_(mythology)). Unfortunately, the correct spelling 'nemesis' was already taken.
 
 #Usage#
 `nemesys -h`
+
+You'll need a `regions.json` file, which should contain a mapping of regions to VPC ids. This is currently required, meaning nemesys only supports using EC2 with a VPC. Here is an example of what the file should look like:
+```json
+{
+  "us-east-1": {
+    "vpc": "{vpc_id}"
+  },
+  "us-west-2": {
+    "vpc": "..."
+  },
+  ...
+}
+```
 
 #Examples#
 To replace an existing Tracking ASG:
