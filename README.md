@@ -1,6 +1,6 @@
 #nemesys#
 
-nemesys is a tool for managing EC2 resources in multiple regions.
+nemesys is a tool for managing EC2 resources in multiple regions. It is built on the simple assumption that these resources have the same name in every region.
 
 Please note that while we use this internally on our team at Demandware, this is very much a beta piece of software. We appreciate any feedback!
 
