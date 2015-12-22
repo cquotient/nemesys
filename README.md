@@ -2,6 +2,8 @@
 
 nemesys is a tool for managing EC2 resources in multiple regions.
 
+Please note that while we use this internally on our team at Demandware, this is very much a beta piece of software. We appreciate any feedback!
+
 The name nemesys is related to the Greek word νέμειν némein, meaning "to give what is due",[2] from Proto-Indo-European nem- "distribute". (https://en.wikipedia.org/wiki/nemesis_(mythology)). Unfortunately, the correct spelling 'nemesis' was already taken.
 
 #Usage#
