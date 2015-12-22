@@ -15,24 +15,23 @@ You'll need a `regions.json` file, which should contain a mapping of regions to 
   },
   "us-west-2": {
     "vpc": "..."
-  },
-  ...
+  }
 }
 ```
 
 #Examples#
-To replace an existing Tracking ASG:
+To replace an existing ASG:
 ```
-nemesys replace asg -o tracking_asg_2015_12_04 -g tracking_asg_2015_12_07 -l tracking_2015_12_03 -r eu-west-1 us-west-2 us-east-1
+nemesys replace asg -o old_asg_2015_12_04 -g new_asg_2015_12_07 -l launch_config_2015_12_03 -r eu-west-1 us-west-2 us-east-1
 ```
-This will copy tags and autoscaling actions from tracking_asg_2015_12_04 to a new ASG called tracking_asg_2015_12_07, using launch config tracking_2015_12_03 in the 3 regions specified
+This will copy tags and autoscaling actions from old_asg_2015_12_04 to a new ASG called new_asg_2015_12_07, using launch config launch_config_2015_12_03 in the 3 regions specified
 
 To create an ELB security group, allowing access from any ip:
 ```
-nemesys create sg -s tracking-elb -i 0.0.0.0/0:80 0.0.0.0/0:443 -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1
+nemesys create sg -s my-elb -i 0.0.0.0/0:80 0.0.0.0/0:443 -c ~/x6/Automation/nemesys/regions.json -r eu-west-1 us-west-2 us-east-1
 ```
 
 To create a corresponding instance security group, only allowing access from the previous ELB group:
 ```
-nemesys create sg -s tracking-server -i tracking-elb:3000 -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1
+nemesys create sg -s my-instance -i tracking-elb:3000 -c ~/x6/Automation/nemesys/regions.json -r eu-west-1 us-west-2 us-east-1
 ```
