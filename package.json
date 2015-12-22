@@ -15,5 +15,6 @@
   "engines": {
     "node": "4.2.2"
   },
+  "license": "MIT",
   "devDependencies": {}
 }
