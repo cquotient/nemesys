@@ -150,7 +150,8 @@ var argv = require('yargs')
       })
 
       .demand(['launch-config', 'ami', 'instance-type', 'ssh-key-pair'])
-      .example('nemesys create lc', 'Creates a Launch Configuration');
+      .example('nemesys create lc -r ap-southeast-1 -l test-lc -a my_ami_name -i c3.large -k key_name -I my_role -s my_sg -u ~/userdata.sh --region-user-data ~/region_userdata.sh -d /dev/sda1:ebs:24:gp2 /dev/sdb:ephemeral:ephemeral0 -S 0.02',
+       'Creates a Launch Configuration with the given parameters, with a clone using spot instances at the given spot price');
     })
 
     .demand(2)

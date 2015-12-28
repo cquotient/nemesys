@@ -22,6 +22,12 @@ You'll need a `regions.json` file, which should contain a mapping of regions to 
 ```
 
 #Examples#
+To create a Launch Configuration:
+```
+nemesys create lc -r ap-southeast-1 -l test-lc -a my_ami_name -i c3.large -k key_name -I my_role -s my_sg -u ~/userdata.sh --region-user-data ~/region_userdata.sh -d /dev/sda1:ebs:24:gp2 /dev/sdb:ephemeral:ephemeral0 -S 0.02
+```
+This will create two Launch Configurations. Both will have the same parameters, but one will have a spot price and '\_spot' appended to the name
+
 To replace an existing ASG:
 ```
 nemesys replace asg -o old_asg_2015_12_04 -g new_asg_2015_12_07 -l launch_config_2015_12_03 -r eu-west-1 us-west-2 us-east-1
