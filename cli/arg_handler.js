@@ -103,10 +103,9 @@ function _handle_delete(argv) {
 function _handle_replace(argv) {
   switch(argv._[1]) {
     case 'asg':
-      var regions_config = require(argv['regions-config']);
       nemesys.asg.replace(
-        regions_config,
         argv['regions'],
+        argv['vpc'],
         argv['old-group'],
         argv['group'],
         argv['launch-config']

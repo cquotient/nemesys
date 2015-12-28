@@ -167,14 +167,15 @@ var argv = require('yargs')
 
   .command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
     yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
-      _regions_conf(yargs)
+      _regions(yargs)
+      .option('v', vpc_opt)
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('o', {
         alias: 'old-group',
         describe: 'Name of the Autoscaling Group to replace. Only applies to `replace` command'
       })
-      .demand(['group', 'launch-config', 'old-group'])
+      .demand(['vpc', 'group', 'launch-config', 'old-group'])
       .example('nemesys replace -o tracking_asg_2015_12_03 -g tracking_asg_2015_12_04 -l tracking_2015_12_04_spot -r eu-west-1',
         'Replaces ASG tracking_asg_2015_12_03 with a new one called tracking_asg_2015_12_04, with launch config tracking_2015_12_04_spot')
         .help('h')
