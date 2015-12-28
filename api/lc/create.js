@@ -5,7 +5,7 @@ var AWS = require('aws-sdk');
 
 var fs = BB.promisifyAll(require('fs'));
 
-var AWSUtil = require('../../aws_util');
+var AWSUtil = require('../aws_util');
 
 function _get_userdata_string(file_names) {
   var ud_files_proms = file_names.map(function(path){

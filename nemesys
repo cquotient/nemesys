@@ -18,6 +18,11 @@ var tags_opt = {
   array: true
 };
 
+var vpc_opt = {
+  alias: 'vpc',
+  describe: 'Value of the VPC "Name" tag'
+};
+
 function _regions_conf(yargs) {
   return yargs
   .option('r', {
@@ -69,10 +74,7 @@ var argv = require('yargs')
     .command('asg', 'Create an Autoscaling Group', function(yargs, argv){
       _regions(yargs)
 
-      .option('v', {
-        alias: 'vpc',
-        description: 'Value of the VPC "Name" tag'
-      })
+      .option('v', vpc_opt)
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('t', tags_opt)
@@ -81,7 +83,7 @@ var argv = require('yargs')
         describe: 'SNS topic to notify of ASG errors'
       })
       .demand(['vpc', 'group', 'launch-config'])
-      .example('nemesys create asg -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
+      .example('nemesys create asg -v my_vpc -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
         'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
       .help('h')
       .alias('h', 'help');
@@ -185,6 +187,15 @@ var argv = require('yargs')
 
   .command('delete', 'Delete an EC2 resource', function(yargs, argv){
     yargs
+
+    .command('asg', 'Delete an Autoscaling Group', function(yargs, argv){
+      _regions(yargs)
+      .option('g', group_opt)
+      .demand(['group'])
+      .example('nemesys delete asg -v my_vpc -g my_asg')
+      .help('h')
+      .alias('h', 'help');
+    })
 
     .command('lc', 'Delete a Launch Configuration', function(yargs, argv){
       _regions(yargs)

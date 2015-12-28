@@ -69,6 +69,18 @@ function _handle_create(argv) {
 
 function _handle_delete(argv) {
   switch(argv._[1]) {
+    case 'asg':
+      nemesys.asg.delete(
+        argv['regions'],
+        argv['group']
+      ).then(function(){
+        console.log('deleted autoscaling group');
+        process.exit(0);
+      }).catch(function(err){
+        console.error(err.stack);
+        process.exit(1)
+      });
+      break;
     case 'lc':
       nemesys.lc.delete(
         argv['regions'],

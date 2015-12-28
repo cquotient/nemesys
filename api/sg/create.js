@@ -4,7 +4,7 @@ var AWS = require('aws-sdk');
 var BB = require('bluebird');
 var validator = require('validator');
 
-var AWSUtil = require('../../aws_util');
+var AWSUtil = require('../aws_util');
 
 function _get_ip_permissions(region, ingress) {
   var EC2 = BB.promisifyAll(new AWS.EC2({
