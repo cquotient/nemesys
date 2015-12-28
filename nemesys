@@ -67,8 +67,12 @@ var argv = require('yargs')
     yargs
 
     .command('asg', 'Create an Autoscaling Group', function(yargs, argv){
-      _regions_conf(yargs)
+      _regions(yargs)
 
+      .option('v', {
+        alias: 'vpc',
+        description: 'Value of the VPC "Name" tag'
+      })
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('t', tags_opt)
@@ -76,7 +80,7 @@ var argv = require('yargs')
         alias: 'error-topic',
         describe: 'SNS topic to notify of ASG errors'
       })
-      .demand(['group', 'launch-config'])
+      .demand(['vpc', 'group', 'launch-config'])
       .example('nemesys create asg -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
         'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
       .help('h')

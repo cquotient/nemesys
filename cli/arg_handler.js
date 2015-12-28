@@ -6,10 +6,9 @@ function _handle_create(argv) {
   switch(argv._[1]) {
 
     case 'asg':
-      var regions_config = require(argv['regions-config']);
       nemesys.asg.create(
-        regions_config,
         argv['regions'],
+        argv['vpc'],
         argv['group'],
         argv['launch-config'],
         argv['instance-tags'],
