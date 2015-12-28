@@ -23,15 +23,14 @@ function _handle_create(argv) {
       break;
 
     case 'sg':
-      var regions_config = require(argv['regions-config']);
       nemesys.sg.create(
-        regions_config,
         argv['regions'],
+        argv['vpc'],
         argv['security-group'],
         argv['description'],
         argv['ingress-rules']
       ).then(function(result){
-        console.log('create complete');
+        console.log('created security group');
         process.exit(0);
       }).catch(function(err){
         console.error(err.stack);

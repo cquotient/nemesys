@@ -90,8 +90,8 @@ var argv = require('yargs')
     })
 
     .command('sg', 'Create a Security Group', function(yargs, argv){
-      _regions_conf(yargs)
-
+      _regions(yargs)
+      .option('v', vpc_opt)
       .option('s', {
         alias: 'security-group',
         describe: 'Name of the Security Group'
@@ -106,7 +106,7 @@ var argv = require('yargs')
         array: true
       })
 
-      .demand(['security-group'])
+      .demand(['vpc', 'security-group'])
       .example('nemesys create sg -s ssh-access -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1',
         'Creates a security group in ap-southeast-1 called "ssh-access", using regions.json to discover the vpc to use');
     })

@@ -14,24 +14,6 @@ function _apply_default_options(optional) {
   return optional;
 }
 
-function _get_vpc_id(region, vpc_name) {
-  var EC2 = BB.promisifyAll(new AWS.EC2({
-    region: region,
-    apiVersion: '2015-10-01'
-  }));
-  return EC2.describeVpcsAsync({
-    Filters: [
-      {
-        Name: 'tag:Name',
-        Values: [vpc_name]
-      }
-    ]
-  })
-  .then(function(data){
-    return data.Vpcs[0].VpcId;
-  });
-}
-
 function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, optional){
   optional = _apply_default_options(optional);
   var AS = BB.promisifyAll(new AWS.AutoScaling({
@@ -43,7 +25,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
     apiVersion: '2015-10-01'
   }));
   // first, get a list of all subnets for our vpc in that region
-  return _get_vpc_id(region, vpc_name)
+  return AWSUtil.get_vpc_id(region, vpc_name)
   .then(function(vpc_id) {
     console.log(`${region}: found vpc ${vpc_id}`);
     return EC2.describeSubnetsAsync({

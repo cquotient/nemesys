@@ -36,10 +36,10 @@ This will copy tags and autoscaling actions from old_asg_2015_12_04 to a new ASG
 
 To create an ELB security group, allowing access from any ip:
 ```
-nemesys create sg -s my-elb -i 0.0.0.0/0:80 0.0.0.0/0:443 -c ~/x6/Automation/nemesys/regions.json -r eu-west-1 us-west-2 us-east-1
+nemesys create sg -s my-elb -i 0.0.0.0/0:80 0.0.0.0/0:443 -r eu-west-1 us-west-2 us-east-1 -v my_vpc
 ```
 
 To create a corresponding instance security group, only allowing access from the previous ELB group:
 ```
-nemesys create sg -s my-instance -i tracking-elb:3000 -c ~/x6/Automation/nemesys/regions.json -r eu-west-1 us-west-2 us-east-1
+nemesys create sg -s my-instance -i tracking-elb:3000 -r eu-west-1 us-west-2 us-east-1 -v my_vpc
 ```

@@ -59,17 +59,20 @@ function _get_ip_permissions(region, ingress) {
   }
 }
 
-function _do_create(region_config, region, sg_name, desc, ingress) {
+function _do_create(region, vpc_name, sg_name, desc, ingress) {
   if(!desc) desc = sg_name;
   var EC2 = BB.promisifyAll(new AWS.EC2({
     region: region,
     apiVersion: '2015-10-01'
   }));
-  return EC2.createSecurityGroupAsync({
-    Description: desc,
-    GroupName: sg_name,
-    DryRun: false,
-    VpcId: region_config.vpc
+  return AWSUtil.get_vpc_id(region, vpc_name)
+  .then(function(vpc_id){
+    return EC2.createSecurityGroupAsync({
+      Description: desc,
+      GroupName: sg_name,
+      DryRun: false,
+      VpcId: vpc_id
+    });
   })
   .then(function(result){
     console.log(`${region}: created security group ${sg_name} (${result.GroupId})`);
@@ -89,9 +92,9 @@ function _do_create(region_config, region, sg_name, desc, ingress) {
   });
 }
 
-function _create(regions_config, regions, sg_name, desc, ingress) {
+function _create(regions, vpc_name, sg_name, desc, ingress) {
   var region_promises = regions.map(function(region){
-    return _do_create(regions_config[region], region, sg_name, desc, ingress);
+    return _do_create(region, vpc_name, sg_name, desc, ingress);
   });
   return BB.all(region_promises);
 }

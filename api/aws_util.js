@@ -29,5 +29,24 @@ function _get_sg_id(region, group_name) {
   });
 }
 
+function _get_vpc_id(region, vpc_name) {
+  var EC2 = BB.promisifyAll(new AWS.EC2({
+    region: region,
+    apiVersion: '2015-10-01'
+  }));
+  return EC2.describeVpcsAsync({
+    Filters: [
+      {
+        Name: 'tag:Name',
+        Values: [vpc_name]
+      }
+    ]
+  })
+  .then(function(data){
+    return data.Vpcs[0].VpcId;
+  });
+}
+
 exports.get_asg = _get_asg;
 exports.get_sg_id = _get_sg_id;
+exports.get_vpc_id = _get_vpc_id;
