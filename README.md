@@ -43,3 +43,8 @@ To create a corresponding instance security group, only allowing access from the
 ```
 nemesys create sg -s my-instance -i tracking-elb:3000 -r eu-west-1 us-west-2 us-east-1 -v my_vpc
 ```
+
+To delete a security group:
+```
+nemesys delete sg -s my-instance -r eu-west-1 us-west-2 us-east-1
+```
