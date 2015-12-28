@@ -18,20 +18,10 @@ var tags_opt = {
   array: true
 };
 
-function _regions_conf(yargs) {
-  return yargs
-  .option('r', {
-    alias: 'regions',
-    describe: 'EC2 regions to operate in',
-    array: true,
-    choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
-  })
-  .option('c', {
-    alias: 'regions-config',
-    describe: 'Region configuration JSON file'
-  })
-  .demand(['regions', 'regions-config']);
-}
+var vpc_opt = {
+  alias: 'vpc',
+  describe: 'Value of the VPC "Name" tag'
+};
 
 function _regions(yargs) {
   return yargs
@@ -67,8 +57,9 @@ var argv = require('yargs')
     yargs
 
     .command('asg', 'Create an Autoscaling Group', function(yargs, argv){
-      _regions_conf(yargs)
+      _regions(yargs)
 
+      .option('v', vpc_opt)
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('t', tags_opt)
@@ -76,16 +67,16 @@ var argv = require('yargs')
         alias: 'error-topic',
         describe: 'SNS topic to notify of ASG errors'
       })
-      .demand(['group', 'launch-config'])
-      .example('nemesys create asg -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
+      .demand(['vpc', 'group', 'launch-config'])
+      .example('nemesys create asg -v my_vpc -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
         'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
       .help('h')
       .alias('h', 'help');
     })
 
     .command('sg', 'Create a Security Group', function(yargs, argv){
-      _regions_conf(yargs)
-
+      _regions(yargs)
+      .option('v', vpc_opt)
       .option('s', {
         alias: 'security-group',
         describe: 'Name of the Security Group'
@@ -100,7 +91,7 @@ var argv = require('yargs')
         array: true
       })
 
-      .demand(['security-group'])
+      .demand(['vpc', 'security-group'])
       .example('nemesys create sg -s ssh-access -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1',
         'Creates a security group in ap-southeast-1 called "ssh-access", using regions.json to discover the vpc to use');
     })
@@ -161,14 +152,15 @@ var argv = require('yargs')
 
   .command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
     yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
-      _regions_conf(yargs)
+      _regions(yargs)
+      .option('v', vpc_opt)
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('o', {
         alias: 'old-group',
         describe: 'Name of the Autoscaling Group to replace. Only applies to `replace` command'
       })
-      .demand(['group', 'launch-config', 'old-group'])
+      .demand(['vpc', 'group', 'launch-config', 'old-group'])
       .example('nemesys replace -o tracking_asg_2015_12_03 -g tracking_asg_2015_12_04 -l tracking_2015_12_04_spot -r eu-west-1',
         'Replaces ASG tracking_asg_2015_12_03 with a new one called tracking_asg_2015_12_04, with launch config tracking_2015_12_04_spot')
         .help('h')
@@ -182,6 +174,15 @@ var argv = require('yargs')
   .command('delete', 'Delete an EC2 resource', function(yargs, argv){
     yargs
 
+    .command('asg', 'Delete an Autoscaling Group', function(yargs, argv){
+      _regions(yargs)
+      .option('g', group_opt)
+      .demand(['group'])
+      .example('nemesys delete asg -v my_vpc -g my_asg')
+      .help('h')
+      .alias('h', 'help');
+    })
+
     .command('lc', 'Delete a Launch Configuration', function(yargs, argv){
       _regions(yargs)
 
@@ -194,6 +195,18 @@ var argv = require('yargs')
 
       .demand(['launch-config'])
       .example('nemesys delete lc -l test-lc -r ap-southeast-1 us-east-1');
+    })
+
+    .command('sg', 'Delete a Security Group', function(yargs, argv){
+      _regions(yargs)
+
+      .option('s', {
+        alias: 'security-group',
+        describe: 'Name of the Security Group'
+      })
+
+      .demand(['security-group'])
+      .example('nemesys delete sg -s my-sg');
     })
 
     .demand(2)

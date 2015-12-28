@@ -6,10 +6,9 @@ function _handle_create(argv) {
   switch(argv._[1]) {
 
     case 'asg':
-      var regions_config = require(argv['regions-config']);
       nemesys.asg.create(
-        regions_config,
         argv['regions'],
+        argv['vpc'],
         argv['group'],
         argv['launch-config'],
         argv['instance-tags'],
@@ -24,15 +23,14 @@ function _handle_create(argv) {
       break;
 
     case 'sg':
-      var regions_config = require(argv['regions-config']);
       nemesys.sg.create(
-        regions_config,
         argv['regions'],
+        argv['vpc'],
         argv['security-group'],
         argv['description'],
         argv['ingress-rules']
       ).then(function(result){
-        console.log('create complete');
+        console.log('created security group');
         process.exit(0);
       }).catch(function(err){
         console.error(err.stack);
@@ -70,6 +68,18 @@ function _handle_create(argv) {
 
 function _handle_delete(argv) {
   switch(argv._[1]) {
+    case 'asg':
+      nemesys.asg.delete(
+        argv['regions'],
+        argv['group']
+      ).then(function(){
+        console.log('deleted autoscaling group');
+        process.exit(0);
+      }).catch(function(err){
+        console.error(err.stack);
+        process.exit(1)
+      });
+      break;
     case 'lc':
       nemesys.lc.delete(
         argv['regions'],
@@ -77,6 +87,18 @@ function _handle_delete(argv) {
         argv['delete-spot-clone']
       ).then(function(){
         console.log('deleted launch config');
+        process.exit(0);
+      }).catch(function(err){
+        console.error(err.stack);
+        process.exit(1);
+      });
+      break;
+    case 'sg':
+      nemesys.sg.delete(
+        argv['regions'],
+        argv['security-group']
+      ).then(function(){
+        console.log('deleted security group');
         process.exit(0);
       }).catch(function(err){
         console.error(err.stack);
@@ -92,10 +114,9 @@ function _handle_delete(argv) {
 function _handle_replace(argv) {
   switch(argv._[1]) {
     case 'asg':
-      var regions_config = require(argv['regions-config']);
       nemesys.asg.replace(
-        regions_config,
         argv['regions'],
+        argv['vpc'],
         argv['old-group'],
         argv['group'],
         argv['launch-config']

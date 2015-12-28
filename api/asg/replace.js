@@ -3,12 +3,12 @@
 var BB = require('bluebird');
 var AWS = require('aws-sdk');
 
-var AWSUtil = require('../../aws_util');
+var AWSUtil = require('../aws_util');
 var create = require('./create');
 
 var _delay_ms = 30000;
 
-function _do_replace(regions_config, region, replace_asg, with_asg, lc_name) {
+function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
   var AS = BB.promisifyAll(new AWS.AutoScaling({
     region: region,
     apiVersion: '2011-01-01'
@@ -38,8 +38,11 @@ function _do_replace(regions_config, region, replace_asg, with_asg, lc_name) {
     var instance_tags = old_asg.Tags.map(function(tag){
       return `${tag.Key}=${tag.Value}`;
     });
-    var error_topic = old_notifications.NotificationConfigurations[0].TopicARN.split(':')[5];
-    return create(regions_config, [region], with_asg, lc_name, instance_tags, error_topic, options).then(function(){
+    var error_topic;
+    if(old_notifications && old_notifications.length > 0) {
+      error_topic = old_notifications.NotificationConfigurations[0].TopicARN.split(':')[5];
+    }
+    return create([region], vpc_name, with_asg, lc_name, instance_tags, error_topic, options).then(function(){
       return AWSUtil.get_asg(AS, with_asg);
     });
   })
@@ -108,9 +111,9 @@ function _do_replace(regions_config, region, replace_asg, with_asg, lc_name) {
   });
 }
 
-function replace(regions_config, regions, replace_asg, with_asg, lc_name) {
+function replace(regions, vpc_name, replace_asg, with_asg, lc_name) {
   var region_promises = regions.map(function(region){
-    return _do_replace(regions_config, region, replace_asg, with_asg, lc_name);
+    return _do_replace(region, vpc_name, replace_asg, with_asg, lc_name);
   });
   return BB.all(region_promises);
 }
