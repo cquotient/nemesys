@@ -1,5 +1,8 @@
 'use strict';
 
+var AWS = require('aws-sdk');
+var BB = require('bluebird');
+
 function _get_asg(as, asg_name) {
   return as.describeAutoScalingGroupsAsync({
     AutoScalingGroupNames: [asg_name]
@@ -9,6 +12,10 @@ function _get_asg(as, asg_name) {
 }
 
 function _get_sg_id(region, group_name) {
+  var EC2 = BB.promisifyAll(new AWS.EC2({
+    region: region,
+    apiVersion: '2015-10-01'
+  }));
   return EC2.describeSecurityGroupsAsync({
     DryRun: false,
     Filters: [

@@ -5,6 +5,8 @@ var AWS = require('aws-sdk');
 
 var fs = BB.promisifyAll(require('fs'));
 
+var AWSUtil = require('../../aws_util');
+
 function _get_userdata_string(file_names) {
   var ud_files_proms = file_names.map(function(path){
     return fs.readFileAsync(path, 'utf-8');
@@ -22,6 +24,13 @@ function _get_userdata_string(file_names) {
       return prev + curr;
     }, user_data_string);
   });
+}
+
+function _get_sg_ids(region, sg) {
+  var proms = sg.map(function(name){
+    return AWSUtil.get_sg_id(region, name);
+  });
+  return BB.all(proms);
 }
 
 function _get_ami_id(region, ami_name) {
@@ -50,6 +59,7 @@ function _do_create(regions_config, region, lc_name, ami, i_type, key, sg, iam, 
 
   return BB.all([
     _get_ami_id(region, ami),
+    _get_sg_ids(region, sg),
     _get_userdata_string(ud)
   ])
   .then(function(results){
@@ -79,7 +89,9 @@ function _do_create(regions_config, region, lc_name, ami, i_type, key, sg, iam, 
         Enabled: true
       },
       InstanceType: i_type,
-      KeyName: key
+      KeyName: key,
+      SecurityGroups: results[1],
+      UserData: results[2]
     };
     console.log(params);
   });
