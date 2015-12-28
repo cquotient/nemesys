@@ -4,21 +4,13 @@ var AWS = require('aws-sdk');
 var BB = require('bluebird');
 var validator = require('validator');
 
-function _get_sg_id(EC2, group_name) {
-  return EC2.describeSecurityGroupsAsync({
-    DryRun: false,
-    Filters: [
-      {
-        Name: 'group-name',
-        Values: [group_name]
-      }
-    ]
-  }).then(function(result){
-    return result.SecurityGroups[0].GroupId;
-  });
-}
+var AWSUtil = require('../../aws_util');
 
-function _get_ip_permissions(EC2, ingress) {
+function _get_ip_permissions(region, ingress) {
+  var EC2 = BB.promisifyAll(new AWS.EC2({
+    region: region,
+    apiVersion: '2015-10-01'
+  }));
   var perms = [],
       groups_to_lookup = [];
   ingress.forEach(function(obj){
@@ -43,7 +35,7 @@ function _get_ip_permissions(EC2, ingress) {
   if(groups_to_lookup.length > 0) {
     var group_id_proms = groups_to_lookup.map(function(obj){
       var parts = obj.split(':');
-      return _get_sg_id(EC2, parts[0])
+      return AWSUtil.get_sg_id(region, parts[0])
       .then(function(group_id) {
         var protocol = parts[2] ? parts[2] : 'tcp';
         perms.push({
@@ -82,7 +74,7 @@ function _do_create(region_config, region, sg_name, desc, ingress) {
   .then(function(result){
     console.log(`${region}: created security group ${sg_name} (${result.GroupId})`);
     if(ingress && ingress.length > 0) {
-      return _get_ip_permissions(EC2, ingress)
+      return _get_ip_permissions(region, ingress)
       .then(function(ip_perms){
         return EC2.authorizeSecurityGroupIngressAsync({
           DryRun: false,
