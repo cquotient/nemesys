@@ -9,18 +9,6 @@ The name nemesys is related to the Greek word νέμειν némein, meaning "to 
 #Usage#
 `nemesys -h`
 
-You'll need a `regions.json` file, which should contain a mapping of regions to VPC ids. This is currently required, meaning nemesys only supports using EC2 with a VPC. Here is an example of what the file should look like:
-```json
-{
-  "us-east-1": {
-    "vpc": "{vpc_id}"
-  },
-  "us-west-2": {
-    "vpc": "..."
-  }
-}
-```
-
 #Examples#
 To create a Launch Configuration:
 ```
