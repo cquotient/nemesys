@@ -212,6 +212,18 @@ var argv = require('yargs')
       .example('nemesys delete lc -l test-lc -r ap-southeast-1 us-east-1');
     })
 
+    .command('sg', 'Delete a Security Group', function(yargs, argv){
+      _regions(yargs)
+
+      .option('s', {
+        alias: 'security-group',
+        describe: 'Name of the Security Group'
+      })
+
+      .demand(['security-group'])
+      .example('nemesys delete sg -s my-sg');
+    })
+
     .demand(2)
     .help('h')
     .alias('h', 'help');
