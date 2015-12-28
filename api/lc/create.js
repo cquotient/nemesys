@@ -91,13 +91,13 @@ function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, 
       InstanceType: i_type,
       KeyName: key,
       SecurityGroups: results[1],
-      UserData: results[2]
+      UserData: (new Buffer(results[2]).toString('base64'))
     };
     // we may need to create 2, so use an array for the lc param objects
     var lc_params = [params];
     if(spot_price) {
       var spot_clone = JSON.parse(JSON.stringify(params));
-      spot_clone.SpotPrice = spot_price;
+      spot_clone.SpotPrice = spot_price + '';
       lc_params.push(spot_clone);
     }
     return lc_params;
