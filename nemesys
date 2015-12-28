@@ -179,6 +179,28 @@ var argv = require('yargs')
     .alias('h', 'help');
   })
 
+  .command('delete', 'Delete an EC2 resource', function(yargs, argv){
+    yargs
+
+    .command('lc', 'Delete a Launch Configuration', function(yargs, argv){
+      _regions(yargs)
+
+      .option('l', lc_opt)
+      .option('D', {
+        alias: 'delete-spot-clone',
+        describe: 'Look for and delete the "spot clone" of this Launch Configuration',
+        type: 'boolean'
+      })
+
+      .demand(['launch-config'])
+      .example('nemesys delete lc -l test-lc -r ap-southeast-1 us-east-1');
+    })
+
+    .demand(2)
+    .help('h')
+    .alias('h', 'help');
+  })
+
   .demand(2)
   .help('h')
   .alias('h', 'help')
