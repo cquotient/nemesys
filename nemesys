@@ -18,7 +18,7 @@ var tags_opt = {
   array: true
 };
 
-function _regions(yargs) {
+function _regions_conf(yargs) {
   return yargs
   .option('r', {
     alias: 'regions',
@@ -31,6 +31,17 @@ function _regions(yargs) {
     describe: 'Region configuration JSON file'
   })
   .demand(['regions', 'regions-config']);
+}
+
+function _regions(yargs) {
+  return yargs
+  .option('r', {
+    alias: 'regions',
+    describe: 'EC2 regions to operate in',
+    array: true,
+    choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
+  })
+  .demand(['regions']);
 }
 
 var argv = require('yargs')
@@ -56,7 +67,7 @@ var argv = require('yargs')
     yargs
 
     .command('asg', 'Create an Autoscaling Group', function(yargs, argv){
-      _regions(yargs)
+      _regions_conf(yargs)
 
       .option('g', group_opt)
       .option('l', lc_opt)
@@ -73,7 +84,7 @@ var argv = require('yargs')
     })
 
     .command('sg', 'Create a Security Group', function(yargs, argv){
-      _regions(yargs)
+      _regions_conf(yargs)
 
       .option('s', {
         alias: 'security-group',
@@ -133,6 +144,10 @@ var argv = require('yargs')
         describe: 'Disks to attach to instances using this Launch Configuration',
         array: true
       })
+      .option('S', {
+        alias: 'clone-spot-price',
+        describe: 'Create a clone of this Launch Configuration with the given spot price. The spot clone will have "_spot" appended to the name'
+      })
 
       .demand(['launch-config', 'ami', 'instance-type', 'ssh-key-pair'])
       .example('nemesys create lc', 'Creates a Launch Configuration');
@@ -145,7 +160,7 @@ var argv = require('yargs')
 
   .command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
     yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
-      _regions(yargs)
+      _regions_conf(yargs)
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('o', {

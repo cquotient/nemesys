@@ -3,7 +3,6 @@
 var nemesys = require('../');
 
 function _handle(argv) {
-  var regions_config = require(argv['regions-config']);
 
   switch(argv._[0]) {
     case 'update':
@@ -32,6 +31,7 @@ function _handle(argv) {
       switch(argv._[1]) {
 
         case 'asg':
+          var regions_config = require(argv['regions-config']);
           nemesys.asg.create(
             regions_config,
             argv['regions'],
@@ -49,6 +49,7 @@ function _handle(argv) {
           break;
 
         case 'sg':
+          var regions_config = require(argv['regions-config']);
           nemesys.sg.create(
             regions_config,
             argv['regions'],
@@ -66,7 +67,6 @@ function _handle(argv) {
 
         case 'lc':
           nemesys.lc.create(
-            regions_config,
             argv['regions'],
             argv['launch-config'],
             argv['ami'],
@@ -76,7 +76,8 @@ function _handle(argv) {
             argv['iam-role'],
             argv['user-data-files'],
             argv['region-user-data'],
-            argv['disks']
+            argv['disks'],
+            argv['clone-spot-price']
           ).then(function(){
             console.log('created launch configuration');
             process.exit(0);
@@ -95,6 +96,7 @@ function _handle(argv) {
     case 'replace':
       switch(argv._[1]) {
         case 'asg':
+          var regions_config = require(argv['regions-config']);
           nemesys.asg.replace(
             regions_config,
             argv['regions'],
