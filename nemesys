@@ -9,7 +9,7 @@ var group_opt = {
 
 var lc_opt = {
   alias: 'launch-config',
-  describe: 'Name of the EC2 Launch Configuration to apply to the given ASG'
+  describe: 'Name of the Launch Configuration'
 };
 
 var tags_opt = {
@@ -18,7 +18,7 @@ var tags_opt = {
   array: true
 };
 
-function _regions(yargs) {
+function _regions_conf(yargs) {
   return yargs
   .option('r', {
     alias: 'regions',
@@ -33,10 +33,15 @@ function _regions(yargs) {
   .demand(['regions', 'regions-config']);
 }
 
-function _help(yargs) {
+function _regions(yargs) {
   return yargs
-  .help('h')
-  .alias('h', 'help');
+  .option('r', {
+    alias: 'regions',
+    describe: 'EC2 regions to operate in',
+    array: true,
+    choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
+  })
+  .demand(['regions']);
 }
 
 var argv = require('yargs')
@@ -62,7 +67,7 @@ var argv = require('yargs')
     yargs
 
     .command('asg', 'Create an Autoscaling Group', function(yargs, argv){
-      _regions(yargs)
+      _regions_conf(yargs)
 
       .option('g', group_opt)
       .option('l', lc_opt)
@@ -72,14 +77,14 @@ var argv = require('yargs')
         describe: 'SNS topic to notify of ASG errors'
       })
       .demand(['group', 'launch-config'])
-      .example('nemesys create -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
+      .example('nemesys create asg -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
         'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
       .help('h')
       .alias('h', 'help');
     })
 
     .command('sg', 'Create a Security Group', function(yargs, argv){
-      _regions(yargs)
+      _regions_conf(yargs)
 
       .option('s', {
         alias: 'security-group',
@@ -99,6 +104,56 @@ var argv = require('yargs')
       .example('nemesys create sg -s ssh-access -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1',
         'Creates a security group in ap-southeast-1 called "ssh-access", using regions.json to discover the vpc to use');
     })
+
+    .command('lc', 'Create a Launch Configuration', function(yargs, argv){
+      _regions(yargs)
+
+      .option('l', lc_opt)
+      .option('a', {
+        alias: 'ami',
+        description: 'AMI name'
+      })
+      .option('i', {
+        alias: 'instance-type',
+        describe: 'EC2 API name of the instance type to use (ie, m3.large)'
+      })
+      .option('k', {
+        alias: 'ssh-key-pair',
+        describe: 'Name of the ssh key pair to use for instances using this Launch Configuration'
+      })
+      .option('I', {
+        alias: 'iam-role',
+        describe: 'IAM role for launched instances'
+      })
+      .option('s', {
+        alias: 'security-groups',
+        describe: 'Name of the Security Group(s) to apply to instances using this Launch Configuration',
+        array: true
+      })
+      .option('u', {
+        alias: 'user-data-files',
+        describe: 'Shell script files to combine to form the user data',
+        array: true
+      })
+      .option('region-user-data', {
+        describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
+        array: true
+      })
+      .option('d', {
+        alias: 'disks',
+        describe: 'Disks to attach to instances using this Launch Configuration',
+        array: true
+      })
+      .option('S', {
+        alias: 'clone-spot-price',
+        describe: 'Create a clone of this Launch Configuration with the given spot price. The spot clone will have "_spot" appended to the name'
+      })
+
+      .demand(['launch-config', 'ami', 'instance-type', 'ssh-key-pair'])
+      .example('nemesys create lc -r ap-southeast-1 -l test-lc -a my_ami_name -i c3.large -k key_name -I my_role -s my_sg -u ~/userdata.sh --region-user-data ~/region_userdata.sh -d /dev/sda1:ebs:24:gp2 /dev/sdb:ephemeral:ephemeral0 -S 0.02',
+       'Creates a Launch Configuration with the given parameters, with a clone using spot instances at the given spot price');
+    })
+
     .demand(2)
     .help('h')
     .alias('h', 'help');
@@ -106,7 +161,7 @@ var argv = require('yargs')
 
   .command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
     yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
-      _regions(yargs)
+      _regions_conf(yargs)
       .option('g', group_opt)
       .option('l', lc_opt)
       .option('o', {
@@ -123,6 +178,29 @@ var argv = require('yargs')
     .help('h')
     .alias('h', 'help');
   })
+
+  .command('delete', 'Delete an EC2 resource', function(yargs, argv){
+    yargs
+
+    .command('lc', 'Delete a Launch Configuration', function(yargs, argv){
+      _regions(yargs)
+
+      .option('l', lc_opt)
+      .option('D', {
+        alias: 'delete-spot-clone',
+        describe: 'Look for and delete the "spot clone" of this Launch Configuration',
+        type: 'boolean'
+      })
+
+      .demand(['launch-config'])
+      .example('nemesys delete lc -l test-lc -r ap-southeast-1 us-east-1');
+    })
+
+    .demand(2)
+    .help('h')
+    .alias('h', 'help');
+  })
+
   .demand(2)
   .help('h')
   .alias('h', 'help')
