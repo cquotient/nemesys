@@ -23,21 +23,6 @@ var vpc_opt = {
   describe: 'Value of the VPC "Name" tag'
 };
 
-function _regions_conf(yargs) {
-  return yargs
-  .option('r', {
-    alias: 'regions',
-    describe: 'EC2 regions to operate in',
-    array: true,
-    choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
-  })
-  .option('c', {
-    alias: 'regions-config',
-    describe: 'Region configuration JSON file'
-  })
-  .demand(['regions', 'regions-config']);
-}
-
 function _regions(yargs) {
   return yargs
   .option('r', {
