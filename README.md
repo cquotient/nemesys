@@ -7,7 +7,10 @@ Please note that while we use this internally on our team at Demandware, this is
 The name nemesys is related to the Greek word νέμειν némein, meaning "to give what is due",[2] from Proto-Indo-European nem- "distribute". (https://en.wikipedia.org/wiki/nemesis_(mythology)). Unfortunately, the correct spelling 'nemesis' was already taken.
 
 #Usage#
-`nemesys -h`
+```
+npm install -g nemesys
+nemesys --help
+```
 
 #Examples#
 To create a Launch Configuration:
