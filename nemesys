@@ -39,7 +39,9 @@ var argv = require('yargs')
   // commands
 
   .command('update', 'Update an EC2 resource', function(yargs, argv){
-    yargs.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function(yargs, argv){
+    yargs
+
+    .command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function(yargs, argv){
       yargs
       .option('g', group_opt)
       .option('l', lc_opt)
@@ -49,6 +51,23 @@ var argv = require('yargs')
       .help('h')
       .alias('h', 'help');
     })
+
+    .command('sg', 'Update a Security Group', function(yargs, argv){
+      _regions(yargs)
+      .option('s', {
+        alias: 'security-group',
+        describe: 'Name of the Security Group'
+      })
+      .option('i', {
+        alias: 'ingress-rules',
+        describe: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
+        type: 'array'
+      })
+      .demand(['security-group'])
+    })
+
+    .demand(2)
+
     .help('h')
     .alias('h', 'help');
   })
@@ -87,7 +106,7 @@ var argv = require('yargs')
       })
       .option('i', {
         alias: 'ingress-rules',
-        description: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
+        describe: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
         array: true
       })
 

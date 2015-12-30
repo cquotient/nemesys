@@ -149,6 +149,19 @@ function _handle_update(argv) {
         process.exit(1);
       });
       break;
+    case 'sg':
+      nemesys.sg.update(
+        argv['regions'],
+        argv['security-group'],
+        argv['ingress-rules']
+      ).then(function(){
+        console.log('updated security group');
+        process.exit(0);
+      }).catch(function(err){
+        console.error(err.stack);
+        process.exit(1);
+      })
+      break;
     default:
       console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
       process.exit(1);
