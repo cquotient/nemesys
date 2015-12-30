@@ -63,6 +63,10 @@ var argv = require('yargs')
         describe: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
         type: 'array'
       })
+      .option('remove', {
+        describe: 'Use this flag to remove, instead of add, the specified rules',
+        type: 'boolean'
+      })
       .demand(['security-group'])
     })
 

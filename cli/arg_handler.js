@@ -153,7 +153,8 @@ function _handle_update(argv) {
       nemesys.sg.update(
         argv['regions'],
         argv['security-group'],
-        argv['ingress-rules']
+        argv['ingress-rules'],
+        argv['remove']
       ).then(function(){
         console.log('updated security group');
         process.exit(0);
