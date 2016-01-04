@@ -8,10 +8,11 @@ function _do_delete(region, lc_name, spot) {
     region: region,
     apiVersion: '2011-01-01'
   }));
-  return BB.all([
-    AS.deleteLaunchConfigurationAsync({LaunchConfigurationName: lc_name}),
-    AS.deleteLaunchConfigurationAsync({LaunchConfigurationName: lc_name + '_spot'})
-  ]);
+  var proms = [AS.deleteLaunchConfigurationAsync({LaunchConfigurationName: lc_name})];
+  if(spot) {
+    proms.push(AS.deleteLaunchConfigurationAsync({LaunchConfigurationName: lc_name + '_spot'}));
+  }
+  return BB.all(proms);
 }
 
 function _delete(regions, lc_name, spot){
