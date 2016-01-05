@@ -54,7 +54,7 @@ function _get_ami_id(region, ami_name) {
 
 function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, spot_price) {
   if(rud) {
-    ud.unshift(rud);
+    ud = [rud].concat(ud);
   }
 
   return BB.all([
