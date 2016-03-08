@@ -217,10 +217,12 @@ var argv = require('yargs')
       .option('v', vpc_opt)
       .option('t', {
         alias: 'tags',
-        describe: 'Tags to apply, in the form of Name=value'
+        describe: 'Tags to apply, in the form of Name=value',
+        array: true
       })
       .option('env', {
-        describe: 'Environment variables to pass to the userdata'
+        describe: 'Environment variables to pass to the userdata',
+        array: true
       })
 
       .demand(['ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'])
