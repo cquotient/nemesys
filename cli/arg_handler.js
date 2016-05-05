@@ -60,6 +60,18 @@ function _handle_create(argv) {
       });
       break;
 
+		case 'instance':
+			nemesys.instance.create(
+
+			).then(function(){
+				console.log('created instance');
+				process.exit(0);
+			}).catch(function(err){
+				console.error(err.stack);
+				process.exit(1);
+			});
+			break;
+
     default:
       console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
       process.exit(1);
