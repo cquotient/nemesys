@@ -60,6 +60,30 @@ function _handle_create(argv) {
       });
       break;
 
+    case 'instance':
+      nemesys.instance.create(
+        argv['regions'],
+        argv['vpc'],
+        argv['ami'],
+        argv['instance-type'],
+        argv['ssh-key-pair'],
+        argv['security-groups'],
+        argv['iam-role'],
+        argv['user-data-files'],
+        argv['region-user-data'],
+        argv['disks'],
+        argv['availability-zone'],
+        argv['tags']
+        //TODO env vars for userdata!
+      ).then(function(){
+        console.log('created instance');
+        process.exit(0);
+      }).catch(function(err){
+        console.error(err.stack);
+        process.exit(1);
+      });
+      break;
+
     default:
       console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
       process.exit(1);
