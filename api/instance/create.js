@@ -56,8 +56,14 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
 			Monitoring: {
 				Enabled: true
 			},
-      SecurityGroupIds: results[1],
-			SubnetId: results[3],
+			NetworkInterfaces: [
+				{
+					AssociatePublicIpAddress: true,
+					DeviceIndex: 0,
+					Groups: results[1],
+					SubnetId: results[3]
+				}
+			],
       UserData: (new Buffer(results[2]).toString('base64'))
     };
 	})
