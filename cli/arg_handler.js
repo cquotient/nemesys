@@ -62,7 +62,19 @@ function _handle_create(argv) {
 
 		case 'instance':
 			nemesys.instance.create(
-
+				argv['regions'],
+				argv['vpc'],
+        argv['ami'],
+        argv['instance-type'],
+        argv['ssh-key-pair'],
+        argv['security-groups'],
+        argv['iam-role'],
+        argv['user-data-files'],
+        argv['region-user-data'],
+        argv['disks'],
+        argv['availability-zone'],
+				argv['tags']
+				//TODO env vars for userdata!
 			).then(function(){
 				console.log('created instance');
 				process.exit(0);

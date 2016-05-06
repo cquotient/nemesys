@@ -210,10 +210,6 @@ var argv = require('yargs')
         alias: 'availability-zone',
         describe: 'Availability zone to launch the instance in'
       })
-      .option('n', {
-        alias: 'name',
-        describe: 'Name of the instance'
-      })
       .option('v', vpc_opt)
       .option('t', {
         alias: 'tags',
