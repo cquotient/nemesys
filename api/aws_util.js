@@ -55,10 +55,10 @@ function _get_userdata_string(file_names) {
   return BB.all(ud_files_proms)
   .then(function(ud_files_content){
     // standard beginning of shell script user data, so we dont have to repeat it everywhere
-  	var user_data_string = '#!/bin/bash\n\n';
-  	user_data_string += 'set -o pipefail\n';
-  	user_data_string += 'set -e -x\n';
-  	user_data_string += 'exec >> /tmp/exec.log 2>&1\n\n';
+    var user_data_string = '#!/bin/bash\n\n';
+    user_data_string += 'set -o pipefail\n';
+    user_data_string += 'set -e -x\n';
+    user_data_string += 'exec >> /tmp/exec.log 2>&1\n\n';
 
     //concat with the rest of the user data
     return ud_files_content.reduce(function(prev, curr) {
@@ -94,22 +94,22 @@ function _get_sg_ids(region, sg) {
 }
 
 function _get_bdms(disks) {
-	return disks.map(function(d){
-		var d_split = d.split(':');
-		var bdm = {
-			DeviceName: d_split[0]
-		};
-		if(d_split[1] === 'ebs') {
-			bdm.Ebs = {
-				VolumeSize: d_split[2],
-				VolumeType: d_split[3],
-				DeleteOnTermination: true
-			};
-		} else { //this means d_split[1] (which is the device type) is 'ephemeral'
-			bdm.VirtualName = d_split[2];
-		}
-		return bdm;
-	});
+  return disks.map(function(d){
+    var d_split = d.split(':');
+    var bdm = {
+      DeviceName: d_split[0]
+    };
+    if(d_split[1] === 'ebs') {
+      bdm.Ebs = {
+        VolumeSize: d_split[2],
+        VolumeType: d_split[3],
+        DeleteOnTermination: true
+      };
+    } else { //this means d_split[1] (which is the device type) is 'ephemeral'
+      bdm.VirtualName = d_split[2];
+    }
+    return bdm;
+  });
 }
 
 exports.get_asg = _get_asg;
