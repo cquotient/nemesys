@@ -151,7 +151,8 @@ var argv = require('yargs')
       })
       .option('region-user-data', {
         describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
-        array: true
+        array: true,
+        default: []
       })
       .option('d', {
         alias: 'disks',
@@ -199,7 +200,8 @@ var argv = require('yargs')
       })
       .option('region-user-data', {
         describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
-        array: true
+        array: true,
+        default: []
       })
       .option('d', {
         alias: 'disks',
