@@ -73,7 +73,8 @@ function _handle_create(argv) {
         argv['region-user-data'],
         argv['disks'],
         argv['availability-zone'],
-        argv['tags']
+        argv['tags'],
+        argv['network-interface']
         //TODO env vars for userdata!
       ).then(function(){
         console.log('created instance');

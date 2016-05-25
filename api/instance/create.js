@@ -25,7 +25,56 @@ function _get_subnet_id(ec2, region, vpc, az) {
   });
 }
 
-function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags) {
+function _get_eni_id(ec2, region, vpc, az, eni_name) {
+	return AWSUtil.get_vpc_id(region, vpc)
+	.then(function(vpc_id){
+		return ec2.describeNetworkInterfacesAsync({
+			Filters: [
+        {
+          Name: 'vpc-id',
+          Values: [vpc_id]
+        },
+        {
+          Name: 'availability-zone',
+          Values: [region + az]
+        },
+				{
+	        Name: 'tag:Name',
+	        Values: [eni_name]
+	      }
+      ]
+		});
+	}).then(function(data){
+		return data.NetworkInterfaces[0].NetworkInterfaceId;
+	});
+}
+
+function _get_network_interface(ec2, region, vpc, az, eni_name, sg_ids_promise, subnet_id_promise) {
+	return BB.all([
+		sg_ids_promise,
+		subnet_id_promise
+	])
+	.then(function(results){
+		if(eni_name) {
+			return _get_eni_id(ec2, region, vpc, az, eni_name)
+			.then(function(eni_id){
+				return {
+					DeviceIndex: 0,
+					NetworkInterfaceId: eni_id
+				};
+			});
+		} else {
+			return Promise.resolve({
+				AssociatePublicIpAddress: true,
+				DeviceIndex: 0,
+				Groups: results[0],
+				SubnetId: results[1]
+			});
+		}
+	});
+}
+
+function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name) {
   if(rud) {
     ud = [rud].concat(ud);
   }
@@ -35,11 +84,15 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
     apiVersion: '2015-10-01'
   }));
 
+	var sg_ids_promise = AWSUtil.get_sg_ids(region, sg);
+	var subnet_id_promise = _get_subnet_id(EC2, region, vpc, az);
+
   return BB.all([
     AWSUtil.get_ami_id(region, ami),
-    AWSUtil.get_sg_ids(region, sg),
+    sg_ids_promise,
     AWSUtil.get_userdata_string(ud),
-    _get_subnet_id(EC2, region, vpc, az)
+    subnet_id_promise,
+		_get_network_interface(EC2, region, vpc, az, eni_name, sg_ids_promise, subnet_id_promise)
   ])
   .then(function(results){
     var bdms = AWSUtil.get_bdms(disks);
@@ -56,14 +109,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
       Monitoring: {
         Enabled: true
       },
-      NetworkInterfaces: [
-        {
-          AssociatePublicIpAddress: true,
-          DeviceIndex: 0,
-          Groups: results[1],
-          SubnetId: results[3]
-        }
-      ],
+      NetworkInterfaces: [results[4]],
       UserData: (new Buffer(results[2]).toString('base64'))
     };
   })
@@ -87,9 +133,9 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
   });
 }
 
-function create(regions, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags){
+function create(regions, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name){
   var region_promises = regions.map(function(region, idx){
-    return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, az, tags);
+    return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, az, tags, eni_name);
   });
   return BB.all(region_promises);
 }

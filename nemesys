@@ -213,6 +213,10 @@ var argv = require('yargs')
         describe: 'Availability zone to launch the instance in'
       })
       .option('v', vpc_opt)
+      .option('n', {
+        alias: 'network-interface',
+        describe: 'Name of existing Elastic Network Interface to attach to this instance'
+      })
       .option('t', {
         alias: 'tags',
         describe: 'Tags to apply, in the form of Name=value',
