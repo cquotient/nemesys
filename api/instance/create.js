@@ -74,6 +74,23 @@ function _get_network_interface(ec2, region, vpc, az, eni_name, sg_ids_promise, 
   });
 }
 
+function _resolve_instance(ec2, region, instance_id) {
+  return new Promise(function(resolve, reject){
+    function _check(){
+      ec2.describeInstancesAsync({InstanceIds: [instance_id]}).then(function(result){
+        if(result.Reservations.length === 1
+        && result.Reservations[0].Instances.length === 1) {
+          resolve(instance_id);
+        } else {
+          console.log(`${region}: waiting for instance ${instance_id} to be ready`);
+          setTimeout(_check, 5000);
+        }
+      }).catch(reject);
+    }
+    _check();
+  });
+}
+
 function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name) {
   if(rud) {
     ud = [rud].concat(ud);
@@ -116,7 +133,10 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
     return EC2.runInstancesAsync(params);
   })
   .then(function(data){
-    console.log(`${region}: applying tags`);
+    return _resolve_instance(EC2, region, data.Instances[0].InstanceId);
+  })
+  .then(function(instance_id){
+    console.log(`${region}: instance ${instance_id} is ready, applying tags`);
     tags = tags.map(function(tag_str){
       var kv = tag_str.split('=');
       return {
@@ -125,7 +145,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
       };
     });
     return EC2.createTagsAsync({
-      Resources: [data.Instances[0].InstanceId],
+      Resources: [instance_id],
       Tags: tags
     });
   });
