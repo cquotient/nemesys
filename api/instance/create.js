@@ -152,8 +152,12 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
 }
 
 function create(regions, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name){
+  if( !(az.length === 1 || az.length === regions.length) ) {
+    throw new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`);
+  }
   var region_promises = regions.map(function(region, idx){
-    return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, az, tags, eni_name);
+    var zone = az.length == regions.length ? az[idx] : az[0];
+    return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, zone, tags, eni_name);
   });
   return BB.all(region_promises);
 }

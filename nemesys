@@ -210,7 +210,8 @@ var argv = require('yargs')
       })
       .option('z', {
         alias: 'availability-zone',
-        describe: 'Availability zone to launch the instance in'
+        describe: 'Availability zone to launch the instance in. If more than one, will be used in order of regions arg',
+        array: true
       })
       .option('v', vpc_opt)
       .option('n', {
