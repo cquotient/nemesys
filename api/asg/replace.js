@@ -44,29 +44,28 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
     }
     return create([region], vpc_name, with_asg, lc_name, instance_tags, error_topic, options).then(function(){
       return AWSUtil.get_asg(AS, with_asg);
-    });
-  })
-  .then(function(new_asg){
-    console.log(`${region}: new asg ${with_asg} created`);
-    console.log(`${region}: waiting for some healthy instances`);
-    return new Promise(function(resolve, reject){
-      function _check() {
-        var is_new_ready = new_asg.DesiredCapacity === 0 || new_asg.Instances.some(function(instance){
-          return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy'
-        });
-        if(is_new_ready) {
-          console.log(`${region}: ${with_asg} is ready`);
-          resolve();
-        } else {
-          console.log(`${region}: no healthy instances in ${with_asg}, waiting 30s`);
-          setTimeout(function(){
-            AWSUtil.get_asg(AS, with_asg).then(function(asg){
-              new_asg = asg;
-            }).then(_check);
-          }, _delay_ms);
+    }).then(function(new_asg){
+      console.log(`${region}: new asg ${with_asg} created`);
+      console.log(`${region}: waiting for some healthy instances`);
+      return new Promise(function(resolve, reject){
+        function _check() {
+          var new_ready_count = new_asg.Instances.filter(function(instance){
+            return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy'
+          }).length;
+          if(new_ready_count === old_asg.DesiredCapacity) {
+            console.log(`${region}: ${with_asg} is ready`);
+            resolve();
+          } else {
+            console.log(`${region}: ${new_ready_count} healthy instances in ${with_asg}, but we want ${old_asg.DesiredCapacity} - waiting 30s`);
+            setTimeout(function(){
+              AWSUtil.get_asg(AS, with_asg).then(function(asg){
+                new_asg = asg;
+              }).then(_check);
+            }, _delay_ms);
+          }
         }
-      }
-      _check();
+        _check();
+      });
     });
   })
   .then(function(){
