@@ -90,6 +90,20 @@ var argv = require('yargs')
         alias: 'error-topic',
         describe: 'SNS topic to notify of ASG errors'
       })
+      .option('z', {
+        alias: 'availability-zones',
+        array: true,
+        describe: 'Availability zones to launch instances in for this ASG'
+      })
+      .option('min-instance-count', {
+        describe: 'Minimum number of instances in ASG'
+      })
+      .option('max-instance-count', {
+        describe: 'Maximum number of instances in ASG'
+      })
+      .option('desired-instance-count', {
+        describe: 'Desired number of instances in ASG'
+      })
       .demand(['vpc', 'group', 'launch-config'])
       .example('nemesys create asg -v my_vpc -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
         'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')

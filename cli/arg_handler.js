@@ -6,13 +6,20 @@ function _handle_create(argv) {
   switch(argv._[1]) {
 
     case 'asg':
+      var optional = {
+        min: argv['min-instance-count'],
+        max: argv['max-instance-count'],
+        desired: argv['desired-instance-count']
+      };
       nemesys.asg.create(
         argv['regions'],
         argv['vpc'],
         argv['group'],
         argv['launch-config'],
         argv['instance-tags'],
-        argv['error-topic']
+        argv['error-topic'],
+        argv['availability-zones'],
+        optional
       ).then(function(result){
         console.log('create complete');
         process.exit(0);

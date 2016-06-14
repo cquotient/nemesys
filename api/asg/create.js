@@ -14,7 +14,7 @@ function _apply_default_options(optional) {
   return optional;
 }
 
-function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, optional){
+function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, azs, optional){
   optional = _apply_default_options(optional);
   var AS = BB.promisifyAll(new AWS.AutoScaling({
     region: region,
@@ -24,24 +24,11 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
     region: region,
     apiVersion: '2015-10-01'
   }));
-  // first, get a list of all subnets for our vpc in that region
-  return AWSUtil.get_vpc_id(region, vpc_name)
-  .then(function(vpc_id) {
-    console.log(`${region}: found vpc ${vpc_id}`);
-    return EC2.describeSubnetsAsync({
-      Filters: [{
-        Name: 'vpc-id',
-        Values: [vpc_id]
-      }]
-    })
-  })
+  // first, get a list of subnets for our vpc in that region
+  return AWSUtil.get_subnet_ids(region, vpc_name, azs)
   .then(function(subnets){
-    console.log(`${region}: found ${subnets.Subnets.length} subnets`);
-    var subnet_ids = subnets.Subnets.map(function(obj){return obj.SubnetId;});
-    return subnet_ids;
-  })
-  // then, create an asg with those subnets
-  .then(function(subnets){
+		// then, create an asg with those subnets
+		console.log(`${region}: found ${subnets.length} subnets`);
     var tags;
     var create_params = {
       AutoScalingGroupName: asg_name,
@@ -107,9 +94,9 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
   });
 }
 
-function create(regions, vpc_name, asg_name, lc_name, instance_tags, error_topic, optional){
+function create(regions, vpc_name, asg_name, lc_name, instance_tags, error_topic, azs, optional){
   var region_promises = regions.map(function(region){
-    return _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, optional);
+    return _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, azs, optional);
   });
   return BB.all(region_promises);
 }

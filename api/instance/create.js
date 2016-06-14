@@ -5,26 +5,6 @@ var AWS = require('aws-sdk');
 
 var AWSUtil = require('../aws_util');
 
-function _get_subnet_id(ec2, region, vpc, az) {
-  return AWSUtil.get_vpc_id(region, vpc)
-  .then(function(vpc_id){
-    return ec2.describeSubnetsAsync({
-      Filters: [
-        {
-          Name: 'vpc-id',
-          Values: [vpc_id]
-        },
-        {
-          Name: 'availability-zone',
-          Values: [region + az]
-        }
-      ]
-    });
-  }).then(function(data){
-    return data.Subnets[0].SubnetId;
-  });
-}
-
 function _get_eni_id(ec2, region, vpc, az, eni_name) {
   return AWSUtil.get_vpc_id(region, vpc)
   .then(function(vpc_id){
@@ -102,7 +82,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
   }));
 
   var sg_ids_promise = AWSUtil.get_sg_ids(region, sg);
-  var subnet_id_promise = _get_subnet_id(EC2, region, vpc, az);
+  var subnet_id_promise = AWSUtil.get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
 
   return BB.all([
     AWSUtil.get_ami_id(region, ami),
