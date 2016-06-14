@@ -12,7 +12,8 @@ function _handle_create(argv) {
         argv['group'],
         argv['launch-config'],
         argv['instance-tags'],
-        argv['error-topic']
+        argv['error-topic'],
+        argv['availability-zones']
       ).then(function(result){
         console.log('create complete');
         process.exit(0);
