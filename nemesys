@@ -23,6 +23,12 @@ var vpc_opt = {
 	describe: 'Value of the VPC "Name" tag'
 };
 
+var ingress_rules_opt = {
+	alias: 'ingress-rules',
+	describe: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
+	array: true
+};
+
 function _regions(yargs) {
 	return yargs
 	.option('r', {
@@ -122,11 +128,7 @@ var argv = require('yargs')
 				alias: 'description',
 				describe: 'Description of the Security Group'
 			})
-			.option('i', {
-				alias: 'ingress-rules',
-				describe: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
-				array: true
-			})
+			.option('i', ingress_rules_opt)
 
 			.demand(['vpc', 'security-group'])
 			.example('nemesys create sg -s ssh-access -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1',
@@ -252,7 +254,9 @@ var argv = require('yargs')
 	})
 
 	.command('replace', 'Replace an existing EC2 resource with a new one', function(yargs, argv){
-		yargs.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
+		yargs
+
+		.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
 			_regions(yargs)
 			.option('v', vpc_opt)
 			.option('g', group_opt)
@@ -267,6 +271,21 @@ var argv = require('yargs')
 				.help('h')
 				.alias('h', 'help')
 		})
+
+		.command('sg', 'Replace the rules on an existing Security Group', function(yargs, argv){
+			_regions(yargs)
+			.option('s', {
+				alias: 'security-group',
+				describe: 'Name of the Security Group'
+			})
+			.option('i', ingress_rules_opt)
+			.demand(['security-group', 'ingress-rules'])
+			.example('nemesys replace sg -s cassandra-node -i logconsumer-server:9042 -r us-east-1',
+				'Replaces the rules in SG "cassandra-node" with just one rule allowing access from logconsumer-server on port 9042 (tcp)')
+			.help('h')
+			.alias('h', 'help')
+		})
+
 		.demand(2)
 		.help('h')
 		.alias('h', 'help');
