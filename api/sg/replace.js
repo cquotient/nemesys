@@ -6,8 +6,6 @@ var BB = require('bluebird');
 var AWSUtil = require('../aws_util');
 var SGUtil = require('./sg_util');
 
-var update = require('./update');
-
 function _get_sg_rules(ec2, sg_id) {
 	return ec2.describeSecurityGroupsAsync({
 		DryRun: false,
