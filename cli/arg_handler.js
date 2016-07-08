@@ -160,6 +160,19 @@ function _handle_replace(argv) {
 				process.exit(1);
 			});
 			break;
+		case 'sg':
+			nemesys.sg.replace(
+				argv['regions'],
+				argv['security-group'],
+				argv['ingress-rules']
+			).then(function(result){
+				console.log('replace complete');
+				process.exit(0);
+			}).catch(function(err){
+				console.error(err.stack);
+				process.exit(1);
+			});
+			break;
 		default:
 			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
 			process.exit(1);
