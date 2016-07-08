@@ -34,57 +34,6 @@ function _do_replace(region, sg_name, ingress) {
 		region: region,
 		apiVersion: '2015-10-01'
 	}));
-	// return AWSUtil.get_sg_id(region, sg_name)
-	// .then(function(sg_id) {
-	// 	console.log(`${region}: found security group ${sg_name} (${sg_id})`);
-	// 	return _get_sg_rules(EC2, sg_id)
-	// })
-	// .then(function(sg_rules) {
-	// 	console.log(`${region}: ${sg_name} has ${sg_rules.length} rule(s)`);
-	// 	return SGUtil.get_ip_permissions(region, ingress)
-	// 	.then(function(ip_perms){
-	// 		var existing_rules = _get_rule_strings(sg_rules);
-	// 		var new_rules = _get_rule_strings(ip_perms);
-	// 		var rules_to_add = new_rules.filter((rule) => existing_rules.indexOf(rule) === -1);
-	// 		var rules_to_delete = existing_rules.filter((rule) => new_rules.indexOf(rule) === -1);
-	// 		return {
-	// 			to_add: rules_to_add,
-	// 			to_delete: rules_to_delete
-	// 		};
-	// 	});
-	// }).then(function(add_delete){
-	// 	if(add_delete.to_add.length === 0 && add_delete.to_delete.length === 0) {
-	// 		console.log(`${region}: no changes to make`);
-	// 		return Promise.resolve();
-	// 	}
-	// 	var first, second;
-	// 	if(add_delete.to_add.length > 0) {
-	// 		console.log(`${region}: adding ${add_delete.to_add.length} rule(s)`);
-	// 		first = update([region], sg_name, add_delete.to_add);
-	// 	} else {
-	// 		first = Promise.resolve();
-	// 	}
-	// 	if(add_delete.to_delete.length > 0) {
-	// 		console.log(`${region}: removing ${add_delete.to_delete.length} rule(s)`);
-	// 		console.log(add_delete.to_delete);
-	// 		second = update([region], sg_name, add_delete.to_delete, true);
-	// 	} else {
-	// 		second = Promise.resolve();
-	// 	}
-	// 	return first.then(second);
-	// });
-
-
-
-
-
-
-
-
-
-
-
-
 	return AWSUtil.get_sg_id(region, sg_name)
 	.then(function(sg_id) {
 		console.log(`${region}: found security group ${sg_name} (${sg_id})`);
