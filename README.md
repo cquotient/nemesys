@@ -1,4 +1,4 @@
-#nemesys#
+#nemesys# [![Build Status](https://travis-ci.org/cquotient/nemesys.svg)](https://travis-ci.org/cquotient/nemesys)
 
 nemesys is a tool for managing EC2 resources in multiple regions. It is built on the simple assumption that these resources have the same name in every region.
 
