@@ -1,7 +1,6 @@
 'use strict';
 
 var BB = require('bluebird');
-var AWS = require('aws-sdk');
 var validator = require('validator');
 
 var AWSUtil = require('../aws_util');
@@ -13,9 +12,10 @@ function _get_ip_permissions(region, ingress) {
 		var parts = obj.split(':');
 		if(validator.isIP(parts[0].split('/')[0]) || parts[0] === '0.0.0.0/0') {
 			var protocol = parts[2] ? parts[2] : 'tcp';
+			var port_range = parts[1].split('-');
 			perms.push({
-				FromPort: +parts[1],
-				ToPort: +parts[1],
+				FromPort: +port_range[0],
+				ToPort: +(port_range[1] || port_range[0]),
 				IpProtocol: protocol,
 				IpRanges: [
 					{
@@ -34,9 +34,10 @@ function _get_ip_permissions(region, ingress) {
 			return AWSUtil.get_sg_id(region, parts[0])
 			.then(function(group_id) {
 				var protocol = parts[2] ? parts[2] : 'tcp';
+				var port_range = parts[1].split('-');
 				perms.push({
-					FromPort: +parts[1],
-					ToPort: +parts[1],
+					FromPort: +port_range[0],
+					ToPort: +(port_range[1] || port_range[0]),
 					IpProtocol: protocol,
 					UserIdGroupPairs: [
 						{

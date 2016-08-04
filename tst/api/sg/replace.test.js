@@ -50,6 +50,14 @@ describe('replace sg', function(){
 									}
 								]
 							});
+						case 'fake-sg-manyip':
+							return Promise.resolve({
+								"SecurityGroups": [
+									{
+										GroupId: 'fake-sg-manyip-id'
+									}
+								]
+							});
 						default:
 							return Promise.reject('looks like this guy isnt stubbed!');
 					}
@@ -130,6 +138,28 @@ describe('replace sg', function(){
 													},
 													{
 														"CidrIp": "4.2.3.4/32"
+													}
+												]
+											}
+										]
+									}
+								]
+							});
+						case 'fake-sg-manyip-id':
+							return Promise.resolve({
+								"SecurityGroups": [
+									{
+										"GroupName": "fake-sg-ssh",
+										"GroupId": "fake-sg-ssh-id",
+										"IpPermissions": [
+											{
+												"IpProtocol": "tcp",
+												"FromPort": 7000,
+												"ToPort": 7000,
+												"UserIdGroupPairs": [],
+												"IpRanges": [
+													{
+														"CidrIp": "1.2.3.4/32"
 													}
 												]
 											}
@@ -256,6 +286,64 @@ describe('replace sg', function(){
 					}
 				]
 			});
+		});
+	});
+
+	it('should add many ip rules, for a range', function(){
+		var ingress = [
+			'1.2.3.4/32:7000-7001',
+			'2.2.3.4/32:7000-7001',
+			'3.2.3.4/32:7000-7001',
+			'4.2.3.4/32:7000-7001'
+		];
+		return replace(['us-east-1', 'us-west-2'], 'fake-sg-manyip', ingress).then(function(result){
+			expect(describe_sg_spy).to.have.been.calledWith({"DryRun":false,"Filters":[{"Name":"group-name","Values":["fake-sg-manyip"]}]});
+			expect(authorize_sg_spy).to.have.been.calledWith({
+				DryRun: false,
+				GroupId: "fake-sg-manyip-id",
+				IpPermissions: [
+					{
+						FromPort: 7000,
+						IpProtocol: "tcp",
+						IpRanges: [
+							{
+								"CidrIp": "1.2.3.4/32"
+							}
+						],
+						ToPort: 7001
+					},
+					{
+						FromPort: 7000,
+						IpProtocol: "tcp",
+						IpRanges: [
+							{
+								"CidrIp": "2.2.3.4/32"
+							}
+						],
+						ToPort: 7001
+					},
+					{
+						FromPort: 7000,
+						IpProtocol: "tcp",
+						IpRanges: [
+							{
+								"CidrIp": "3.2.3.4/32"
+							}
+						],
+						ToPort: 7001
+					},
+					{
+						FromPort: 7000,
+						IpProtocol: "tcp",
+						IpRanges: [
+							{
+								"CidrIp": "4.2.3.4/32"
+							}
+						],
+						ToPort: 7001
+					}
+				]
+			})
 		});
 	});
 

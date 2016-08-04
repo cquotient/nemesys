@@ -17,11 +17,12 @@ function _get_sg_rules(ec2, sg_id) {
 
 function _get_rule_strings(api_rules) {
 	return api_rules.reduce(function(prev, curr){
+		var port_range = curr.FromPort === curr.ToPort ? curr.ToPort : `${curr.FromPort}-${curr.ToPort}`;
 		if(curr.UserIdGroupPairs) {
-			prev = prev.concat(curr.UserIdGroupPairs.map((rule) => [rule.GroupId, curr.ToPort, curr.IpProtocol].join(':')));
+			prev = prev.concat(curr.UserIdGroupPairs.map((rule) => [rule.GroupId, port_range, curr.IpProtocol].join(':')));
 		}
 		if(curr.IpRanges) {
-			prev = prev.concat(curr.IpRanges.map((rule) => [rule.CidrIp, curr.ToPort, curr.IpProtocol].join(':')));
+			prev = prev.concat(curr.IpRanges.map((rule) => [rule.CidrIp, port_range, curr.IpProtocol].join(':')));
 		}
 		return prev;
 	}, []);
