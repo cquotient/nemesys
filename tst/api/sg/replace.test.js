@@ -141,13 +141,33 @@ describe('replace sg', function(){
 				DryRun: false,
 				GroupId: "fake-sg-id",
 				IpPermissions: [{
-					FromPort: "8080",
+					FromPort: 8080,
 					IpProtocol: "tcp",
 					IpRanges: [{ CidrIp: "1.2.3.4/32" }],
-					ToPort: "8080"
+					ToPort: 8080
 				}]
 			});
 			expect(revoke_sg_spy).to.not.have.been.called;
+		});
+	});
+
+	it('should remove one ip rule', function(){
+		var ingress = ['fake-sg-allow-1-name:9043',
+									'fake-sg-allow-1-name:9044:udp',
+									'1.2.3.4/32:9998:udp'];
+		return replace(['us-east-1'], 'fake-sg', ingress).then(function(result){
+			expect(describe_sg_spy).to.have.been.calledWith({"DryRun":false,"Filters":[{"Name":"group-name","Values":["fake-sg"]}]});
+			expect(authorize_sg_spy).to.not.have.been.called;
+			expect(revoke_sg_spy).to.have.been.calledWith({
+				DryRun: false,
+				GroupId: "fake-sg-id",
+				IpPermissions: [{
+					FromPort: 9998,
+					IpProtocol: "tcp",
+					IpRanges: [{ CidrIp: "1.2.3.4/32" }],
+					ToPort: 9998
+				}]
+			});
 		});
 	});
 

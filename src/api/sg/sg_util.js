@@ -14,8 +14,8 @@ function _get_ip_permissions(region, ingress) {
 		if(validator.isIP(parts[0].split('/')[0]) || parts[0] === '0.0.0.0/0') {
 			var protocol = parts[2] ? parts[2] : 'tcp';
 			perms.push({
-				FromPort: parts[1],
-				ToPort: parts[1],
+				FromPort: +parts[1],
+				ToPort: +parts[1],
 				IpProtocol: protocol,
 				IpRanges: [
 					{
@@ -35,8 +35,8 @@ function _get_ip_permissions(region, ingress) {
 			.then(function(group_id) {
 				var protocol = parts[2] ? parts[2] : 'tcp';
 				perms.push({
-					FromPort: parts[1],
-					ToPort: parts[1],
+					FromPort: +parts[1],
+					ToPort: +parts[1],
 					IpProtocol: protocol,
 					UserIdGroupPairs: [
 						{
