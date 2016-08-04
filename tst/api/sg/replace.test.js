@@ -42,61 +42,105 @@ describe('replace sg', function(){
 									}
 								]
 							});
+						case 'fake-sg-ssh':
+							return Promise.resolve({
+								"SecurityGroups": [
+									{
+										GroupId: 'fake-sg-ssh-id'
+									}
+								]
+							});
 						default:
 							return Promise.reject('looks like this guy isnt stubbed!');
 					}
 				} else {
-					return Promise.resolve({
-						"SecurityGroups":
-						[{
-							"OwnerId":"fakeownerid",
-							"GroupName":"fake-sg",
-							"GroupId":"sg-fakesgid",
-							"Description":"ok",
-							"IpPermissions":[
-								{
-									"IpProtocol":"udp",
-									"FromPort":9998,
-									"ToPort":9998,
-									"UserIdGroupPairs":[],
-									"IpRanges":[{
-										"CidrIp":"1.2.3.4/32"
-									}],
-									"PrefixListIds":[]
-								},{
-									"IpProtocol":"tcp",
-									"FromPort":9998,"ToPort":9998,
-									"UserIdGroupPairs":[],
-									"IpRanges":[{
-										"CidrIp":"1.2.3.4/32"
-									}],
-									"PrefixListIds":[]
-								},{
-									"IpProtocol":"tcp",
-									"FromPort":9043,
-									"ToPort":9043,
-									"UserIdGroupPairs":[{
-										"UserId":"fake-user-id",
-										"GroupId":"fake-sg-allow-1-id"
-									}],
-									"IpRanges":[],
-									"PrefixListIds":[]
-								},{
-									"IpProtocol":"udp",
-									"FromPort":9044,
-									"ToPort":9044,
-									"UserIdGroupPairs":[{
-										"UserId":"fake-user-id",
-										"GroupId":"fake-sg-allow-1-id"
-									}],
-									"IpRanges":[],
-									"PrefixListIds":[]
-								}
-							],
-							"VpcId":"fake-vpc-id",
-							"Tags":[]
-						}]});
+					switch(params.GroupIds[0]) {
+						case 'fake-sg-id':
+							return Promise.resolve({
+								"SecurityGroups":
+								[{
+									"OwnerId":"fakeownerid",
+									"GroupName":"fake-sg",
+									"GroupId":"sg-fakesgid",
+									"Description":"ok",
+									"IpPermissions":[
+										{
+											"IpProtocol":"udp",
+											"FromPort":9998,
+											"ToPort":9998,
+											"UserIdGroupPairs":[],
+											"IpRanges":[{
+												"CidrIp":"1.2.3.4/32"
+											}],
+											"PrefixListIds":[]
+										},{
+											"IpProtocol":"tcp",
+											"FromPort":9998,"ToPort":9998,
+											"UserIdGroupPairs":[],
+											"IpRanges":[{
+												"CidrIp":"1.2.3.4/32"
+											}],
+											"PrefixListIds":[]
+										},{
+											"IpProtocol":"tcp",
+											"FromPort":9043,
+											"ToPort":9043,
+											"UserIdGroupPairs":[{
+												"UserId":"fake-user-id",
+												"GroupId":"fake-sg-allow-1-id"
+											}],
+											"IpRanges":[],
+											"PrefixListIds":[]
+										},{
+											"IpProtocol":"udp",
+											"FromPort":9044,
+											"ToPort":9044,
+											"UserIdGroupPairs":[{
+												"UserId":"fake-user-id",
+												"GroupId":"fake-sg-allow-1-id"
+											}],
+											"IpRanges":[],
+											"PrefixListIds":[]
+										}
+									],
+									"VpcId":"fake-vpc-id",
+									"Tags":[]
+								}]});
+						case 'fake-sg-ssh-id':
+							return Promise.resolve({
+								"SecurityGroups": [
+									{
+										"GroupName": "fake-sg-ssh",
+										"GroupId": "fake-sg-ssh-id",
+										"IpPermissions": [
+											{
+												"IpProtocol": "tcp",
+												"FromPort": 22,
+												"ToPort": 22,
+												"UserIdGroupPairs": [],
+												"IpRanges": [
+													{
+														"CidrIp": "1.2.3.4/32"
+													},
+													{
+														"CidrIp": "2.2.3.4/32"
+													},
+													{
+														"CidrIp": "3.2.3.4/32"
+													},
+													{
+														"CidrIp": "4.2.3.4/32"
+													}
+												]
+											}
+										]
+									}
+								]
+							});
+						default:
+							return Promise.reject('uh oh, this sg group id is not stubbed!');
 					}
+				}
 			},
 			authorizeSecurityGroupIngressAsync: function(params) {
 				return Promise.resolve();
@@ -167,6 +211,50 @@ describe('replace sg', function(){
 					IpRanges: [{ CidrIp: "1.2.3.4/32" }],
 					ToPort: 9998
 				}]
+			});
+		});
+	});
+
+	it('should remove many ip rules', function(){
+		var ingress = ['1.2.3.4/32:22'];
+		return replace(['us-east-1'], 'fake-sg-ssh', ingress).then(function(result){
+			expect(describe_sg_spy).to.have.been.calledWith({"DryRun":false,"Filters":[{"Name":"group-name","Values":["fake-sg-ssh"]}]});
+			expect(authorize_sg_spy).to.not.have.been.called;
+			expect(revoke_sg_spy).to.have.been.calledWith({
+				DryRun: false,
+				GroupId: "fake-sg-ssh-id",
+				IpPermissions: [
+					{
+						FromPort: 22,
+						IpProtocol: "tcp",
+						IpRanges: [
+							{
+								"CidrIp": "2.2.3.4/32"
+							}
+						],
+						ToPort: 22
+					},
+					{
+						FromPort: 22,
+						IpProtocol: "tcp",
+						IpRanges: [
+							{
+								"CidrIp": "3.2.3.4/32"
+							}
+						],
+						ToPort: 22
+					},
+					{
+						FromPort: 22,
+						IpProtocol: "tcp",
+						IpRanges: [
+							{
+								"CidrIp": "4.2.3.4/32"
+							}
+						],
+						ToPort: 22
+					}
+				]
 			});
 		});
 	});

@@ -48,22 +48,15 @@ function _do_replace(region, sg_name, ingress) {
 				var rules_to_delete = [];
 				for(let i=0; i<existing_rules.length; i++) {
 					if(new_rules.indexOf(existing_rules[i]) === -1) {
-						if(sg_rules[i].UserIdGroupPairs.length === 0) {
-							delete sg_rules[i].UserIdGroupPairs;
-						}
-						if(sg_rules[i].IpRanges.length === 0) {
-							delete sg_rules[i].IpRanges;
-						}
-						if(sg_rules[i].PrefixListIds.length === 0) {
-							delete sg_rules[i].PrefixListIds;
-						}
-						rules_to_delete.push(sg_rules[i]);
+						rules_to_delete.push(existing_rules[i]);
 					}
 				}
-				return {
-					to_add: rules_to_add,
-					to_delete: rules_to_delete
-				};
+				return SGUtil.get_ip_permissions(region, rules_to_delete).then(function(formatted_deletes){
+					return {
+						to_add: rules_to_add,
+						to_delete: formatted_deletes
+					};
+				});
 			});
 		}).then(function(add_delete){
 			if(add_delete.to_add.length === 0 && add_delete.to_delete.length === 0) {
