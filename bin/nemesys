@@ -339,4 +339,4 @@ var argv = require('yargs')
 	.alias('h', 'help')
 	.argv;
 
-require('./cli/arg_handler').handle(argv);
+require('../src/cli/arg_handler').handle(argv);

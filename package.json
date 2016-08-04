@@ -1,8 +1,11 @@
 {
   "name": "nemesys",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "CQuotient Engineering",
   "repository": "cquotient/nemesys",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha tst/**/*"
+  },
   "dependencies": {
     "aws-sdk": "2.2.26",
     "bluebird": "3.0.6",
@@ -10,11 +13,16 @@
     "yargs": "3.30.0"
   },
   "bin": {
-    "nemesys": "nemesys"
+    "nemesys": "bin/nemesys"
   },
   "engines": {
     "node": "^4.4.3"
   },
   "license": "MIT",
-  "devDependencies": {}
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.0.1",
+    "sinon": "^1.17.5",
+    "sinon-chai": "^2.8.0"
+  }
 }

@@ -1,8 +1,8 @@
 'use strict';
 
-var AWS = require('aws-sdk');
 var BB = require('bluebird');
 
+var AWSProvider = require('../aws_provider');
 var AWSUtil = require('../aws_util');
 var SGUtil = require('./sg_util');
 
@@ -17,21 +17,19 @@ function _get_sg_rules(ec2, sg_id) {
 
 function _get_rule_strings(api_rules) {
 	return api_rules.reduce(function(prev, curr){
+		var port_range = curr.FromPort === curr.ToPort ? curr.ToPort : `${curr.FromPort}-${curr.ToPort}`;
 		if(curr.UserIdGroupPairs) {
-			prev = prev.concat(curr.UserIdGroupPairs.map((rule) => [rule.GroupId, curr.ToPort, curr.IpProtocol].join(':')));
+			prev = prev.concat(curr.UserIdGroupPairs.map((rule) => [rule.GroupId, port_range, curr.IpProtocol].join(':')));
 		}
 		if(curr.IpRanges) {
-			prev = prev.concat(curr.IpRanges.map((rule) => [rule.CidrIp, curr.ToPort, curr.IpProtocol].join(':')));
+			prev = prev.concat(curr.IpRanges.map((rule) => [rule.CidrIp, port_range, curr.IpProtocol].join(':')));
 		}
 		return prev;
 	}, []);
 }
 
 function _do_replace(region, sg_name, ingress) {
-	var EC2 = BB.promisifyAll(new AWS.EC2({
-		region: region,
-		apiVersion: '2015-10-01'
-	}));
+	var EC2 = AWSProvider.get_ec2(region);
 	return AWSUtil.get_sg_id(region, sg_name)
 	.then(function(sg_id) {
 		console.log(`${region}: found security group ${sg_name} (${sg_id})`);
@@ -51,22 +49,15 @@ function _do_replace(region, sg_name, ingress) {
 				var rules_to_delete = [];
 				for(let i=0; i<existing_rules.length; i++) {
 					if(new_rules.indexOf(existing_rules[i]) === -1) {
-						if(sg_rules[i].UserIdGroupPairs.length === 0) {
-							delete sg_rules[i].UserIdGroupPairs;
-						}
-						if(sg_rules[i].IpRanges.length === 0) {
-							delete sg_rules[i].IpRanges;
-						}
-						if(sg_rules[i].PrefixListIds.length === 0) {
-							delete sg_rules[i].PrefixListIds;
-						}
-						rules_to_delete.push(sg_rules[i]);
+						rules_to_delete.push(existing_rules[i]);
 					}
 				}
-				return {
-					to_add: rules_to_add,
-					to_delete: rules_to_delete
-				};
+				return SGUtil.get_ip_permissions(region, rules_to_delete).then(function(formatted_deletes){
+					return {
+						to_add: rules_to_add,
+						to_delete: formatted_deletes
+					};
+				});
 			});
 		}).then(function(add_delete){
 			if(add_delete.to_add.length === 0 && add_delete.to_delete.length === 0) {

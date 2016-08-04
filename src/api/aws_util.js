@@ -1,5 +1,6 @@
 'use strict';
 
+var AWSProvider = require('./aws_provider');
 var AWS = require('aws-sdk');
 var BB = require('bluebird');
 var fs = BB.promisifyAll(require('fs'));
@@ -25,10 +26,7 @@ function _get_asg(as, asg_name) {
 }
 
 function _get_sg_id(region, group_name) {
-	var EC2 = BB.promisifyAll(new AWS.EC2({
-		region: region,
-		apiVersion: '2015-10-01'
-	}));
+	var EC2 = AWSProvider.get_ec2(region);
 	return EC2.describeSecurityGroupsAsync({
 		DryRun: false,
 		Filters: [
