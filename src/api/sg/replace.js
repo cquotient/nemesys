@@ -52,7 +52,7 @@ function _do_replace(region, sg_name, ingress) {
 						rules_to_delete.push(existing_rules[i]);
 					}
 				}
-				return SGUtil.get_ip_permissions(region, rules_to_delete).then(function(formatted_deletes){
+				return SGUtil.get_ip_permissions(region, rules_to_delete, true).then(function(formatted_deletes){
 					return {
 						to_add: rules_to_add,
 						to_delete: formatted_deletes
