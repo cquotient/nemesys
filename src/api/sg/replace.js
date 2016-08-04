@@ -1,6 +1,5 @@
 'use strict';
 
-var AWS = require('aws-sdk');
 var BB = require('bluebird');
 
 var AWSProvider = require('../aws_provider');

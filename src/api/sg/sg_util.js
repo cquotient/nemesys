@@ -7,10 +7,6 @@ var validator = require('validator');
 var AWSUtil = require('../aws_util');
 
 function _get_ip_permissions(region, ingress) {
-	var EC2 = BB.promisifyAll(new AWS.EC2({
-		region: region,
-		apiVersion: '2015-10-01'
-	}));
 	var perms = [],
 			groups_to_lookup = [];
 	ingress.forEach(function(obj){
