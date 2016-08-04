@@ -245,6 +245,30 @@ describe('replace sg', function(){
 		});
 	});
 
+	it('should remove one sg rule', function(){
+		var ingress = ['fake-sg-allow-1-name:9044:udp',
+									'1.2.3.4/32:9998:tcp',
+									'1.2.3.4/32:9998:udp'];
+		return replace(['us-east-1'], 'fake-sg', ingress).then(function(result){
+			expect(describe_sg_spy).to.have.been.calledWith({"DryRun":false,"Filters":[{"Name":"group-name","Values":["fake-sg"]}]});
+			expect(authorize_sg_spy).to.not.have.been.called;
+			expect(revoke_sg_spy).to.have.been.calledWith({
+				DryRun: false,
+				GroupId: "fake-sg-id",
+				IpPermissions: [{
+					FromPort: 9043,
+					IpProtocol: "tcp",
+					UserIdGroupPairs: [
+						{
+							GroupId: 'fake-sg-allow-1-id'
+						}
+					],
+					ToPort: 9043
+				}]
+			});
+		});
+	});
+
 	it('should remove many ip rules', function(){
 		var ingress = ['1.2.3.4/32:22'];
 		return replace(['us-east-1'], 'fake-sg-ssh', ingress).then(function(result){

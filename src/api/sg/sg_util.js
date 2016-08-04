@@ -5,7 +5,7 @@ var validator = require('validator');
 
 var AWSUtil = require('../aws_util');
 
-function _get_ip_permissions(region, ingress) {
+function _get_ip_permissions(region, ingress, groups_are_ids) {
 	var perms = [],
 			groups_to_lookup = [];
 	ingress.forEach(function(obj){
@@ -31,21 +31,35 @@ function _get_ip_permissions(region, ingress) {
 	if(groups_to_lookup.length > 0) {
 		var group_id_proms = groups_to_lookup.map(function(obj){
 			var parts = obj.split(':');
-			return AWSUtil.get_sg_id(region, parts[0])
-			.then(function(group_id) {
-				var protocol = parts[2] ? parts[2] : 'tcp';
-				var port_range = parts[1].split('-');
+			var protocol = parts[2] ? parts[2] : 'tcp';
+			var port_range = parts[1].split('-');
+			if(groups_are_ids) {
 				perms.push({
 					FromPort: +port_range[0],
 					ToPort: +(port_range[1] || port_range[0]),
 					IpProtocol: protocol,
 					UserIdGroupPairs: [
 						{
-							GroupId: group_id
+							GroupId: parts[0]
 						}
 					]
 				});
-			});
+				return Promise.resolve();
+			} else {
+				return AWSUtil.get_sg_id(region, parts[0])
+				.then(function(group_id) {
+					perms.push({
+						FromPort: +port_range[0],
+						ToPort: +(port_range[1] || port_range[0]),
+						IpProtocol: protocol,
+						UserIdGroupPairs: [
+							{
+								GroupId: group_id
+							}
+						]
+					});
+				});
+			}
 		});
 		return BB.all(group_id_proms)
 		.then(function(){
