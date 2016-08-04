@@ -134,21 +134,21 @@ describe('replace sg', function(){
 									'fake-sg-allow-1-name:9044:udp',
 									'1.2.3.4/32:9998:tcp',
 									'1.2.3.4/32:9998:udp',
-									'1.2.3.4/32/8080'];
+									'1.2.3.4/32:8080'];
 		return replace(['us-east-1'], 'fake-sg', ingress).then(function(result){
 			expect(describe_sg_spy).to.have.been.calledWith({"DryRun":false,"Filters":[{"Name":"group-name","Values":["fake-sg"]}]});
 			expect(authorize_sg_spy).to.have.been.calledWith({
 				DryRun: false,
 				GroupId: "fake-sg-id",
 				IpPermissions: [{
-					FromPort: undefined,
+					FromPort: "8080",
 					IpProtocol: "tcp",
-					IpRanges: [{ CidrIp: "1.2.3.4/32/8080" }],
-					ToPort: undefined
+					IpRanges: [{ CidrIp: "1.2.3.4/32" }],
+					ToPort: "8080"
 				}]
 			});
 			expect(revoke_sg_spy).to.not.have.been.called;
 		});
-	})
+	});
 
 });
