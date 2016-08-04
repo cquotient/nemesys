@@ -3,6 +3,7 @@
 var AWS = require('aws-sdk');
 var BB = require('bluebird');
 
+var AWSProvider = require('../aws_provider');
 var AWSUtil = require('../aws_util');
 var SGUtil = require('./sg_util');
 
@@ -28,10 +29,7 @@ function _get_rule_strings(api_rules) {
 }
 
 function _do_replace(region, sg_name, ingress) {
-	var EC2 = BB.promisifyAll(new AWS.EC2({
-		region: region,
-		apiVersion: '2015-10-01'
-	}));
+	var EC2 = AWSProvider.get_ec2(region);
 	return AWSUtil.get_sg_id(region, sg_name)
 	.then(function(sg_id) {
 		console.log(`${region}: found security group ${sg_name} (${sg_id})`);
