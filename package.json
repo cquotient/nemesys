@@ -1,6 +1,6 @@
 {
   "name": "nemesys",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "CQuotient Engineering",
   "repository": "cquotient/nemesys",
   "dependencies": {
@@ -10,7 +10,7 @@
     "yargs": "3.30.0"
   },
   "bin": {
-    "nemesys": "nemesys"
+    "nemesys": "bin/nemesys"
   },
   "engines": {
     "node": "^4.4.3"
