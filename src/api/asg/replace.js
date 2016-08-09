@@ -42,7 +42,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		if(old_notifications && old_notifications.length > 0) {
 			error_topic = old_notifications.NotificationConfigurations[0].TopicARN.split(':')[5];
 		}
-		return create([region], vpc_name, with_asg, lc_name, instance_tags, error_topic, options).then(function(){
+		return create([region], vpc_name, with_asg, lc_name, instance_tags, error_topic, null, options).then(function(){
 			return AWSUtil.get_asg(AS, with_asg);
 		}).then(function(new_asg){
 			console.log(`${region}: new asg ${with_asg} created`);
