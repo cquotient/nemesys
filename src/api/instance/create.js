@@ -71,7 +71,7 @@ function _resolve_instance(ec2, region, instance_id) {
 	});
 }
 
-function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name) {
+function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name, env_vars) {
 	if(rud) {
 		ud = [rud].concat(ud);
 	}
@@ -86,17 +86,17 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
 
 	return BB.all([
 		AWSUtil.get_ami_id(region, ami),
-		AWSUtil.get_userdata_string(ud),
+		AWSUtil.get_userdata_string(ud, env_vars),
 		_get_network_interface(EC2, region, vpc, az, eni_name, sg_ids_promise, subnet_id_promise)
 	])
-	.then(function(results){
+	.spread(function(ami_id, userdata_string, network_interface){
 		var bdms = AWSUtil.get_bdms(disks);
 		return {
 			BlockDeviceMappings: bdms,
 			IamInstanceProfile: {
 				Name: iam
 			},
-			ImageId: results[0],
+			ImageId: ami_id,
 			InstanceType: i_type,
 			KeyName: key_name,
 			MaxCount: 1,
@@ -104,8 +104,8 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
 			Monitoring: {
 				Enabled: true
 			},
-			NetworkInterfaces: [results[2]],
-			UserData: (new Buffer(results[1]).toString('base64'))
+			NetworkInterfaces: [network_interface],
+			UserData: (new Buffer(userdata_string).toString('base64'))
 		};
 	})
 	.then(function(params){
@@ -131,13 +131,13 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
 	});
 }
 
-function create(regions, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name){
+function create(regions, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name, env_vars){
 	if( !(az.length === 1 || az.length === regions.length) ) {
-		throw new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`);
+		return Promise.reject(new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`));
 	}
 	var region_promises = regions.map(function(region, idx){
 		var zone = az.length == regions.length ? az[idx] : az[0];
-		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, zone, tags, eni_name);
+		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, zone, tags, eni_name, env_vars);
 	});
 	return BB.all(region_promises);
 }

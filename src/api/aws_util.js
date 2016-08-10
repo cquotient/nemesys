@@ -54,7 +54,7 @@ function _get_vpc_id(region, vpc_name) {
 	});
 }
 
-function _get_userdata_string(file_names) {
+function _get_userdata_string(file_names, env_vars) {
 	var ud_files_proms = file_names.map(function(path){
 		return fs.readFileAsync(path, 'utf-8');
 	});
@@ -65,6 +65,15 @@ function _get_userdata_string(file_names) {
 		user_data_string += 'set -o pipefail\n';
 		user_data_string += 'set -e -x\n';
 		user_data_string += 'exec >> /tmp/exec.log 2>&1\n\n';
+
+		// include env vars so userdata scripts can use them
+		if(env_vars) {
+			user_data_string += '# begin env vars\n';
+			env_vars.forEach(function(env){
+				user_data_string += `export ${env}\n`
+			});
+			user_data_string += '# end env vars\n';
+		}
 
 		//concat with the rest of the user data
 		return ud_files_content.reduce(function(prev, curr) {

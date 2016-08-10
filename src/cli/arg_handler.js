@@ -81,8 +81,8 @@ function _handle_create(argv) {
 				argv['disks'],
 				argv['availability-zone'],
 				argv['tags'],
-				argv['network-interface']
-				//TODO env vars for userdata!
+				argv['network-interface'],
+				argv['env']
 			).then(function(){
 				console.log('created instance');
 				process.exit(0);
