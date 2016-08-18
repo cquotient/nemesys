@@ -6,6 +6,7 @@ var AWS = require('aws-sdk');
 var AWSUtil = require('../aws_util');
 
 function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, spot_price) {
+	if(!ud) ud = [];
 	if(rud) {
 		ud = [rud].concat(ud);
 	}
