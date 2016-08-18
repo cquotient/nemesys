@@ -72,6 +72,7 @@ function _resolve_instance(ec2, region, instance_id) {
 }
 
 function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name, env_vars) {
+	if(!ud) ud = [];
 	if(rud) {
 		ud = [rud].concat(ud);
 	}
