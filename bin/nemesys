@@ -243,6 +243,9 @@ var argv = require('yargs')
 				describe: 'Environment variables to pass to the userdata',
 				array: true
 			})
+			.option('optimize-ebs', {
+				describe: 'Use EBS optimization'
+			})
 
 			.demand(['ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'])
 			.example('');

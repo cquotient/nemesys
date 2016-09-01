@@ -82,7 +82,8 @@ function _handle_create(argv) {
 				argv['availability-zone'],
 				argv['tags'],
 				argv['network-interface'],
-				argv['env']
+				argv['env'],
+				argv['optimize-ebs']
 			).then(function(){
 				console.log('created instance');
 				process.exit(0);
