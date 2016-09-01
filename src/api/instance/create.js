@@ -71,7 +71,7 @@ function _resolve_instance(ec2, region, instance_id) {
 	});
 }
 
-function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name, env_vars) {
+function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name, env_vars, ebs_opt) {
 	if(!ud) ud = [];
 	if(rud) {
 		ud = [rud].concat(ud);
@@ -94,6 +94,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
 		var bdms = AWSUtil.get_bdms(disks);
 		return {
 			BlockDeviceMappings: bdms,
+			EbsOptimized: !!ebs_opt,
 			IamInstanceProfile: {
 				Name: iam
 			},
@@ -132,13 +133,13 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks,
 	});
 }
 
-function create(regions, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name, env_vars){
+function create(regions, vpc, ami, i_type, key_name, sg, iam, ud, rud, disks, az, tags, eni_name, env_vars, ebs_opt){
 	if( !(az.length === 1 || az.length === regions.length) ) {
 		return Promise.reject(new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`));
 	}
 	var region_promises = regions.map(function(region, idx){
 		var zone = az.length == regions.length ? az[idx] : az[0];
-		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, zone, tags, eni_name, env_vars);
+		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud, rud[idx], disks, zone, tags, eni_name, env_vars, ebs_opt);
 	});
 	return BB.all(region_promises);
 }
