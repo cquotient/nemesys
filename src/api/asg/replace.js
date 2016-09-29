@@ -1,18 +1,15 @@
 'use strict';
 
 var BB = require('bluebird');
-var AWS = require('aws-sdk');
 
 var AWSUtil = require('../aws_util');
+var AWSProvider = require('../aws_provider');
 var create = require('./create');
 
 var _delay_ms = 30000;
 
 function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
-	var AS = BB.promisifyAll(new AWS.AutoScaling({
-		region: region,
-		apiVersion: '2011-01-01'
-	}));
+	var AS = AWSProvider.get_as(region);
 
 	return BB.all([
 		AWSUtil.get_asg(AS, replace_asg),
@@ -39,7 +36,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 			return `${tag.Key}=${tag.Value}`;
 		});
 		var error_topic;
-		if(old_notifications && old_notifications.length > 0) {
+		if(old_notifications && old_notifications.NotificationConfigurations.length > 0) {
 			error_topic = old_notifications.NotificationConfigurations[0].TopicARN.split(':')[5];
 		}
 		return create([region], vpc_name, with_asg, lc_name, instance_tags, error_topic, null, options).then(function(){

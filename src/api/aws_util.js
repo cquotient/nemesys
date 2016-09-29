@@ -41,7 +41,7 @@ function _get_sg_id(region, group_name) {
 }
 
 function _get_vpc_id(region, vpc_name) {
-	return _get_ec2(region).describeVpcsAsync({
+	return AWSProvider.get_ec2(region).describeVpcsAsync({
 		Filters: [
 			{
 				Name: 'tag:Name',
@@ -119,11 +119,10 @@ function _get_subnet_ids(region, vpc_name, azs) {
 				Values: azs.map((az) => region + az)
 			});
 		}
-		return _get_ec2(region).describeSubnetsAsync({
+		return AWSProvider.get_ec2(region).describeSubnetsAsync({
 			Filters: filters
 		});
 	}).then(function(data){
-
 		return data.Subnets.map((obj) => obj.SubnetId);
 	});
 }

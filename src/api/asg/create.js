@@ -4,6 +4,7 @@ var BB = require('bluebird');
 var AWS = require('aws-sdk');
 
 var AWSUtil = require('../aws_util');
+var AWSProvider = require('../aws_provider');
 
 function _apply_default_options(optional) {
 	optional = optional || {};
@@ -16,14 +17,8 @@ function _apply_default_options(optional) {
 
 function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, azs, optional){
 	optional = _apply_default_options(optional);
-	var AS = BB.promisifyAll(new AWS.AutoScaling({
-		region: region,
-		apiVersion: '2011-01-01'
-	}));
-	var EC2 = BB.promisifyAll(new AWS.EC2({
-		region: region,
-		apiVersion: '2015-10-01'
-	}));
+	var AS = AWSProvider.get_as(region);
+	var EC2 = AWSProvider.get_ec2(region);
 	// first, get a list of subnets for our vpc in that region
 	return AWSUtil.get_subnet_ids(region, vpc_name, azs)
 	.then(function(subnets){
