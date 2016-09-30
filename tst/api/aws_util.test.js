@@ -16,6 +16,15 @@ describe('AWSUtil', function(){
 
 	beforeEach(function(){
 		sandbox = sinon.sandbox.create();
+		const mock_iam = {
+			getUserAsync: function(){
+				return Promise.resolve({
+					"User":{"Arn":"arn:aws:iam::fake-account-id:user/jane.doe"}
+				});
+			}
+		};
+		let AWSProvider = require('../../src/api/aws_provider');
+		sandbox.stub(AWSProvider, 'get_iam', () => mock_iam);
 	});
 
 	afterEach(function(){
@@ -23,18 +32,6 @@ describe('AWSUtil', function(){
 	});
 
 	describe('#get_account_id()', function(){
-
-		beforeEach(function(){
-			const mock_iam = {
-				getUserAsync: function(){
-					return Promise.resolve({
-						"User":{"Arn":"arn:aws:iam::fake-account-id:user/jane.doe"}
-					});
-				}
-			};
-			let AWSProvider = require('../../src/api/aws_provider');
-			sinon.stub(AWSProvider, 'get_iam', () => mock_iam);
-		});
 
 		it('should return an account id', function(){
 			return AWSUtil.get_account_id()

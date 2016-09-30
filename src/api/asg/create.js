@@ -57,10 +57,12 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	.then(function(asg){
 		if(error_topic) {
 			console.log(`${region}: adding notification for topic ${error_topic}`);
-			return AS.putNotificationConfigurationAsync({
-				AutoScalingGroupName: asg_name,
-				NotificationTypes: ['autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'],
-				TopicARN: `arn:aws:sns:${region}:117684984046:${error_topic}`
+			return AWSUtil.get_account_id().then(function(id){
+				return AS.putNotificationConfigurationAsync({
+					AutoScalingGroupName: asg_name,
+					NotificationTypes: ['autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'],
+					TopicARN: `arn:aws:sns:${region}:${id}:${error_topic}`
+				});
 			}).then(function(){
 				return AWSUtil.get_asg(AS,asg_name);
 			});

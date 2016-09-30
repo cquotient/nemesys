@@ -190,6 +190,15 @@ describe('replace asg', function(){
 		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
 		describe_vpcs_spy = sandbox.spy(mock_ec2, 'describeVpcsAsync');
 		describe_subnets_spy = sandbox.spy(mock_ec2, 'describeSubnetsAsync');
+
+		const mock_iam = {
+			getUserAsync: function(){
+				return Promise.resolve({
+					"User":{"Arn":"arn:aws:iam::fake-account-id:user/jane.doe"}
+				});
+			}
+		};
+		sandbox.stub(AWSProvider, 'get_iam', () => mock_iam);
 	});
 
 	afterEach(function(){
@@ -246,7 +255,7 @@ describe('replace asg', function(){
 			expect(put_notifcation_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-new-asg',
 				NotificationTypes: ['autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'],
-				TopicARN: `arn:aws:sns:us-east-1:117684984046:fake-err-topic`
+				TopicARN: `arn:aws:sns:us-east-1:fake-account-id:fake-err-topic`
 			});
 			expect(put_sched_action_spy).to.have.been.calledWith({
 					AutoScalingGroupName: 'fake-new-asg',
