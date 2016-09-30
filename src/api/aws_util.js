@@ -146,6 +146,13 @@ function _get_bdms(disks) {
 	});
 }
 
+function _get_account_id() {
+	return AWSProvider.get_iam().getUserAsync()
+	.then(function(resp){
+		return resp.User.Arn.split(':')[4];
+	});
+}
+
 exports.get_asg = _get_asg;
 exports.get_sg_id = _get_sg_id;
 exports.get_vpc_id = _get_vpc_id;
@@ -153,5 +160,6 @@ exports.get_userdata_string = _get_userdata_string;
 exports.get_ami_id = _get_ami_id;
 exports.get_sg_ids = _get_sg_ids;
 exports.get_subnet_ids = _get_subnet_ids;
+exports.get_account_id = _get_account_id;
 
 exports.get_bdms =_get_bdms;

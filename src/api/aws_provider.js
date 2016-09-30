@@ -17,5 +17,12 @@ function _get_as(region) {
 	}));
 }
 
+function _get_iam() {
+	return BB.promisifyAll(new AWS.IAM({
+		apiVersion: '2010-05-08'
+	}));
+}
+
 exports.get_ec2 = _get_ec2;
 exports.get_as = _get_as;
+exports.get_iam = _get_iam;

@@ -22,7 +22,7 @@ describe('replace asg', function(){
 		chai = require('chai');
 		sinon_chai = require('sinon-chai');
 		chai.use(sinon_chai);
-		expect = require('chai').expect;
+		expect = chai.expect;
 	});
 
 	beforeEach(function(){
