@@ -17,6 +17,8 @@ describe('replace asg', function(){
 			update_asg_spy,
 			delete_asg_spy,
 			enable_metrics_spy,
+			describe_hooks_spy,
+			put_hook_spy,
 			describe_vpcs_spy,
 			describe_subnets_spy;
 
@@ -177,6 +179,24 @@ describe('replace asg', function(){
 			},
 			enableMetricsCollectionAsync: function(params){
 				return Promise.resolve({});
+			},
+			describeLifecycleHooksAsync: function(params){
+				return Promise.resolve({
+					LifecycleHooks: [
+						{
+							LifecycleHookName: 'fake-hook-name',
+							AutoScalingGroupName: params.AutoScalingGroupName,
+							LifecycleTransition: 'autoscaling:EC2_INSTANCE_TERMINATING',
+							NotificationTargetARN: 'fake-target-arn',
+							RoleARN: 'fake-role-arn',
+							HeartbeatTimeout: 1800,
+							GlobalTimeout: 172800,
+							DefaultResult: 'ABANDON' }
+					]
+				});
+			},
+			putLifecycleHookAsync: function(params){
+				return Promise.resolve({});
 			}
 		};
 		describe_asg_spy = sandbox.spy(mock_as, 'describeAutoScalingGroupsAsync');
@@ -190,6 +210,8 @@ describe('replace asg', function(){
 		update_asg_spy = sandbox.spy(mock_as, 'updateAutoScalingGroupAsync');
 		delete_asg_spy = sandbox.spy(mock_as, 'deleteAutoScalingGroupAsync');
 		enable_metrics_spy = sandbox.spy(mock_as, 'enableMetricsCollectionAsync');
+		describe_hooks_spy = sandbox.spy(mock_as, 'describeLifecycleHooksAsync');
+		put_hook_spy = sandbox.spy(mock_as, 'putLifecycleHookAsync');
 		var AWSProvider = require('../../../src/api/aws_provider');
 		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
 
@@ -255,6 +277,9 @@ describe('replace asg', function(){
 			expect(describe_scaling_policy_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg'
 			});
+			expect(describe_hooks_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-old-asg'
+			});
 			expect(describe_vpcs_spy).to.have.been.calledWith({
 				Filters: [
 					{
@@ -311,6 +336,15 @@ describe('replace asg', function(){
 			// });
 			expect(enable_metrics_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-new-asg'
+			});
+			expect(put_hook_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-new-asg', /* required */
+				LifecycleHookName: 'fake-hook-name', /* required */
+				DefaultResult: 'ABANDON',
+				HeartbeatTimeout: 1800,
+				LifecycleTransition: 'autoscaling:EC2_INSTANCE_TERMINATING',
+				NotificationTargetARN: 'fake-target-arn',
+				RoleARN: 'fake-role-arn'
 			});
 			expect(update_asg_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg',

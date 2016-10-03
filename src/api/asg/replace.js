@@ -15,14 +15,25 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		AWSUtil.get_asg(AS, replace_asg),
 		AS.describeNotificationConfigurationsAsync({AutoScalingGroupNames: [replace_asg]}),
 		AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}),
-		AS.describePoliciesAsync({AutoScalingGroupName: replace_asg})
+		AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}),
+		AS.describeLifecycleHooksAsync({AutoScalingGroupName: replace_asg})
 	])
-	.spread(function(old_asg, old_notifications, old_scheduled_actions, old_policies){
+	.spread(function(old_asg, old_notifications, old_scheduled_actions, old_policies, old_hooks){
 		var scheduled_actions = old_scheduled_actions.ScheduledUpdateGroupActions.map(function(action){
 			return {
 				name: action.ScheduledActionName,
 				capacity: action.DesiredCapacity,
 				recurrence: action.Recurrence
+			};
+		});
+		var hooks = old_hooks.LifecycleHooks.map(function(hook){
+			return {
+				name: hook.LifecycleHookName,
+				default_result: hook.DefaultResult,
+				timeout: hook.HeartbeatTimeout,
+				lc_transition: hook.LifecycleTransition,
+				target_arn: hook.NotificationTargetARN,
+				role_arn: hook.RoleARN
 			};
 		});
 		var options = {
@@ -32,7 +43,8 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 			hc_grace: old_asg.HealthCheckGracePeriod,
 			elb_name: old_asg.LoadBalancerNames[0],
 			scheduled_actions: scheduled_actions,
-			scaling_policies: old_policies.ScalingPolicies
+			scaling_policies: old_policies.ScalingPolicies,
+			hooks: hooks
 		};
 		var instance_tags = old_asg.Tags.map(function(tag){
 			return `${tag.Key}=${tag.Value}`;

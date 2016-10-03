@@ -12,6 +12,8 @@ function _apply_default_options(optional) {
 	if(!optional.max) optional.max = 1;
 	if(!optional.desired) optional.desired = 0;
 	if(!optional.hc_grace) optional.hc_grace = 300;
+
+	if(!optional.hooks) optional.hooks = [];
 	return optional;
 }
 
@@ -57,6 +59,21 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	.then(function(asg){
 		return AS.enableMetricsCollectionAsync({AutoScalingGroupName: asg_name})
 		.then(() => asg);
+	})
+	// add lifecycle hooks
+	.then(function(asg){
+		var hook_promises = optional.hooks.map(function(hook){
+			return AS.putLifecycleHookAsync({
+				AutoScalingGroupName: asg_name,
+				LifecycleHookName: hook.name,
+				DefaultResult: hook.default_result,
+				HeartbeatTimeout: hook.timeout,
+				LifecycleTransition: hook.lc_transition,
+				NotificationTargetARN: hook.target_arn,
+				RoleARN: hook.role_arn
+			});
+		});
+		return BB.all(hook_promises).then(() => asg);
 	})
 	// add notifications
 	.then(function(asg){
