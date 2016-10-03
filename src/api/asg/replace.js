@@ -14,9 +14,10 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 	return BB.all([
 		AWSUtil.get_asg(AS, replace_asg),
 		AS.describeNotificationConfigurationsAsync({AutoScalingGroupNames: [replace_asg]}),
-		AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg})
+		AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}),
+		AS.describePoliciesAsync({AutoScalingGroupName: replace_asg})
 	])
-	.spread(function(old_asg, old_notifications, old_scheduled_actions){
+	.spread(function(old_asg, old_notifications, old_scheduled_actions, old_policies){
 		var scheduled_actions = old_scheduled_actions.ScheduledUpdateGroupActions.map(function(action){
 			return {
 				name: action.ScheduledActionName,
@@ -30,7 +31,8 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 			desired: old_asg.DesiredCapacity,
 			hc_grace: old_asg.HealthCheckGracePeriod,
 			elb_name: old_asg.LoadBalancerNames[0],
-			scheduled_actions: scheduled_actions
+			scheduled_actions: scheduled_actions,
+			scaling_policies: old_policies.ScalingPolicies
 		};
 		var instance_tags = old_asg.Tags.map(function(tag){
 			return `${tag.Key}=${tag.Value}`;

@@ -9,11 +9,14 @@ describe('replace asg', function(){
 			describe_asg_spy,
 			describe_notifcations_spy,
 			describe_sched_acts_spy,
+			describe_scaling_policy_spy,
 			create_asg_spy,
 			put_notifcation_spy,
 			put_sched_action_spy,
+			put_scaling_policy_spy,
 			update_asg_spy,
 			delete_asg_spy,
+			enable_metrics_spy,
 			describe_vpcs_spy,
 			describe_subnets_spy;
 
@@ -132,6 +135,28 @@ describe('replace asg', function(){
 					return Promise.reject(new Error('bad arg for mocked describeScheduledActionsAsync'));
 				}
 			},
+			describePoliciesAsync: function(params){
+				return Promise.resolve({
+					ScalingPolicies: [
+						{
+							AutoScalingGroupName: params.AutoScalingGroupName,
+							PolicyName: 'fake-scaling-policy-1',
+							PolicyARN: 'fake-policy-arn-1',
+							PolicyType: 'SimpleScaling',
+							AdjustmentType: 'ChangeInCapacity',
+							ScalingAdjustment: 2,
+							Cooldown: 1200,
+							MetricAggregationType: 'Average',
+							Alarms: [
+								{
+									AlarmName: 'fake-alarm-1',
+									AlarmARN: 'fake-alarm-arn-1'
+								}
+							]
+						}
+					]
+				});
+			},
 			createAutoScalingGroupAsync: function(params){
 
 			},
@@ -146,16 +171,25 @@ describe('replace asg', function(){
 			},
 			putScheduledUpdateGroupActionAsync: function(params){
 				return Promise.resolve({});
+			},
+			putScalingPolicyAsync: function(params){
+				return Promise.resolve({});
+			},
+			enableMetricsCollectionAsync: function(params){
+				return Promise.resolve({});
 			}
 		};
 		describe_asg_spy = sandbox.spy(mock_as, 'describeAutoScalingGroupsAsync');
 		describe_notifcations_spy = sandbox.spy(mock_as, 'describeNotificationConfigurationsAsync');
 		describe_sched_acts_spy = sandbox.spy(mock_as, 'describeScheduledActionsAsync');
+		describe_scaling_policy_spy = sandbox.spy(mock_as, 'describePoliciesAsync');
 		create_asg_spy = sandbox.spy(mock_as, 'createAutoScalingGroupAsync');
 		put_notifcation_spy = sandbox.spy(mock_as, 'putNotificationConfigurationAsync');
 		put_sched_action_spy = sandbox.spy(mock_as, 'putScheduledUpdateGroupActionAsync');
+		put_scaling_policy_spy = sandbox.spy(mock_as, 'putScalingPolicyAsync');
 		update_asg_spy = sandbox.spy(mock_as, 'updateAutoScalingGroupAsync');
 		delete_asg_spy = sandbox.spy(mock_as, 'deleteAutoScalingGroupAsync');
+		enable_metrics_spy = sandbox.spy(mock_as, 'enableMetricsCollectionAsync');
 		var AWSProvider = require('../../../src/api/aws_provider');
 		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
 
@@ -218,6 +252,9 @@ describe('replace asg', function(){
 			expect(describe_sched_acts_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg'
 			});
+			expect(describe_scaling_policy_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-old-asg'
+			});
 			expect(describe_vpcs_spy).to.have.been.calledWith({
 				Filters: [
 					{
@@ -263,6 +300,18 @@ describe('replace asg', function(){
 					DesiredCapacity: 10,
 					Recurrence: 'fake-recurrence'
 			});
+			// expect(put_scaling_policy_spy).to.have.been.calledWith({
+			// 	AutoScalingGroupName: 'fake-new-asg',
+			// 	PolicyName: 'fake-scaling-policy-1',
+			// 	PolicyType: 'SimpleScaling',
+			// 	AdjustmentType: 'ChangeInCapacity',
+			// 	ScalingAdjustment: 2,
+			// 	Cooldown: 1200,
+			// 	MetricAggregationType: 'Average'
+			// });
+			expect(enable_metrics_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-new-asg'
+			});
 			expect(update_asg_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg',
 				DesiredCapacity: 0
@@ -270,7 +319,7 @@ describe('replace asg', function(){
 			//TODO let old asg go down to 0 instances...
 			expect(delete_asg_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg'
-			})
+			});
 		});
 	});
 

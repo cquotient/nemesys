@@ -53,6 +53,11 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 		}
 		return AS.createAutoScalingGroupAsync(create_params);
 	})
+	// enable metric collection
+	.then(function(asg){
+		return AS.enableMetricsCollectionAsync({AutoScalingGroupName: asg_name})
+		.then(() => asg);
+	})
 	// add notifications
 	.then(function(asg){
 		if(error_topic) {
@@ -82,9 +87,19 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 					Recurrence: action.recurrence
 				});
 			});
-			return BB.all(action_promises).then(function(){
-				return AWSUtil.get_asg(AS, asg_name);
+			return BB.all(action_promises).then(() => AWSUtil.get_asg(AS, asg_name));
+		} else {
+			return Promise.resolve(asg);
+		}
+	})
+	// add scaling policies
+	.then(function(asg){
+		if(optional.scaling_policies) {
+			var policy_promises = optional.scaling_policies.map(function(policy){
+				delete policy.Alarms;
+				return AS.putScalingPolicyAsync(policy);
 			});
+			return BB.all(policy_promises).then(() => AWSUtil.get_asg(AS, asg_name));
 		} else {
 			return Promise.resolve(asg);
 		}
