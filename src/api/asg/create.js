@@ -113,13 +113,26 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	.then(function(asg){
 		if(optional.scaling_policies) {
 			var policy_promises = optional.scaling_policies.map(function(policy){
-				return AS.putScalingPolicyAsync({
+				var policy_params = {
 					AutoScalingGroupName: asg_name,
 					PolicyName: policy.name,
-					ScalingAdjustment: policy.adjustment,
-					AdjustmentType: policy.adjustment_type,
-					Cooldown: policy.cooldown
-				}).then(function(put_policy_result){
+					AdjustmentType: policy.adjustment_type
+				};
+				if(policy.policy_type === 'StepScaling') {
+					policy_params.PolicyType = 'StepScaling';
+					policy_params.MetricAggregationType = policy.aggregation_type;
+					policy_params.StepAdjustments = policy.step_adjustments.map(function(obj){
+						return {
+							MetricIntervalLowerBound: obj.lower_bound,
+							MetricIntervalUpperBound: obj.upper_bound,
+							ScalingAdjustment: obj.adjustment
+						};
+					});
+				} else {
+					policy_params.ScalingAdjustment = policy.adjustment;
+					policy_params.Cooldown = policy.cooldown;
+				}
+				return AS.putScalingPolicyAsync(policy_params).then(function(put_policy_result){
 					return AWSProvider.get_cw(region).describeAlarmsAsync({
 						AlarmNames: policy.alarm_names
 					}).then(function(desc_alarm_result){

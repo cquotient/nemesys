@@ -150,11 +150,41 @@ describe('replace asg', function(){
 							AdjustmentType: 'ChangeInCapacity',
 							ScalingAdjustment: 2,
 							Cooldown: 1200,
-							MetricAggregationType: 'Average',
 							Alarms: [
 								{
 									AlarmName: 'fake-alarm-1',
 									AlarmARN: 'fake-alarm-arn-1'
+								}
+							]
+						},
+						{
+							AutoScalingGroupName: params.AutoScalingGroupName,
+							PolicyName: 'fake-scaling-policy-2',
+							PolicyARN: 'fake-policy-arn-2',
+							PolicyType: 'StepScaling',
+							AdjustmentType: 'ChangeInCapacity',
+							MetricAggregationType: 'Maximum',
+							EstimatedInstanceWarmup: 300,
+							StepAdjustments: [
+								{
+									MetricIntervalLowerBound: 0,
+									MetricIntervalUpperBound: 100,
+									ScalingAdjustment: 1
+								},
+								{
+									MetricIntervalLowerBound: 100,
+									MetricIntervalUpperBound: 200,
+									ScalingAdjustment: 2
+								},
+								{
+									MetricIntervalLowerBound: 200,
+									ScalingAdjustment: 3
+								}
+							],
+							Alarms: [
+								{
+									AlarmName: 'fake-alarm-2',
+									AlarmARN: 'fake-alarm-arn-2'
 								}
 							]
 						}
@@ -162,7 +192,7 @@ describe('replace asg', function(){
 				});
 			},
 			createAutoScalingGroupAsync: function(params){
-
+				return Promise.resolve({});
 			},
 			updateAutoScalingGroupAsync: function(params){
 				return Promise.resolve({});
@@ -361,6 +391,30 @@ describe('replace asg', function(){
 				AdjustmentType: 'ChangeInCapacity',
 				ScalingAdjustment: 2,
 				Cooldown: 1200
+			});
+			expect(put_scaling_policy_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-new-asg',
+				PolicyName: 'fake-scaling-policy-2',
+				AdjustmentType: 'ChangeInCapacity',
+				PolicyType: 'StepScaling',
+				MetricAggregationType: 'Maximum',
+				StepAdjustments: [
+					{
+						MetricIntervalLowerBound: 0,
+						MetricIntervalUpperBound: 100,
+						ScalingAdjustment: 1
+					},
+					{
+						MetricIntervalLowerBound: 100,
+						MetricIntervalUpperBound: 200,
+						ScalingAdjustment: 2
+					},
+					{
+						MetricIntervalLowerBound: 200,
+						MetricIntervalUpperBound: undefined,
+						ScalingAdjustment: 3
+					}
+				]
 			});
 			expect(describe_alarms_spy).to.have.been.calledWith({
 				AlarmNames: ['fake-alarm-1']

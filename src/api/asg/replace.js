@@ -8,52 +8,74 @@ var create = require('./create');
 
 var _delay_ms = 30000;
 
+function _parse_sched_actions(sched_actions) {
+	return sched_actions.ScheduledUpdateGroupActions.map(function(action){
+		return {
+			name: action.ScheduledActionName,
+			capacity: action.DesiredCapacity,
+			recurrence: action.Recurrence
+		};
+	});
+}
+
+function _parse_policies(policies) {
+	return policies.ScalingPolicies.map(function(policy){
+		var parsed = {
+			name: policy.PolicyName,
+			adjustment_type: policy.AdjustmentType,
+			alarm_names: policy.Alarms.map((alarm) => alarm.AlarmName)
+		};
+		if(policy.PolicyType === 'StepScaling') {
+			parsed.policy_type = 'StepScaling';
+			parsed.aggregation_type = policy.MetricAggregationType;
+			parsed.step_adjustments = policy.StepAdjustments.map(function(step_adj){
+				return {
+					lower_bound: step_adj.MetricIntervalLowerBound,
+					upper_bound: step_adj.MetricIntervalUpperBound,
+					adjustment: step_adj.ScalingAdjustment
+				};
+			});
+		} else {
+			parsed.adjustment = policy.ScalingAdjustment;
+			parsed.cooldown = policy.Cooldown;
+		}
+		return parsed;
+	});
+}
+
+function _parse_lifecycle_hooks(hooks) {
+	return hooks.LifecycleHooks.map(function(hook){
+		return {
+			name: hook.LifecycleHookName,
+			default_result: hook.DefaultResult,
+			timeout: hook.HeartbeatTimeout,
+			lc_transition: hook.LifecycleTransition,
+			target_arn: hook.NotificationTargetARN,
+			role_arn: hook.RoleARN
+		};
+	});
+}
+
 function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 	var AS = AWSProvider.get_as(region);
 
 	return BB.all([
 		AWSUtil.get_asg(AS, replace_asg),
 		AS.describeNotificationConfigurationsAsync({AutoScalingGroupNames: [replace_asg]}),
-		AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}),
-		AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}),
-		AS.describeLifecycleHooksAsync({AutoScalingGroupName: replace_asg})
+		AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}).then(_parse_sched_actions),
+		AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}).then(_parse_policies),
+		AS.describeLifecycleHooksAsync({AutoScalingGroupName: replace_asg}).then(_parse_lifecycle_hooks)
 	])
-	.spread(function(old_asg, old_notifications, old_scheduled_actions, old_policies, old_hooks){
-		var scheduled_actions = old_scheduled_actions.ScheduledUpdateGroupActions.map(function(action){
-			return {
-				name: action.ScheduledActionName,
-				capacity: action.DesiredCapacity,
-				recurrence: action.Recurrence
-			};
-		});
-		var policies = old_policies.ScalingPolicies.map(function(policy){
-			return {
-				name: policy.PolicyName,
-				adjustment: policy.ScalingAdjustment,
-				adjustment_type: policy.AdjustmentType,
-				cooldown: policy.Cooldown,
-				alarm_names: policy.Alarms.map((alarm) => alarm.AlarmName)
-			};
-		});
-		var hooks = old_hooks.LifecycleHooks.map(function(hook){
-			return {
-				name: hook.LifecycleHookName,
-				default_result: hook.DefaultResult,
-				timeout: hook.HeartbeatTimeout,
-				lc_transition: hook.LifecycleTransition,
-				target_arn: hook.NotificationTargetARN,
-				role_arn: hook.RoleARN
-			};
-		});
+	.spread(function(old_asg, old_notifications, parsed_old_sched_acts, parsed_old_policies, parsed_old_hooks){
 		var options = {
 			min: old_asg.MinSize,
 			max: old_asg.MaxSize,
 			desired: old_asg.DesiredCapacity,
 			hc_grace: old_asg.HealthCheckGracePeriod,
 			elb_name: old_asg.LoadBalancerNames[0],
-			scheduled_actions: scheduled_actions,
-			scaling_policies: policies,
-			hooks: hooks
+			scheduled_actions: parsed_old_sched_acts,
+			scaling_policies: parsed_old_policies,
+			hooks: parsed_old_hooks
 		};
 		var instance_tags = old_asg.Tags.map(function(tag){
 			return `${tag.Key}=${tag.Value}`;
