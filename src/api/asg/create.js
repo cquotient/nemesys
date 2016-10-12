@@ -152,8 +152,6 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 						});
 						return BB.all(alarm_promises);
 					});
-				}).then(function(result){
-
 				});
 			});
 			return BB.all(policy_promises).then(() => AWSUtil.get_asg(AS, asg_name));
