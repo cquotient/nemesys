@@ -20,7 +20,9 @@ describe('replace asg', function(){
 			describe_hooks_spy,
 			put_hook_spy,
 			describe_vpcs_spy,
-			describe_subnets_spy;
+			describe_subnets_spy,
+			describe_alarms_spy,
+			put_alarm_spy;
 
 	before(function(){
 		replace = require('../../../src/api/asg/replace');
@@ -175,7 +177,9 @@ describe('replace asg', function(){
 				return Promise.resolve({});
 			},
 			putScalingPolicyAsync: function(params){
-				return Promise.resolve({});
+				return Promise.resolve({
+					PolicyARN: 'fake-policy-arn-2'
+				});
 			},
 			enableMetricsCollectionAsync: function(params){
 				return Promise.resolve({});
@@ -255,6 +259,32 @@ describe('replace asg', function(){
 			}
 		};
 		sandbox.stub(AWSProvider, 'get_iam', () => mock_iam);
+
+		const mock_cloudwatch = {
+			describeAlarmsAsync: function(params){
+				return Promise.resolve({
+					MetricAlarms: [
+						{
+							AlarmName: 'fake-alarm-1',
+							MetricName: 'fake-metric-name-1',
+							Namespace: 'fake-metric-namespace-1',
+							Statistic: 'fake-statistic-1',
+							Period: 300,
+							Threshold: 1000,
+							ComparisonOperator: 'fake-comp-operator-1',
+							Dimensions: [{Name: 'QueueName', Value: 'fake-queue-1'}],
+							EvaluationPeriods: 1
+						}
+					]
+				});
+			},
+			putMetricAlarmAsync: function(params){
+				return Promise.resolve({});
+			}
+		};
+		sandbox.stub(AWSProvider, 'get_cw', () => mock_cloudwatch);
+		describe_alarms_spy = sandbox.spy(mock_cloudwatch, 'describeAlarmsAsync');
+		put_alarm_spy = sandbox.spy(mock_cloudwatch, 'putMetricAlarmAsync');
 	});
 
 	afterEach(function(){
@@ -325,15 +355,28 @@ describe('replace asg', function(){
 					DesiredCapacity: 10,
 					Recurrence: 'fake-recurrence'
 			});
-			// expect(put_scaling_policy_spy).to.have.been.calledWith({
-			// 	AutoScalingGroupName: 'fake-new-asg',
-			// 	PolicyName: 'fake-scaling-policy-1',
-			// 	PolicyType: 'SimpleScaling',
-			// 	AdjustmentType: 'ChangeInCapacity',
-			// 	ScalingAdjustment: 2,
-			// 	Cooldown: 1200,
-			// 	MetricAggregationType: 'Average'
-			// });
+			expect(put_scaling_policy_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-new-asg',
+				PolicyName: 'fake-scaling-policy-1',
+				AdjustmentType: 'ChangeInCapacity',
+				ScalingAdjustment: 2,
+				Cooldown: 1200
+			});
+			expect(describe_alarms_spy).to.have.been.calledWith({
+				AlarmNames: ['fake-alarm-1']
+			});
+			expect(put_alarm_spy).to.have.been.calledWith({
+				AlarmName: 'fake-alarm-1',
+				MetricName: 'fake-metric-name-1',
+				Namespace: 'fake-metric-namespace-1',
+				Statistic: 'fake-statistic-1',
+				Period: 300,
+				Threshold: 1000,
+				ComparisonOperator: 'fake-comp-operator-1',
+				Dimensions: [{Name: 'QueueName', Value: 'fake-queue-1'}],
+				EvaluationPeriods: 1,
+				AlarmActions: ['fake-policy-arn-2']
+			});
 			expect(enable_metrics_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-new-asg'
 			});

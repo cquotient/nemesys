@@ -26,6 +26,15 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 				recurrence: action.Recurrence
 			};
 		});
+		var policies = old_policies.ScalingPolicies.map(function(policy){
+			return {
+				name: policy.PolicyName,
+				adjustment: policy.ScalingAdjustment,
+				adjustment_type: policy.AdjustmentType,
+				cooldown: policy.Cooldown,
+				alarm_names: policy.Alarms.map((alarm) => alarm.AlarmName)
+			};
+		});
 		var hooks = old_hooks.LifecycleHooks.map(function(hook){
 			return {
 				name: hook.LifecycleHookName,
@@ -43,7 +52,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 			hc_grace: old_asg.HealthCheckGracePeriod,
 			elb_name: old_asg.LoadBalancerNames[0],
 			scheduled_actions: scheduled_actions,
-			scaling_policies: old_policies.ScalingPolicies,
+			scaling_policies: policies,
 			hooks: hooks
 		};
 		var instance_tags = old_asg.Tags.map(function(tag){

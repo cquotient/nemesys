@@ -113,8 +113,35 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	.then(function(asg){
 		if(optional.scaling_policies) {
 			var policy_promises = optional.scaling_policies.map(function(policy){
-				delete policy.Alarms;
-				return AS.putScalingPolicyAsync(policy);
+				return AS.putScalingPolicyAsync({
+					AutoScalingGroupName: asg_name,
+					PolicyName: policy.name,
+					ScalingAdjustment: policy.adjustment,
+					AdjustmentType: policy.adjustment_type,
+					Cooldown: policy.cooldown
+				}).then(function(put_policy_result){
+					return AWSProvider.get_cw(region).describeAlarmsAsync({
+						AlarmNames: policy.alarm_names
+					}).then(function(desc_alarm_result){
+						var alarm_promises = desc_alarm_result.MetricAlarms.map(function(alarm){
+							return AWSProvider.get_cw(region).putMetricAlarmAsync({
+								AlarmName: alarm.AlarmName,
+								MetricName: alarm.MetricName,
+								Namespace: alarm.Namespace,
+								Statistic: alarm.Statistic,
+								Period: alarm.Period,
+								Threshold: alarm.Threshold,
+								ComparisonOperator: alarm.ComparisonOperator,
+								Dimensions: alarm.Dimensions,
+								EvaluationPeriods: alarm.EvaluationPeriods,
+								AlarmActions: [put_policy_result.PolicyARN]
+							});
+						});
+						return BB.all(alarm_promises);
+					});
+				}).then(function(result){
+
+				});
 			});
 			return BB.all(policy_promises).then(() => AWSUtil.get_asg(AS, asg_name));
 		} else {

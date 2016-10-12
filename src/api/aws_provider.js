@@ -23,6 +23,14 @@ function _get_iam() {
 	}));
 }
 
+function _get_cloudwatch(region) {
+	return BB.promisifyAll(new AWS.CloudWatch({
+		region: region,
+		apiVersion: '2010-08-01'
+	}));
+}
+
 exports.get_ec2 = _get_ec2;
 exports.get_as = _get_as;
 exports.get_iam = _get_iam;
+exports.get_cw = _get_cloudwatch;
