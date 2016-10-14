@@ -432,7 +432,8 @@ describe('replace asg', function(){
 				AlarmActions: ['fake-policy-arn-2']
 			});
 			expect(enable_metrics_spy).to.have.been.calledWith({
-				AutoScalingGroupName: 'fake-new-asg'
+				AutoScalingGroupName: 'fake-new-asg',
+				Granularity: '1Minute'
 			});
 			expect(put_hook_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-new-asg', /* required */

@@ -57,7 +57,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	})
 	// enable metric collection
 	.then(function(asg){
-		return AS.enableMetricsCollectionAsync({AutoScalingGroupName: asg_name})
+		return AS.enableMetricsCollectionAsync({AutoScalingGroupName: asg_name, Granularity: '1Minute'})
 		.then(() => asg);
 	})
 	// add lifecycle hooks
