@@ -456,7 +456,8 @@ describe('replace asg', function(){
 			});
 			expect(update_asg_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg',
-				DesiredCapacity: 0
+				DesiredCapacity: 0,
+				MinSize: 0
 			});
 			expect(del_sched_act_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg',

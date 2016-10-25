@@ -139,7 +139,8 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		console.log(`${region}: lowering capacity to 0 for ${replace_asg}`);
 		return AS.updateAutoScalingGroupAsync({
 			AutoScalingGroupName: replace_asg,
-			DesiredCapacity: 0
+			DesiredCapacity: 0,
+			MinSize: 0
 		}).then(function(){
 			return AWSUtil.get_asg(AS, replace_asg);
 		});
