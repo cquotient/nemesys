@@ -1,45 +1,90 @@
 'use strict';
 
 var BB = require('bluebird');
-var AWS = require('aws-sdk');
 
 var AWSUtil = require('../aws_util');
+var AWSProvider = require('../aws_provider');
 var create = require('./create');
 
 var _delay_ms = 30000;
 
+function _parse_sched_actions(sched_actions) {
+	return sched_actions.ScheduledUpdateGroupActions.map(function(action){
+		return {
+			name: action.ScheduledActionName,
+			capacity: action.DesiredCapacity,
+			recurrence: action.Recurrence
+		};
+	});
+}
+
+function _parse_policies(policies) {
+	return policies.ScalingPolicies.map(function(policy){
+		var parsed = {
+			name: policy.PolicyName,
+			adjustment_type: policy.AdjustmentType,
+			alarm_names: policy.Alarms.map((alarm) => alarm.AlarmName)
+		};
+		if(policy.PolicyType === 'StepScaling') {
+			parsed.policy_type = 'StepScaling';
+			parsed.aggregation_type = policy.MetricAggregationType;
+			parsed.step_adjustments = policy.StepAdjustments.map(function(step_adj){
+				return {
+					lower_bound: step_adj.MetricIntervalLowerBound,
+					upper_bound: step_adj.MetricIntervalUpperBound,
+					adjustment: step_adj.ScalingAdjustment
+				};
+			});
+		} else {
+			parsed.adjustment = policy.ScalingAdjustment;
+			parsed.cooldown = policy.Cooldown;
+		}
+		return parsed;
+	});
+}
+
+function _parse_lifecycle_hooks(hooks) {
+	return hooks.LifecycleHooks.map(function(hook){
+		return {
+			name: hook.LifecycleHookName,
+			default_result: hook.DefaultResult,
+			timeout: hook.HeartbeatTimeout,
+			lc_transition: hook.LifecycleTransition,
+			target_arn: hook.NotificationTargetARN,
+			role_arn: hook.RoleARN
+		};
+	});
+}
+
 function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
-	var AS = BB.promisifyAll(new AWS.AutoScaling({
-		region: region,
-		apiVersion: '2011-01-01'
-	}));
+	var AS = AWSProvider.get_as(region);
+
+	let sched_action_promise = AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}).then(_parse_sched_actions);
+	let policy_promise = AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}).then(_parse_policies);
 
 	return BB.all([
 		AWSUtil.get_asg(AS, replace_asg),
 		AS.describeNotificationConfigurationsAsync({AutoScalingGroupNames: [replace_asg]}),
-		AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg})
+		sched_action_promise,
+		policy_promise,
+		AS.describeLifecycleHooksAsync({AutoScalingGroupName: replace_asg}).then(_parse_lifecycle_hooks)
 	])
-	.spread(function(old_asg, old_notifications, old_scheduled_actions){
-		var scheduled_actions = old_scheduled_actions.ScheduledUpdateGroupActions.map(function(action){
-			return {
-				name: action.ScheduledActionName,
-				capacity: action.DesiredCapacity,
-				recurrence: action.Recurrence
-			};
-		});
+	.spread(function(old_asg, old_notifications, parsed_old_sched_acts, parsed_old_policies, parsed_old_hooks){
 		var options = {
 			min: old_asg.MinSize,
 			max: old_asg.MaxSize,
 			desired: old_asg.DesiredCapacity,
 			hc_grace: old_asg.HealthCheckGracePeriod,
 			elb_name: old_asg.LoadBalancerNames[0],
-			scheduled_actions: scheduled_actions
+			scheduled_actions: parsed_old_sched_acts,
+			scaling_policies: parsed_old_policies,
+			hooks: parsed_old_hooks
 		};
 		var instance_tags = old_asg.Tags.map(function(tag){
 			return `${tag.Key}=${tag.Value}`;
 		});
 		var error_topic;
-		if(old_notifications && old_notifications.length > 0) {
+		if(old_notifications && old_notifications.NotificationConfigurations.length > 0) {
 			error_topic = old_notifications.NotificationConfigurations[0].TopicARN.split(':')[5];
 		}
 		return create([region], vpc_name, with_asg, lc_name, instance_tags, error_topic, null, options).then(function(){
@@ -69,10 +114,33 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		});
 	})
 	.then(function(){
+		console.log(`${region}: removing scheduled actions for ${replace_asg}`);
+		return sched_action_promise.then(function(sched_actions){
+			return BB.all(sched_actions.map(function(action){
+				return AS.deleteScheduledActionAsync({
+					AutoScalingGroupName: replace_asg,
+					ScheduledActionName: action.name
+				});
+			}));
+		});
+	})
+	.then(function(){
+		console.log(`${region}: removing scaling policies for ${replace_asg}`);
+		return policy_promise.then(function(policies){
+			return BB.all(policies.map(function(policy){
+				return AS.deletePolicyAsync({
+					AutoScalingGroupName: replace_asg,
+					PolicyName: policy.name
+				});
+			}));
+		});
+	})
+	.then(function(){
 		console.log(`${region}: lowering capacity to 0 for ${replace_asg}`);
 		return AS.updateAutoScalingGroupAsync({
 			AutoScalingGroupName: replace_asg,
-			DesiredCapacity: 0
+			DesiredCapacity: 0,
+			MinSize: 0
 		}).then(function(){
 			return AWSUtil.get_asg(AS, replace_asg);
 		});
