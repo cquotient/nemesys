@@ -60,12 +60,13 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 	var AS = AWSProvider.get_as(region);
 
 	let sched_action_promise = AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}).then(_parse_sched_actions);
+	let policy_promise = AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}).then(_parse_policies);
 
 	return BB.all([
 		AWSUtil.get_asg(AS, replace_asg),
 		AS.describeNotificationConfigurationsAsync({AutoScalingGroupNames: [replace_asg]}),
 		sched_action_promise,
-		AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}).then(_parse_policies),
+		policy_promise,
 		AS.describeLifecycleHooksAsync({AutoScalingGroupName: replace_asg}).then(_parse_lifecycle_hooks)
 	])
 	.spread(function(old_asg, old_notifications, parsed_old_sched_acts, parsed_old_policies, parsed_old_hooks){
@@ -119,6 +120,17 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 				return AS.deleteScheduledActionAsync({
 					AutoScalingGroupName: replace_asg,
 					ScheduledActionName: action.name
+				});
+			}));
+		});
+	})
+	.then(function(){
+		console.log(`${region}: removing scaling policies for ${replace_asg}`);
+		return policy_promise.then(function(policies){
+			return BB.all(policies.map(function(policy){
+				return AS.deletePolicyAsync({
+					AutoScalingGroupName: replace_asg,
+					PolicyName: policy.name
 				});
 			}));
 		});

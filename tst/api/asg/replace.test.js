@@ -23,7 +23,8 @@ describe('replace asg', function(){
 			describe_subnets_spy,
 			describe_alarms_spy,
 			put_alarm_spy,
-			del_sched_act_spy;
+			del_sched_act_spy,
+			del_policy_spy;
 
 	before(function(){
 		replace = require('../../../src/api/asg/replace');
@@ -235,6 +236,9 @@ describe('replace asg', function(){
 			},
 			deleteScheduledActionAsync: function(params){
 				return Promise.resolve({});
+			},
+			deletePolicyAsync: function(params){
+				return Promise.resolve({});
 			}
 		};
 		describe_asg_spy = sandbox.spy(mock_as, 'describeAutoScalingGroupsAsync');
@@ -251,6 +255,7 @@ describe('replace asg', function(){
 		describe_hooks_spy = sandbox.spy(mock_as, 'describeLifecycleHooksAsync');
 		put_hook_spy = sandbox.spy(mock_as, 'putLifecycleHookAsync');
 		del_sched_act_spy = sandbox.spy(mock_as, 'deleteScheduledActionAsync');
+		del_policy_spy = sandbox.spy(mock_as, 'deletePolicyAsync');
 		var AWSProvider = require('../../../src/api/aws_provider');
 		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
 
@@ -456,6 +461,14 @@ describe('replace asg', function(){
 			expect(del_sched_act_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg',
 				ScheduledActionName: 'fake-sched-action-1'
+			});
+			expect(del_policy_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-old-asg',
+				PolicyName: 'fake-scaling-policy-1'
+			});
+			expect(del_policy_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-old-asg',
+				PolicyName: 'fake-scaling-policy-2'
 			});
 			//TODO let old asg go down to 0 instances...
 			expect(delete_asg_spy).to.have.been.calledWith({
