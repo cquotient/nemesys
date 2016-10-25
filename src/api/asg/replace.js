@@ -59,10 +59,12 @@ function _parse_lifecycle_hooks(hooks) {
 function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 	var AS = AWSProvider.get_as(region);
 
+	let sched_action_promise = AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}).then(_parse_sched_actions);
+
 	return BB.all([
 		AWSUtil.get_asg(AS, replace_asg),
 		AS.describeNotificationConfigurationsAsync({AutoScalingGroupNames: [replace_asg]}),
-		AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}).then(_parse_sched_actions),
+		sched_action_promise,
 		AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}).then(_parse_policies),
 		AS.describeLifecycleHooksAsync({AutoScalingGroupName: replace_asg}).then(_parse_lifecycle_hooks)
 	])
@@ -108,6 +110,17 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 				}
 				_check();
 			});
+		});
+	})
+	.then(function(){
+		console.log(`${region}: removing scheduled actions for ${replace_asg}`);
+		return sched_action_promise.then(function(sched_actions){
+			return BB.all(sched_actions.map(function(action){
+				return AS.deleteScheduledActionAsync({
+					AutoScalingGroupName: replace_asg,
+					ScheduledActionName: action.name
+				});
+			}));
 		});
 	})
 	.then(function(){
