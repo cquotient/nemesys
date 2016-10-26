@@ -1,6 +1,8 @@
 'use strict';
 
-var nemesys = require('../');
+const path = require('path');
+
+const nemesys = require('../');
 
 function _handle_create(argv) {
 	switch(argv._[1]) {
@@ -215,7 +217,18 @@ function _handle_update(argv) {
 	}
 }
 
+const path_args = ['user-data-files', 'region-user-data'];
+
 function _handle(argv) {
+	//TODO is there a way to use yargs coercion instead of this mess?
+	if(argv['json-config']) {
+		let dir = path.dirname(argv['json-config']);
+		path_args.forEach((path_arg) => {
+			argv[path_arg] = argv[path_arg].map((file) => {
+				return path.resolve(dir, file);
+			});
+		});
+	}
 	switch(argv._[0]) {
 		case 'update':
 			_handle_update(argv);
