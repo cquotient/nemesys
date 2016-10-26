@@ -224,9 +224,11 @@ function _handle(argv) {
 	if(argv['json-config']) {
 		let dir = path.dirname(argv['json-config']);
 		path_args.forEach((path_arg) => {
-			argv[path_arg] = argv[path_arg].map((file) => {
-				return path.resolve(dir, file);
-			});
+			if(argv[path_arg]) {
+				argv[path_arg] = argv[path_arg].map((file) => {
+					return path.resolve(dir, file);
+				});
+			}
 		});
 	}
 	switch(argv._[0]) {
