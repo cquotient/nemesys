@@ -10,7 +10,7 @@
     "aws-sdk": "2.2.26",
     "bluebird": "3.0.6",
     "validator": "4.4.0",
-    "yargs": "3.30.0"
+    "yargs": "6.3.0"
   },
   "bin": {
     "nemesys": "bin/nemesys"

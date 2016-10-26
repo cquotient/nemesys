@@ -1,35 +1,35 @@
 #!/usr/bin/env node
-
+'use strict';
 //TODO use yargs auto completion feature!
 
-var group_opt = {
+let group_opt = {
 	alias: 'group',
 	describe: 'Name of the Autoscaling Group to create or update'
 };
 
-var lc_opt = {
+let lc_opt = {
 	alias: 'launch-config',
 	describe: 'Name of the Launch Configuration'
 };
 
-var tags_opt = {
+let tags_opt = {
 	alias: 'instance-tags',
 	describe: 'Tags to apply to instances launched from this ASG',
 	array: true
 };
 
-var vpc_opt = {
+let vpc_opt = {
 	alias: 'vpc',
 	describe: 'Value of the VPC "Name" tag'
 };
 
-var ingress_rules_opt = {
+let ingress_rules_opt = {
 	alias: 'ingress-rules',
 	describe: 'Security Group ingress rules, in the format of {ip/group name}:{port}[:{protocol}]. Default protocol is tcp',
 	array: true
 };
 
-function _regions(yargs) {
+function _common_args(yargs) {
 	return yargs
 	.option('r', {
 		alias: 'regions',
@@ -37,6 +37,15 @@ function _regions(yargs) {
 		array: true,
 		choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
 	})
+	.config('json-config', {
+		describe: 'List of JSON files with parameters',
+		array: true
+	})
+	//TODO is there a way to use coerce, instead of having to do path normalization in
+	// arg_handler.js?
+	// .coerce('user-data-files', function(arg){
+	// 	console.log('coercing user-data');
+	// })
 	.demand(['regions']);
 }
 
@@ -59,7 +68,7 @@ var argv = require('yargs')
 		})
 
 		.command('sg', 'Update a Security Group', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 			.option('s', {
 				alias: 'security-group',
 				describe: 'Name of the Security Group'
@@ -86,7 +95,7 @@ var argv = require('yargs')
 		yargs
 
 		.command('asg', 'Create an Autoscaling Group', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 
 			.option('v', vpc_opt)
 			.option('g', group_opt)
@@ -118,7 +127,7 @@ var argv = require('yargs')
 		})
 
 		.command('sg', 'Create a Security Group', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 			.option('v', vpc_opt)
 			.option('s', {
 				alias: 'security-group',
@@ -136,7 +145,7 @@ var argv = require('yargs')
 		})
 
 		.command('lc', 'Create a Launch Configuration', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 
 			.option('l', lc_opt)
 			.option('a', {
@@ -186,7 +195,7 @@ var argv = require('yargs')
 		})
 
 		.command('instance', 'Create an Instance', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 
 			.option('a', {
 				alias: 'ami',
@@ -260,7 +269,7 @@ var argv = require('yargs')
 		yargs
 
 		.command('asg', 'Replace an Autoscaling Group', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 			.option('v', vpc_opt)
 			.option('g', group_opt)
 			.option('l', lc_opt)
@@ -276,7 +285,7 @@ var argv = require('yargs')
 		})
 
 		.command('sg', 'Replace the rules on an existing Security Group', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 			.option('s', {
 				alias: 'security-group',
 				describe: 'Name of the Security Group'
@@ -298,7 +307,7 @@ var argv = require('yargs')
 		yargs
 
 		.command('asg', 'Delete an Autoscaling Group', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 			.option('g', group_opt)
 			.demand(['group'])
 			.example('nemesys delete asg -v my_vpc -g my_asg')
@@ -307,7 +316,7 @@ var argv = require('yargs')
 		})
 
 		.command('lc', 'Delete a Launch Configuration', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 
 			.option('l', lc_opt)
 			.option('D', {
@@ -321,7 +330,7 @@ var argv = require('yargs')
 		})
 
 		.command('sg', 'Delete a Security Group', function(yargs, argv){
-			_regions(yargs)
+			_common_args(yargs)
 
 			.option('s', {
 				alias: 'security-group',
