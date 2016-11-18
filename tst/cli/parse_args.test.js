@@ -69,6 +69,16 @@ describe('parse_args', function(){
 				assert.match(console.error.args[0][0], /rum/);
 				assert.match(console.error.args[0][0], /ale/);
 			});
+
+			it('does no error if required envs are passed', function(){
+				opts.push('--required-env=rum');
+				opts.push('--required-env=ale');
+				opts.push('--env="ale=good"');
+				opts.push('--env="rum=great"');
+
+				testee.parse_args(commands.concat(opts));
+				assert.notCalled(process.exit);
+			})
 		});
 
 	});

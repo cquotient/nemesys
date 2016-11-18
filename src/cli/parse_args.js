@@ -37,10 +37,10 @@ function _common_args(yargs) {
 			array: true,
 			choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
 		})
-		// .config('json-config', {
-		// 	describe: 'List of JSON files with parameters',
-		// 	array: true
-		// })
+		.config('json-config', {
+			describe: 'List of JSON files with parameters',
+			array: true
+		})
 		//TODO is there a way to use coerce, instead of having to do path normalization in
 		// arg_handler.js?
 		// .coerce('user-data-files', function(arg){
@@ -371,8 +371,9 @@ function _validate_dependent_args(argv) {
 			for (let v of argv['required-env']) {
 				let found = false;
 				for (let e of argv.env) {
-					if (e.indexOf(v + '=') === 0) {
+					if (e.indexOf(v + '=') === 1) {
 						found = true;
+						break;
 					}
 				}
 				if (!found) {
@@ -381,7 +382,7 @@ function _validate_dependent_args(argv) {
 			}
 		}
 
-		if (missing) {
+		if (missing.length > 0) {
 			console.error('Missing required ENVs: ' + missing.join(', '));
 			process.exit(1);
 		}
