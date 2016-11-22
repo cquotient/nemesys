@@ -50,7 +50,7 @@ function _common_args(yargs) {
 }
 
 function parse_args (args) {
-	let argv = require('yargs')(args || process.args)
+	let argv = require('yargs')(args || process.argv)
 		.usage('nemesys {command}')
 		// commands
 
