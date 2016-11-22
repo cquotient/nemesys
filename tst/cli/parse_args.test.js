@@ -28,7 +28,7 @@ describe('parse_args', function(){
 
 	describe('#parse_args()', function(){
 		it('exits if not commands provided', function(){
-			testee.parse_args();
+			testee.parse_args([])
 			assert.calledOnce(process.exit);
 		});
 
