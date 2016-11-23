@@ -371,7 +371,7 @@ function _validate_dependent_args(argv) {
 			for (let v of argv['required-env']) {
 				let found = false;
 				for (let e of argv.env) {
-					if (e.indexOf(v + '=') === 1) {
+					if (e.indexOf(v + '=') === 0) {
 						found = true;
 						break;
 					}
