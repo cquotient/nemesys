@@ -54,7 +54,7 @@ function _get_vpc_id(region, vpc_name) {
 	});
 }
 
-function _get_userdata_string(file_names, env_vars) {
+function _get_userdata_string(file_names, env_vars, raw_ud_string) {
 	var ud_files_proms = file_names.map(function(path){
 		return fs.readFileAsync(path, 'utf-8');
 	});
@@ -73,6 +73,10 @@ function _get_userdata_string(file_names, env_vars) {
 				user_data_string += `export ${env}\n`
 			});
 			user_data_string += '# end env vars\n';
+		}
+
+		if(raw_ud_string) {
+			ud_files_content.push(raw_ud_string);
 		}
 
 		//concat with the rest of the user data

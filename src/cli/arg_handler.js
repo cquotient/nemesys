@@ -80,6 +80,7 @@ function _handle_create(argv) {
 				argv['iam-role'],
 				argv['user-data-files'],
 				argv['region-user-data'],
+				null, //not supported from command line atm
 				argv['disks'],
 				argv['availability-zone'],
 				argv['tags'],

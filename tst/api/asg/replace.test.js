@@ -3,8 +3,6 @@
 describe('replace asg', function(){
 	var replace,
 			sandbox,
-			chai,
-			sinon_chai,
 			expect,
 			describe_asg_spy,
 			describe_notifcations_spy,
@@ -28,8 +26,8 @@ describe('replace asg', function(){
 
 	before(function(){
 		replace = require('../../../src/api/asg/replace');
-		chai = require('chai');
-		sinon_chai = require('sinon-chai');
+		let chai = require('chai');
+		let sinon_chai = require('sinon-chai');
 		chai.use(sinon_chai);
 		expect = chai.expect;
 	});
