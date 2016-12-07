@@ -1,21 +1,8 @@
 'use strict';
 
 var AWSProvider = require('./aws_provider');
-var AWS = require('aws-sdk');
 var BB = require('bluebird');
 var fs = BB.promisifyAll(require('fs'));
-
-var ec2_conns = {};
-
-function _get_ec2(region) {
-	if(!ec2_conns[region]) {
-		ec2_conns[region] = BB.promisifyAll(new AWS.EC2({
-			region: region,
-			apiVersion: '2015-10-01'
-		}));
-	}
-	return ec2_conns[region];
-}
 
 function _get_asg(as, asg_name) {
 	return as.describeAutoScalingGroupsAsync({
@@ -95,7 +82,7 @@ function _get_ami_id(region, ami_name) {
 			}
 		]
 	};
-	return _get_ec2(region).describeImagesAsync(params)
+	return AWSProvider.get_ec2(region).describeImagesAsync(params)
 	.then(function(data){
 		return data.Images[0].ImageId;
 	});
