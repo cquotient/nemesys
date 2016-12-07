@@ -116,18 +116,22 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_f
 		return _resolve_instance(EC2, region, data.Instances[0].InstanceId);
 	})
 	.then(function(instance_id){
-		console.log(`${region}: instance ${instance_id} is ready, applying tags`);
-		tags = tags.map(function(tag_str){
-			var kv = tag_str.split('=');
-			return {
-				Key: kv[0],
-				Value: kv[1]
-			};
-		});
-		return EC2.createTagsAsync({
-			Resources: [instance_id],
-			Tags: tags
-		}).then(() => instance_id);
+		if(tags && tags.length > 0) {
+			console.log(`${region}: instance ${instance_id} is ready, applying tags`);
+			tags = tags.map(function(tag_str){
+				var kv = tag_str.split('=');
+				return {
+					Key: kv[0],
+					Value: kv[1]
+				};
+			});
+			return EC2.createTagsAsync({
+				Resources: [instance_id],
+				Tags: tags
+			}).then(() => instance_id);
+		} else {
+			return instance_id;
+		}
 	});
 }
 
