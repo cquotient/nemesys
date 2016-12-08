@@ -5,7 +5,8 @@ describe.only('create ami', function(){
 			sandbox,
 			expect,
 			describe_sg_spy,
-			run_instances_spy;
+			run_instances_spy,
+			describe_instances_spy;
 
 	before(function(){
 		create = require('../../../src/api/ami/create');
@@ -70,7 +71,13 @@ describe.only('create ami', function(){
 						{
 							Instances: [
 								{
-									InstanceId: 'fake-instance-id-1'
+									InstanceId: 'fake-instance-id-1',
+									Tags: [
+										{
+											Key: 'Spinup',
+											Value: 'complete'
+										}
+									]
 								}
 							]
 						}
@@ -83,6 +90,7 @@ describe.only('create ami', function(){
 		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
 		run_instances_spy = sandbox.spy(mock_ec2, 'runInstancesAsync');
 		describe_sg_spy = sandbox.spy(mock_ec2, 'describeSecurityGroupsAsync');
+		describe_instances_spy = sandbox.spy(mock_ec2, 'describeInstancesAsync');
 
 		//mock fs
 		sandbox.stub(require('fs'), 'readFileAsync', function(file){
@@ -101,6 +109,7 @@ describe.only('create ami', function(){
 	});
 
 	it('should create an ami in all regions', function(){
+		this.timeout(10000);
 		let ud_files = ['fake-file-1', 'fake-file-2'];
 		let disks = [];
 		return create(['us-east-1', 'us-west-2'], 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1']).then(function(result){
@@ -135,6 +144,13 @@ describe.only('create ami', function(){
 				}],
 				UserData: (new Buffer(expected_ud).toString('base64'))
 			});
+
+			//
+			expect(describe_instances_spy).to.have.been.calledWith({
+				InstanceIds: ['fake-instance-id-1']
+			});
+
+			
 		});
 	});
 

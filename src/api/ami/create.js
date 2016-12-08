@@ -2,10 +2,41 @@
 
 const BB = require('bluebird');
 
+const AWSProvider = require('../aws_provider');
 const create_instance = require('../instance/create');
 
-function _do_create(create_region, instance_id, copy_regions){
+function _is_tag_present(tags, key, value) {
+	if(tags && tags.length > 0) {
+		for(let i=0 ; i<tags.length ; i++) {
+			if(tags[i].Key == key && tags[i].Value == value) return true;
+		}
+	}
+	return false;
+}
 
+function _wait_for_spinup_complete(region, instance_id) {
+	return new Promise(function(resolve, reject){
+		function _check(){
+			AWSProvider.get_ec2(region).describeInstancesAsync({InstanceIds: [instance_id]}).then(function(result){
+				if(result.Reservations.length === 1
+				&& result.Reservations[0].Instances.length === 1
+				&& _is_tag_present(result.Reservations[0].Instances[0].Tags, 'Spinup', 'complete')) {
+					resolve(instance_id);
+				} else {
+					console.log(`${region}: waiting for instance ${instance_id} spinup to complete with tag Spinup=complete`);
+					setTimeout(_check, 5000);
+				}
+			}).catch(reject);
+		}
+		_check();
+	});
+}
+
+function _do_create(create_region, instance_id, copy_regions){
+	return _wait_for_spinup_complete(create_region, instance_id)
+	.then(function(instance_id){
+		
+	});
 }
 
 function _gen_spinup_complete_ud(region) {
