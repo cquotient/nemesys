@@ -7,7 +7,8 @@ describe.only('create ami', function(){
 			describe_sg_spy,
 			run_instances_spy,
 			describe_instances_spy,
-			create_image_spy;
+			create_image_spy,
+			wait_for_spy;
 
 	before(function(){
 		create = require('../../../src/api/ami/create');
@@ -86,7 +87,14 @@ describe.only('create ami', function(){
 				});
 			},
 			createImageAsync: function(){
-				return Promise.resolve({});
+				return Promise.resolve({
+					ImageId: 'fake-image-id-1'
+				});
+			},
+			waitForAsync: function(state, params){
+				return Promise.resolve({
+
+				});
 			}
 		};
 
@@ -96,6 +104,7 @@ describe.only('create ami', function(){
 		describe_sg_spy = sandbox.spy(mock_ec2, 'describeSecurityGroupsAsync');
 		describe_instances_spy = sandbox.spy(mock_ec2, 'describeInstancesAsync');
 		create_image_spy = sandbox.spy(mock_ec2, 'createImageAsync');
+		wait_for_spy = sandbox.spy(mock_ec2, 'waitForAsync');
 
 		//mock fs
 		sandbox.stub(require('fs'), 'readFileAsync', function(file){
@@ -183,7 +192,15 @@ describe.only('create ami', function(){
 						DeviceName: "/dev/sdb", VirtualName: "ephemeral0"
 					}
 				]
-			})
+			});
+
+			expect(wait_for_spy).to.have.been.calledWith('imageExists', {
+				ImageIds: ['fake-image-id-1']
+			});
+
+			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
+				ImageIds: ['fake-image-id-1']
+			});
 		});
 	});
 

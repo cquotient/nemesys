@@ -40,6 +40,14 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks){
 			InstanceId: instance_id,
 			Name: ami_name,
 			BlockDeviceMappings: AWSUtil.get_bdms(disks)
+		}).then((result) => result.ImageId);
+	}).then(function(image_id){
+		return AWSProvider.get_ec2(create_region).waitForAsync('imageExists', {
+			ImageIds: [image_id]
+		}).then(() => image_id);
+	}).then(function(image_id){
+		return AWSProvider.get_ec2(create_region).waitForAsync('imageAvailable', {
+			ImageIds: [image_id]
 		});
 	});
 }
