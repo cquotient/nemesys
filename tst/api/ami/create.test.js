@@ -6,7 +6,8 @@ describe.only('create ami', function(){
 			expect,
 			describe_sg_spy,
 			run_instances_spy,
-			describe_instances_spy;
+			describe_instances_spy,
+			create_image_spy;
 
 	before(function(){
 		create = require('../../../src/api/ami/create');
@@ -83,6 +84,9 @@ describe.only('create ami', function(){
 						}
 					]
 				});
+			},
+			createImageAsync: function(){
+				return Promise.resolve({});
 			}
 		};
 
@@ -91,6 +95,7 @@ describe.only('create ami', function(){
 		run_instances_spy = sandbox.spy(mock_ec2, 'runInstancesAsync');
 		describe_sg_spy = sandbox.spy(mock_ec2, 'describeSecurityGroupsAsync');
 		describe_instances_spy = sandbox.spy(mock_ec2, 'describeInstancesAsync');
+		create_image_spy = sandbox.spy(mock_ec2, 'createImageAsync');
 
 		//mock fs
 		sandbox.stub(require('fs'), 'readFileAsync', function(file){
@@ -111,8 +116,8 @@ describe.only('create ami', function(){
 	it('should create an ami in all regions', function(){
 		this.timeout(10000);
 		let ud_files = ['fake-file-1', 'fake-file-2'];
-		let disks = [];
-		return create(['us-east-1', 'us-west-2'], 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1']).then(function(result){
+		let disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
+		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1']).then(function(result){
 			let expected_ud = '#!/bin/bash\n\n';
 			expected_ud += 'set -o pipefail\n';
 			expected_ud += 'set -e -x\n';
@@ -123,7 +128,19 @@ describe.only('create ami', function(){
 			expected_ud += 'aws ec2 create-tags --region us-east-1 --resources `ec2metadata --instance-id` --tags Key=Spinup,Value=complete\n';
 
 			expect(run_instances_spy).to.have.been.calledWith({
-				BlockDeviceMappings: [],
+				BlockDeviceMappings: [
+					{
+						DeviceName: "/dev/sda1",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "24", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdj",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "200", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdb", VirtualName: "ephemeral0"
+					}
+				],
 				EbsOptimized: false,
 				IamInstanceProfile: {
 					Name: 'fake-iam'
@@ -138,9 +155,9 @@ describe.only('create ami', function(){
 				},
 				NetworkInterfaces: [{
 					AssociatePublicIpAddress: true,
-				  DeviceIndex: 0,
-				  Groups: ["fake-sg-id-1"],
-				  SubnetId: "fake-subnet-id-1"
+					DeviceIndex: 0,
+					Groups: ["fake-sg-id-1"],
+					SubnetId: "fake-subnet-id-1"
 				}],
 				UserData: (new Buffer(expected_ud).toString('base64'))
 			});
@@ -150,7 +167,23 @@ describe.only('create ami', function(){
 				InstanceIds: ['fake-instance-id-1']
 			});
 
-			
+			expect(create_image_spy).to.have.been.calledWith({
+				InstanceId: 'fake-instance-id-1',
+				Name: 'fake-ami',
+				BlockDeviceMappings: [
+					{
+						DeviceName: "/dev/sda1",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "24", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdj",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "200", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdb", VirtualName: "ephemeral0"
+					}
+				]
+			})
 		});
 	});
 
