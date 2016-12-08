@@ -37,10 +37,10 @@ function _common_args(yargs) {
 			array: true,
 			choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
 		})
-		// .config('json-config', {
-		// 	describe: 'List of JSON files with parameters',
-		// 	array: true
-		// })
+		.config('json-config', {
+			describe: 'List of JSON files with parameters',
+			array: true
+		})
 		//TODO is there a way to use coerce, instead of having to do path normalization in
 		// arg_handler.js?
 		// .coerce('user-data-files', function(arg){
