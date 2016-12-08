@@ -47,7 +47,7 @@ function _wait_for_image(region, image_id) {
 	}).then(() => image_id);
 }
 
-function _do_create(create_region, instance_id, copy_regions, ami_name, disks){
+function _do_create(create_region, instance_id, copy_regions, ami_name, disks, preserve_instance){
 	return _wait_for_spinup_complete(create_region, instance_id)
 	.then(function(instance_id){
 		console.log(`${create_region}: ${instance_id} ready, creating image ${ami_name}`);
@@ -70,6 +70,16 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks){
 			});
 		});
 		return BB.all(copy_image_promises);
+	}).then(function(){
+		if(preserve_instance) {
+			console.log(`${create_region}: ${instance_id} will remain online`);
+			return Promise.resolve();
+		} else {
+			console.log(`${create_region}: terminating instance ${instance_id}`);
+			return AWSProvider.get_ec2(create_region).terminateInstancesAsync({
+				InstanceIds: [instance_id]
+			});
+		}
 	});
 }
 
@@ -77,13 +87,13 @@ function _gen_spinup_complete_ud(region) {
 	return `aws ec2 create-tags --region ${region} --resources \`ec2metadata --instance-id\` --tags Key=Spinup,Value=complete\n`;
 }
 
-function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, disks, az){
+function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, disks, az, preserve_instance){
 	let spinup_complete_ud = _gen_spinup_complete_ud(regions[0]);
 	// create in first region, then copy to others
 	return create_instance([regions[0]], vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, spinup_complete_ud, disks, az)
 	.then(function(instance_ids){ //create_instance is for many regions, so result is an array of ids
 		console.log(`${regions[0]}: instance (${instance_ids[0]}) created`);
-		return _do_create(regions[0], instance_ids[0], regions.slice(1), ami_name, disks);
+		return _do_create(regions[0], instance_ids[0], regions.slice(1), ami_name, disks, preserve_instance);
 	});
 }
 
