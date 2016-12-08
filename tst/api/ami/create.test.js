@@ -107,6 +107,11 @@ describe('create ami', function(){
 				return Promise.resolve({
 
 				});
+			},
+			createTagsAsync: function(){
+				return Promise.resolve({
+
+				});
 			}
 		};
 
@@ -208,9 +213,6 @@ describe('create ami', function(){
 				]
 			});
 
-			expect(wait_for_spy).to.have.been.calledWith('imageExists', {
-				ImageIds: ['fake-image-id-1']
-			});
 			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
 				ImageIds: ['fake-image-id-1']
 			});
@@ -221,9 +223,6 @@ describe('create ami', function(){
 				SourceRegion: 'us-east-1'
 			});
 
-			expect(wait_for_spy).to.have.been.calledWith('imageExists', {
-				ImageIds: ['fake-image-id-2']
-			});
 			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
 				ImageIds: ['fake-image-id-2']
 			});
