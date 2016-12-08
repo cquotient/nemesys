@@ -25,7 +25,7 @@ function _wait_for_spinup_complete(region, instance_id) {
 					resolve(instance_id);
 				} else {
 					console.log(`${region}: waiting for instance ${instance_id} spinup to complete with tag Spinup=complete`);
-					setTimeout(_check, 5000);
+					setTimeout(_check, 30000);
 				}
 			}).catch(reject);
 		}
@@ -34,14 +34,9 @@ function _wait_for_spinup_complete(region, instance_id) {
 }
 
 function _wait_for_image(region, image_id) {
-	console.log(`${region}: waiting for image ${image_id} to exist`);
-	return AWSProvider.get_ec2(region).waitForAsync('imageExists', {
+	console.log(`${region}: waiting for image ${image_id} to be available`);
+	return AWSProvider.get_ec2(region).waitForAsync('imageAvailable', {
 		ImageIds: [image_id]
-	}).then(function(){
-		console.log(`${region}: image ${image_id} exists, waiting for it to be available`);
-		return AWSProvider.get_ec2(region).waitForAsync('imageAvailable', {
-			ImageIds: [image_id]
-		});
 	}).then(function(){
 		console.log(`${region}: image ${image_id} is available`);
 	}).then(() => image_id);
@@ -59,17 +54,21 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks, p
 	}).then(function(image_id){
 		return _wait_for_image(create_region, image_id);
 	}).then(function(image_id){
-		console.log(`${create_region}: image is ready to copy, copying to: ${JSON.stringify(copy_regions)}`);
-		let copy_image_promises = copy_regions.map(function(region){
-			return AWSProvider.get_ec2(region).copyImageAsync({
-				Name: ami_name,
-				SourceImageId: image_id,
-				SourceRegion: create_region
-			}).then(function(result){
-				return _wait_for_image(region, result.ImageId);
+		if(copy_regions.length > 0) {
+			console.log(`${create_region}: image is ready to copy, copying to: ${JSON.stringify(copy_regions)}`);
+			let copy_image_promises = copy_regions.map(function(region){
+				return AWSProvider.get_ec2(region).copyImageAsync({
+					Name: ami_name,
+					SourceImageId: image_id,
+					SourceRegion: create_region
+				}).then(function(result){
+					return _wait_for_image(region, result.ImageId);
+				});
 			});
-		});
-		return BB.all(copy_image_promises);
+			return BB.all(copy_image_promises);
+		} else {
+			return Promise.resolve();
+		}
 	}).then(function(){
 		if(preserve_instance) {
 			console.log(`${create_region}: ${instance_id} will remain online`);
