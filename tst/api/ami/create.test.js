@@ -8,7 +8,8 @@ describe.only('create ami', function(){
 			run_instances_spy,
 			describe_instances_spy,
 			create_image_spy,
-			wait_for_spy;
+			wait_for_spy,
+			copy_image_spy;
 
 	before(function(){
 		create = require('../../../src/api/ami/create');
@@ -95,6 +96,11 @@ describe.only('create ami', function(){
 				return Promise.resolve({
 
 				});
+			},
+			copyImageAsync: function(){
+				return Promise.resolve({
+					ImageId: 'fake-image-id-2'
+				});
 			}
 		};
 
@@ -105,6 +111,7 @@ describe.only('create ami', function(){
 		describe_instances_spy = sandbox.spy(mock_ec2, 'describeInstancesAsync');
 		create_image_spy = sandbox.spy(mock_ec2, 'createImageAsync');
 		wait_for_spy = sandbox.spy(mock_ec2, 'waitForAsync');
+		copy_image_spy = sandbox.spy(mock_ec2, 'copyImageAsync');
 
 		//mock fs
 		sandbox.stub(require('fs'), 'readFileAsync', function(file){
@@ -197,9 +204,21 @@ describe.only('create ami', function(){
 			expect(wait_for_spy).to.have.been.calledWith('imageExists', {
 				ImageIds: ['fake-image-id-1']
 			});
-
 			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
 				ImageIds: ['fake-image-id-1']
+			});
+
+			expect(copy_image_spy).to.have.been.calledWith({
+				Name: 'fake-ami',
+				SourceImageId: 'fake-image-id-1',
+				SourceRegion: 'us-east-1'
+			});
+
+			expect(wait_for_spy).to.have.been.calledWith('imageExists', {
+				ImageIds: ['fake-image-id-2']
+			});
+			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
+				ImageIds: ['fake-image-id-2']
 			});
 		});
 	});
