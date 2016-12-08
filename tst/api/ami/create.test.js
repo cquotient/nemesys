@@ -1,6 +1,6 @@
 'use strict';
 
-describe.only('create ami', function(){
+describe('create ami', function(){
 	var create,
 			sandbox,
 			expect,
@@ -64,7 +64,7 @@ describe.only('create ami', function(){
 				return Promise.resolve({
 					Images: [
 						{
-							ImageId: 'fake-ami-id-1'
+							ImageId: 'fake-base-image-id-1'
 						}
 					]
 				});
@@ -168,7 +168,7 @@ describe.only('create ami', function(){
 				IamInstanceProfile: {
 					Name: 'fake-iam'
 				},
-				ImageId: 'fake-ami-id-1',
+				ImageId: 'fake-base-image-id-1',
 				InstanceType: 'c4.large',
 				KeyName: 'fake-key',
 				MaxCount: 1,
