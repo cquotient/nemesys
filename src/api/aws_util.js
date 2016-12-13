@@ -1,21 +1,8 @@
 'use strict';
 
 var AWSProvider = require('./aws_provider');
-var AWS = require('aws-sdk');
 var BB = require('bluebird');
 var fs = BB.promisifyAll(require('fs'));
-
-var ec2_conns = {};
-
-function _get_ec2(region) {
-	if(!ec2_conns[region]) {
-		ec2_conns[region] = BB.promisifyAll(new AWS.EC2({
-			region: region,
-			apiVersion: '2015-10-01'
-		}));
-	}
-	return ec2_conns[region];
-}
 
 function _get_asg(as, asg_name) {
 	return as.describeAutoScalingGroupsAsync({
@@ -54,7 +41,7 @@ function _get_vpc_id(region, vpc_name) {
 	});
 }
 
-function _get_userdata_string(file_names, env_vars) {
+function _get_userdata_string(file_names, env_vars, raw_ud_string) {
 	var ud_files_proms = file_names.map(function(path){
 		return fs.readFileAsync(path, 'utf-8');
 	});
@@ -75,6 +62,10 @@ function _get_userdata_string(file_names, env_vars) {
 			user_data_string += '# end env vars\n';
 		}
 
+		if(raw_ud_string) {
+			ud_files_content.push(raw_ud_string);
+		}
+
 		//concat with the rest of the user data
 		return ud_files_content.reduce(function(prev, curr) {
 			return prev + curr;
@@ -91,7 +82,7 @@ function _get_ami_id(region, ami_name) {
 			}
 		]
 	};
-	return _get_ec2(region).describeImagesAsync(params)
+	return AWSProvider.get_ec2(region).describeImagesAsync(params)
 	.then(function(data){
 		return data.Images[0].ImageId;
 	});

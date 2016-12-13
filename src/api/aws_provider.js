@@ -3,11 +3,16 @@
 var BB = require('bluebird');
 var AWS = require('aws-sdk');
 
+var ec2_conns = {};
+
 function _get_ec2(region) {
-	return BB.promisifyAll(new AWS.EC2({
-		region: region,
-		apiVersion: '2015-10-01'
-	}));
+	if(!ec2_conns[region]) {
+		ec2_conns[region] = BB.promisifyAll(new AWS.EC2({
+			region: region,
+			apiVersion: '2015-10-01'
+		}));
+	}
+	return ec2_conns[region];
 }
 
 function _get_as(region) {

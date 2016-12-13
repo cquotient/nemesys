@@ -80,6 +80,7 @@ function _handle_create(argv) {
 				argv['iam-role'],
 				argv['user-data-files'],
 				argv['region-user-data'],
+				null, //raw userdata string not supported from command line atm
 				argv['disks'],
 				argv['availability-zone'],
 				argv['tags'],
@@ -88,6 +89,30 @@ function _handle_create(argv) {
 				argv['optimize-ebs']
 			).then(function(){
 				console.log('created instance');
+				process.exit(0);
+			}).catch(function(err){
+				console.error(err.stack);
+				process.exit(1);
+			});
+			break;
+
+		case 'ami':
+			nemesys.ami.create(
+				argv['regions'],
+				argv['ami'],
+				argv['vpc'],
+				argv['base-ami'],
+				argv['instance-type'],
+				argv['ssh-key-pair'],
+				argv['security-groups'],
+				argv['iam-role'],
+				argv['user-data-files'],
+				argv['region-user-data'],
+				argv['disks'],
+				argv['availability-zone'],
+				argv['preserve-instance']
+			).then(function(){
+				console.log('created ami');
 				process.exit(0);
 			}).catch(function(err){
 				console.error(err.stack);
