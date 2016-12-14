@@ -56,6 +56,28 @@ function _parse_lifecycle_hooks(hooks) {
 	});
 }
 
+function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
+	return new Promise(function(resolve, reject){
+		function _check() {
+			var new_ready_count = new_asg.Instances.filter(function(instance){
+				return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy'
+			}).length;
+			if(new_ready_count === old_asg.DesiredCapacity) {
+				console.log(`${region}: ${new_asg_name} is ready`);
+				resolve();
+			} else {
+				console.log(`${region}: ${new_ready_count} healthy instances in ${new_asg_name}, but we want ${old_asg.DesiredCapacity} - waiting 30s`);
+				setTimeout(function(){
+					AWSUtil.get_asg(AS, new_asg_name).then(function(asg){
+						new_asg = asg;
+					}).then(_check);
+				}, _delay_ms);
+			}
+		}
+		_check();
+	});
+}
+
 function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 	var AS = AWSProvider.get_as(region);
 
@@ -92,25 +114,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		}).then(function(new_asg){
 			console.log(`${region}: new asg ${with_asg} created`);
 			console.log(`${region}: waiting for some healthy instances`);
-			return new Promise(function(resolve, reject){
-				function _check() {
-					var new_ready_count = new_asg.Instances.filter(function(instance){
-						return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy'
-					}).length;
-					if(new_ready_count === old_asg.DesiredCapacity) {
-						console.log(`${region}: ${with_asg} is ready`);
-						resolve();
-					} else {
-						console.log(`${region}: ${new_ready_count} healthy instances in ${with_asg}, but we want ${old_asg.DesiredCapacity} - waiting 30s`);
-						setTimeout(function(){
-							AWSUtil.get_asg(AS, with_asg).then(function(asg){
-								new_asg = asg;
-							}).then(_check);
-						}, _delay_ms);
-					}
-				}
-				_check();
-			});
+			return _wait_for_health(region, with_asg, new_asg, old_asg);
 		});
 	})
 	.then(function(){
