@@ -406,6 +406,18 @@ function parse_args (args) {
 						.example('nemesys delete sg -s my-sg');
 				})
 
+				.command('ami', 'Delete an AMI', function(yargs, argv){
+					_common_args(yargs)
+
+					.option('a', {
+						alias:       'ami',
+						description: 'AMI name'
+					})
+
+					.demand(['ami'])
+					.example('nemesys delete ami -r us-east-1 us-west-2 -a my-old-ami')
+				})
+
 				.demand(2)
 				.help('h')
 				.alias('h', 'help');

@@ -165,6 +165,18 @@ function _handle_delete(argv) {
 				process.exit(1);
 			});
 			break;
+		case 'ami':
+			nemesys.ami.delete(
+				argv['regions'],
+				argv['ami']
+			).then(function(){
+				console.log('deleted ami');
+				process.exit(0);
+			}).catch(function(err){
+				console.error(err.stack);
+				process.exit(1);
+			});
+			break;
 		default:
 			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
 			process.exit(1);
