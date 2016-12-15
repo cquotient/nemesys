@@ -57,6 +57,7 @@ function _parse_lifecycle_hooks(hooks) {
 }
 
 function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
+	//first wait for asg to report that all the instances are healthy
 	return new Promise(function(resolve, reject){
 		function _check() {
 			let new_ready_count = new_asg.Instances.filter(function(instance){
@@ -76,6 +77,7 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 		}
 		_check();
 	}).then(function(){
+		//then wait for the elb to report that all instances in the asg are healthy in the elb, too
 		console.log(`${region}: waiting for all hosts to be healthy in load balancer`);
 		return new Promise(function(resolve, reject){
 			function _check() {
@@ -84,7 +86,6 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 					let inst_elb_check_proms = asg.LoadBalancerNames.map(function(elb){
 						return AWSProvider.get_elb(region).describeInstanceHealthAsync({
 							LoadBalancerName: elb,
-							// Instances: new_instance_ids.map((inst_id) => {InstanceId: inst_id})
 							Instances: new_instance_ids.map( (inst_id) => ({InstanceId: inst_id}) )
 						});
 					});
