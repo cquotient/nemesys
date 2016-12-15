@@ -22,7 +22,8 @@ describe('replace asg', function(){
 			describe_alarms_spy,
 			put_alarm_spy,
 			del_sched_act_spy,
-			del_policy_spy;
+			del_policy_spy,
+			desc_inst_health_spy;
 
 	before(function(){
 		replace = require('../../../src/api/asg/replace');
@@ -42,7 +43,8 @@ describe('replace asg', function(){
 					if(name === 'fake-new-asg') {
 						var instances = [{
 							LifecycleState: 'InService',
-							HealthStatus: 'Healthy'
+							HealthStatus: 'Healthy',
+							InstanceId: 'fake-instance-id-1'
 						}];
 						//TODO: need a way to fake having instances become healthy
 						return Promise.resolve({
@@ -323,6 +325,22 @@ describe('replace asg', function(){
 		sandbox.stub(AWSProvider, 'get_cw', () => mock_cloudwatch);
 		describe_alarms_spy = sandbox.spy(mock_cloudwatch, 'describeAlarmsAsync');
 		put_alarm_spy = sandbox.spy(mock_cloudwatch, 'putMetricAlarmAsync');
+
+		const mock_elb = {
+			describeInstanceHealthAsync: function(params){
+				//TODO need a way to fake instance starting unhealthy and becoming healthy!
+				return Promise.resolve({
+					InstanceStates: [
+						{
+							InstanceId: 'fake-instance-id-1',
+							State: 'InService'
+						}
+					]
+				});
+			}
+		};
+		sandbox.stub(AWSProvider, 'get_elb', () => mock_elb);
+		desc_inst_health_spy = sandbox.spy(mock_elb, 'describeInstanceHealthAsync');
 	});
 
 	afterEach(function(){
@@ -472,6 +490,15 @@ describe('replace asg', function(){
 			//TODO let old asg go down to 0 instances...
 			expect(delete_asg_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-old-asg'
+			});
+
+			expect(desc_inst_health_spy).to.have.been.calledWith({
+				LoadBalancerName: 'fake-elb1',
+				Instances: [
+					{
+						InstanceId: 'fake-instance-id-1'
+					}
+				]
 			});
 		});
 	});

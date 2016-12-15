@@ -56,6 +56,58 @@ function _parse_lifecycle_hooks(hooks) {
 	});
 }
 
+function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
+	//first wait for asg to report that all the instances are healthy
+	return new Promise(function(resolve, reject){
+		function _check() {
+			let new_ready_count = new_asg.Instances.filter(function(instance){
+				return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy'
+			}).length;
+			if(new_ready_count === old_asg.DesiredCapacity) {
+				console.log(`${region}: asg ${new_asg_name} is ready`);
+				resolve();
+			} else {
+				console.log(`${region}: ${new_ready_count} healthy instances in ${new_asg_name}, but we want ${old_asg.DesiredCapacity} - waiting 30s`);
+				setTimeout(function(){
+					AWSUtil.get_asg(AWSProvider.get_as(region), new_asg_name).then(function(asg){
+						new_asg = asg;
+					}).then(_check).catch(reject);
+				}, _delay_ms);
+			}
+		}
+		_check();
+	}).then(function(){
+		//then wait for the elb to report that all instances in the asg are healthy in the elb, too
+		console.log(`${region}: waiting for all hosts to be healthy in load balancer`);
+		return new Promise(function(resolve, reject){
+			function _check() {
+				AWSUtil.get_asg(AWSProvider.get_as(region), new_asg_name).then(function(asg){
+					let new_instance_ids = new_asg.Instances.map((instance) => instance.InstanceId);
+					let inst_elb_check_proms = asg.LoadBalancerNames.map(function(elb){
+						return AWSProvider.get_elb(region).describeInstanceHealthAsync({
+							LoadBalancerName: elb,
+							Instances: new_instance_ids.map( (inst_id) => ({InstanceId: inst_id}) )
+						});
+					});
+					return BB.all(inst_elb_check_proms);
+				}).then(function(elb_results){
+					let unhealthy = elb_results.reduce(function(prev, curr){
+						return prev.concat(curr.InstanceStates.filter((obj) => obj.State !== 'InService').map((obj) => obj.InstanceId));
+					}, []);
+					if(unhealthy.length > 0) {
+						console.log(`${region}: found ${unhealthy.length} unhealthy instances (${unhealthy.join(', ')}) - waiting 30s`);
+						setTimeout(_check, _delay_ms);
+					} else {
+						console.log(`${region}: all hosts healthy in load balancer`);
+						resolve();
+					}
+				}).catch(reject);
+			}
+			_check();
+		});
+	});
+}
+
 function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 	var AS = AWSProvider.get_as(region);
 
@@ -92,25 +144,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		}).then(function(new_asg){
 			console.log(`${region}: new asg ${with_asg} created`);
 			console.log(`${region}: waiting for some healthy instances`);
-			return new Promise(function(resolve, reject){
-				function _check() {
-					var new_ready_count = new_asg.Instances.filter(function(instance){
-						return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy'
-					}).length;
-					if(new_ready_count === old_asg.DesiredCapacity) {
-						console.log(`${region}: ${with_asg} is ready`);
-						resolve();
-					} else {
-						console.log(`${region}: ${new_ready_count} healthy instances in ${with_asg}, but we want ${old_asg.DesiredCapacity} - waiting 30s`);
-						setTimeout(function(){
-							AWSUtil.get_asg(AS, with_asg).then(function(asg){
-								new_asg = asg;
-							}).then(_check);
-						}, _delay_ms);
-					}
-				}
-				_check();
-			});
+			return _wait_for_health(region, with_asg, new_asg, old_asg);
 		});
 	})
 	.then(function(){
