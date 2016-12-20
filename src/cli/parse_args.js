@@ -469,7 +469,7 @@ function _validate(command) {
 		'create asg':      ['regions', 'vpc', 'group', 'launch-config'],
 		'create sg':       ['regions', 'vpc', 'security-group'],
 		'create lc':       ['regions', 'launch-config', 'ami', 'instance-type', 'ssh-key-pair'],
-		'create instance': ['regions', 'az', 'ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
+		'create instance': ['regions', 'ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
 		'create ami':      ['regions', 'ami', 'base-ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
 		'replace asg':     ['regions', 'vpc', 'group', 'launch-config', 'old-group'],
 		'replace sg':      ['regions', 'security-group', 'ingress-rules'],
