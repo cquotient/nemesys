@@ -2,7 +2,7 @@
 
 describe('delete ami', function(){
 
-	var delete_ami,
+	let delete_ami,
 			sandbox,
 			expect,
 			deregister_spy,

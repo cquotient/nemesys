@@ -1,18 +1,18 @@
 'use strict';
 
-var BB = require('bluebird');
-var validator = require('validator');
+const BB = require('bluebird');
+const validator = require('validator');
 
-var AWSUtil = require('../aws_util');
+const AWSUtil = require('../aws_util');
 
 function _get_ip_permissions(region, ingress, groups_are_ids) {
-	var perms = [],
+	let perms = [],
 			groups_to_lookup = [];
 	ingress.forEach(function(obj){
-		var parts = obj.split(':');
+		let parts = obj.split(':');
 		if(validator.isIP(parts[0].split('/')[0]) || parts[0] === '0.0.0.0/0') {
-			var protocol = parts[2] ? parts[2] : 'tcp';
-			var port_range = parts[1].split('-');
+			let protocol = parts[2] ? parts[2] : 'tcp';
+			let port_range = parts[1].split('-');
 			perms.push({
 				FromPort: +port_range[0],
 				ToPort: +(port_range[1] || port_range[0]),
@@ -29,10 +29,10 @@ function _get_ip_permissions(region, ingress, groups_are_ids) {
 	});
 
 	if(groups_to_lookup.length > 0) {
-		var group_id_proms = groups_to_lookup.map(function(obj){
-			var parts = obj.split(':');
-			var protocol = parts[2] ? parts[2] : 'tcp';
-			var port_range = parts[1].split('-');
+		let group_id_proms = groups_to_lookup.map(function(obj){
+			let parts = obj.split(':');
+			let protocol = parts[2] ? parts[2] : 'tcp';
+			let port_range = parts[1].split('-');
 			if(groups_are_ids) {
 				perms.push({
 					FromPort: +port_range[0],

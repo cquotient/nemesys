@@ -1,10 +1,9 @@
 'use strict';
 
-var BB = require('bluebird');
-var AWS = require('aws-sdk');
+const BB = require('bluebird');
 
-var AWSUtil = require('../aws_util');
-var AWSProvider = require('../aws_provider');
+const AWSUtil = require('../aws_util');
+const AWSProvider = require('../aws_provider');
 
 function _apply_default_options(optional) {
 	optional = optional || {};
@@ -19,15 +18,14 @@ function _apply_default_options(optional) {
 
 function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, azs, optional){
 	optional = _apply_default_options(optional);
-	var AS = AWSProvider.get_as(region);
-	var EC2 = AWSProvider.get_ec2(region);
+	let AS = AWSProvider.get_as(region);
+
 	// first, get a list of subnets for our vpc in that region
 	return AWSUtil.get_subnet_ids(region, vpc_name, azs)
 	.then(function(subnets){
 		// then, create an asg with those subnets
 		console.log(`${region}: found ${subnets.length} subnets`);
-		var tags;
-		var create_params = {
+		let create_params = {
 			AutoScalingGroupName: asg_name,
 			LaunchConfigurationName: lc_name,
 			VPCZoneIdentifier: subnets.join(','),
@@ -40,12 +38,12 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 		};
 		if(instance_tags) {
 			console.log(`${region}: applying tags`);
-			var tags = instance_tags.map(function(tag_str){
-				var kv = tag_str.split('=');
+			let tags = instance_tags.map(function(tag_str){
+				let kv = tag_str.split('=');
 				return {
 					Key: kv[0],
 					Value: kv[1]
-				}
+				};
 			});
 			create_params.Tags = tags;
 		}
@@ -62,7 +60,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	})
 	// add lifecycle hooks
 	.then(function(asg){
-		var hook_promises = optional.hooks.map(function(hook){
+		let hook_promises = optional.hooks.map(function(hook){
 			return AS.putLifecycleHookAsync({
 				AutoScalingGroupName: asg_name,
 				LifecycleHookName: hook.name,
@@ -76,7 +74,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 		return BB.all(hook_promises).then(() => asg);
 	})
 	// add notifications
-	.then(function(asg){
+	.then(function(){
 		if(error_topic) {
 			console.log(`${region}: adding notification for topic ${error_topic}`);
 			return AWSUtil.get_account_id().then(function(id){
@@ -96,7 +94,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	.then(function(asg){
 		if(optional.scheduled_actions) {
 			console.log(`${region}: adding scheduled actions`);
-			var action_promises = optional.scheduled_actions.map(function(action){
+			let action_promises = optional.scheduled_actions.map(function(action){
 				return AS.putScheduledUpdateGroupActionAsync({
 					AutoScalingGroupName: asg_name,
 					ScheduledActionName: action.name,
@@ -112,8 +110,8 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	// add scaling policies
 	.then(function(asg){
 		if(optional.scaling_policies) {
-			var policy_promises = optional.scaling_policies.map(function(policy){
-				var policy_params = {
+			let policy_promises = optional.scaling_policies.map(function(policy){
+				let policy_params = {
 					AutoScalingGroupName: asg_name,
 					PolicyName: policy.name,
 					AdjustmentType: policy.adjustment_type
@@ -136,7 +134,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 					return AWSProvider.get_cw(region).describeAlarmsAsync({
 						AlarmNames: policy.alarm_names
 					}).then(function(desc_alarm_result){
-						var alarm_promises = desc_alarm_result.MetricAlarms.map(function(alarm){
+						let alarm_promises = desc_alarm_result.MetricAlarms.map(function(alarm){
 							return AWSProvider.get_cw(region).putMetricAlarmAsync({
 								AlarmName: alarm.AlarmName,
 								MetricName: alarm.MetricName,
@@ -162,7 +160,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 }
 
 function create(regions, vpc_name, asg_name, lc_name, instance_tags, error_topic, azs, optional){
-	var region_promises = regions.map(function(region){
+	let region_promises = regions.map(function(region){
 		return _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_topic, azs, optional);
 	});
 	return BB.all(region_promises);

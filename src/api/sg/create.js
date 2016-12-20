@@ -1,14 +1,14 @@
 'use strict';
 
-var AWS = require('aws-sdk');
-var BB = require('bluebird');
+const AWS = require('aws-sdk');
+const BB = require('bluebird');
 
-var AWSUtil = require('../aws_util');
-var SGUtil = require('./sg_util');
+const AWSUtil = require('../aws_util');
+const SGUtil = require('./sg_util');
 
 function _do_create(region, vpc_name, sg_name, desc, ingress) {
 	if(!desc) desc = sg_name;
-	var EC2 = BB.promisifyAll(new AWS.EC2({
+	let EC2 = BB.promisifyAll(new AWS.EC2({
 		region: region,
 		apiVersion: '2015-10-01'
 	}));
@@ -32,7 +32,7 @@ function _do_create(region, vpc_name, sg_name, desc, ingress) {
 					IpPermissions: ip_perms
 				});
 			})
-			.then(function(result){
+			.then(function(){
 				console.log(`${region}: successfully applied ${ingress.length} sg ingress rules to ${sg_name}`);
 			});
 		}
@@ -40,7 +40,7 @@ function _do_create(region, vpc_name, sg_name, desc, ingress) {
 }
 
 function _create(regions, vpc_name, sg_name, desc, ingress) {
-	var region_promises = regions.map(function(region){
+	let region_promises = regions.map(function(region){
 		return _do_create(region, vpc_name, sg_name, desc, ingress);
 	});
 	return BB.all(region_promises);

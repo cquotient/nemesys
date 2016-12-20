@@ -1,14 +1,14 @@
 'use strict';
 
-var AWS = require('aws-sdk');
-var BB = require('bluebird');
+const AWS = require('aws-sdk');
+const BB = require('bluebird');
 
-var AWSUtil = require('../aws_util');
+const AWSUtil = require('../aws_util');
 
-var _delay_ms = 30000;
+const _delay_ms = 30000;
 
 function _do_update(region, asg_name, lc_name) {
-	var AS = BB.promisifyAll(new AWS.AutoScaling({
+	let AS = BB.promisifyAll(new AWS.AutoScaling({
 		region: region,
 		apiVersion: '2011-01-01'
 	}));
@@ -19,7 +19,7 @@ function _do_update(region, asg_name, lc_name) {
 		// make sure the requested launch configuration exists
 		if(lc_resp.LaunchConfigurations.length !== 1) {
 			return Promise.reject(new Error(`No Launch Configuration found for name "${lc_name}" in ${region}`));
-		};
+		}
 		return AWSUtil.get_asg(AS, asg_name);
 		//
 	})
@@ -41,7 +41,7 @@ function _do_update(region, asg_name, lc_name) {
 		//
 	})
 	.then(function(asg){
-		console.log(`${region}: launch config updated, increasing capacity and replacing instances...`)
+		console.log(`${region}: launch config updated, increasing capacity and replacing instances...`);
 		return AS.updateAutoScalingGroupAsync({
 			AutoScalingGroupName: asg_name,
 			DesiredCapacity: asg.DesiredCapacity + 1,
@@ -55,11 +55,11 @@ function _do_update(region, asg_name, lc_name) {
 	})
 	.then(function(asg){
 		return new Promise(function(resolve, reject){
-			var timeout;
+			let timeout;
 			function _check(){
 				// we need to distinguish between new healthy instances,
 				// new unhealthy instances, and old (not terminated) instances
-				var new_ready = [], new_not_ready = [], old = [];
+				let new_ready = [], new_not_ready = [], old = [];
 				asg.Instances.forEach(function(obj){
 					if(obj.LaunchConfigurationName === lc_name) {
 						if(obj.LifecycleState === 'InService' && obj.HealthStatus === 'Healthy') {
@@ -119,7 +119,7 @@ function _do_update(region, asg_name, lc_name) {
 }
 
 function update(regions, asg_name, lc_name) {
-	var region_promises = regions.map(function(region){
+	let region_promises = regions.map(function(region){
 		return _do_update(region, asg_name, lc_name);
 	});
 	return BB.all(region_promises);

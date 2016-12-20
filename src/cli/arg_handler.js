@@ -1,28 +1,26 @@
 'use strict';
 
-const path = require('path');
-
 const nemesys = require('../');
 
-function _handle_create(argv) {
-	switch(argv._[1]) {
+function _handle_create(cmd) {
+	switch(cmd.target) {
 
 		case 'asg':
-			var optional = {
-				min: argv['min-instance-count'],
-				max: argv['max-instance-count'],
-				desired: argv['desired-instance-count']
+			let optional = {
+				min: cmd.opts['min-instance-count'],
+				max: cmd.opts['max-instance-count'],
+				desired: cmd.opts['desired-instance-count']
 			};
 			nemesys.asg.create(
-				argv['regions'],
-				argv['vpc'],
-				argv['group'],
-				argv['launch-config'],
-				argv['instance-tags'],
-				argv['error-topic'],
-				argv['availability-zones'],
+				cmd.opts['regions'],
+				cmd.opts['vpc'],
+				cmd.opts['group'],
+				cmd.opts['launch-config'],
+				cmd.opts['instance-tags'],
+				cmd.opts['error-topic'],
+				cmd.opts['availability-zones'],
 				optional
-			).then(function(result){
+			).then(function(){
 				console.log('create complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -33,12 +31,12 @@ function _handle_create(argv) {
 
 		case 'sg':
 			nemesys.sg.create(
-				argv['regions'],
-				argv['vpc'],
-				argv['security-group'],
-				argv['description'],
-				argv['ingress-rules']
-			).then(function(result){
+				cmd.opts['regions'],
+				cmd.opts['vpc'],
+				cmd.opts['security-group'],
+				cmd.opts['description'],
+				cmd.opts['ingress-rules']
+			).then(function(){
 				console.log('created security group');
 				process.exit(0);
 			}).catch(function(err){
@@ -49,17 +47,17 @@ function _handle_create(argv) {
 
 		case 'lc':
 			nemesys.lc.create(
-				argv['regions'],
-				argv['launch-config'],
-				argv['ami'],
-				argv['instance-type'],
-				argv['ssh-key-pair'],
-				argv['security-groups'],
-				argv['iam-role'],
-				argv['user-data-files'],
-				argv['region-user-data'],
-				argv['disks'],
-				argv['clone-spot-price']
+				cmd.opts['regions'],
+				cmd.opts['launch-config'],
+				cmd.opts['ami'],
+				cmd.opts['instance-type'],
+				cmd.opts['ssh-key-pair'],
+				cmd.opts['security-groups'],
+				cmd.opts['iam-role'],
+				cmd.opts['user-data-files'],
+				cmd.opts['region-user-data'],
+				cmd.opts['disks'],
+				cmd.opts['clone-spot-price']
 			).then(function(){
 				console.log('created launch configuration');
 				process.exit(0);
@@ -71,22 +69,22 @@ function _handle_create(argv) {
 
 		case 'instance':
 			nemesys.instance.create(
-				argv['regions'],
-				argv['vpc'],
-				argv['ami'],
-				argv['instance-type'],
-				argv['ssh-key-pair'],
-				argv['security-groups'],
-				argv['iam-role'],
-				argv['user-data-files'],
-				argv['region-user-data'],
+				cmd.opts['regions'],
+				cmd.opts['vpc'],
+				cmd.opts['ami'],
+				cmd.opts['instance-type'],
+				cmd.opts['ssh-key-pair'],
+				cmd.opts['security-groups'],
+				cmd.opts['iam-role'],
+				cmd.opts['user-data-files'],
+				cmd.opts['region-user-data'],
 				null, //raw userdata string not supported from command line atm
-				argv['disks'],
-				argv['availability-zone'],
-				argv['tags'],
-				argv['network-interface'],
-				argv['env'],
-				argv['optimize-ebs']
+				cmd.opts['disks'],
+				cmd.opts['availability-zone'],
+				cmd.opts['tags'],
+				cmd.opts['network-interface'],
+				cmd.opts['env'],
+				cmd.opts['optimize-ebs']
 			).then(function(){
 				console.log('created instance');
 				process.exit(0);
@@ -98,19 +96,19 @@ function _handle_create(argv) {
 
 		case 'ami':
 			nemesys.ami.create(
-				argv['regions'],
-				argv['ami'],
-				argv['vpc'],
-				argv['base-ami'],
-				argv['instance-type'],
-				argv['ssh-key-pair'],
-				argv['security-groups'],
-				argv['iam-role'],
-				argv['user-data-files'],
-				argv['region-user-data'],
-				argv['disks'],
-				argv['availability-zone'],
-				argv['preserve-instance']
+				cmd.opts['regions'],
+				cmd.opts['ami'],
+				cmd.opts['vpc'],
+				cmd.opts['base-ami'],
+				cmd.opts['instance-type'],
+				cmd.opts['ssh-key-pair'],
+				cmd.opts['security-groups'],
+				cmd.opts['iam-role'],
+				cmd.opts['user-data-files'],
+				cmd.opts['region-user-data'],
+				cmd.opts['disks'],
+				cmd.opts['availability-zone'],
+				cmd.opts['preserve-instance']
 			).then(function(){
 				console.log('created ami');
 				process.exit(0);
@@ -121,13 +119,13 @@ function _handle_create(argv) {
 			break;
 
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${cmd.command} ${cmd.target}`);
 			process.exit(1);
 	}
 }
 
 function _handle_delete(argv) {
-	switch(argv._[1]) {
+	switch(argv.target) {
 		case 'asg':
 			nemesys.asg.delete(
 				argv['regions'],
@@ -137,7 +135,7 @@ function _handle_delete(argv) {
 				process.exit(0);
 			}).catch(function(err){
 				console.error(err.stack);
-				process.exit(1)
+				process.exit(1);
 			});
 			break;
 		case 'lc':
@@ -178,13 +176,13 @@ function _handle_delete(argv) {
 			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
 
 function _handle_replace(argv) {
-	switch(argv._[1]) {
+	switch(argv.target) {
 		case 'asg':
 			nemesys.asg.replace(
 				argv['regions'],
@@ -192,7 +190,7 @@ function _handle_replace(argv) {
 				argv['old-group'],
 				argv['group'],
 				argv['launch-config']
-			).then(function(result){
+			).then(function(){
 				console.log('replace complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -205,7 +203,7 @@ function _handle_replace(argv) {
 				argv['regions'],
 				argv['security-group'],
 				argv['ingress-rules']
-			).then(function(result){
+			).then(function(){
 				console.log('replace complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -214,19 +212,19 @@ function _handle_replace(argv) {
 			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
 
 function _handle_update(argv) {
-	switch(argv._[1]) {
+	switch(argv.target) {
 		case 'asg':
 			nemesys.asg.update(
 				argv['regions'],
 				argv['group'],
 				argv['launch-config']
-			).then(function(result){
+			).then(function(){
 				console.log('update complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -246,29 +244,17 @@ function _handle_update(argv) {
 			}).catch(function(err){
 				console.error(err.stack);
 				process.exit(1);
-			})
+			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
 
-const path_args = ['user-data-files', 'region-user-data'];
 
 function _handle(argv) {
-	//TODO is there a way to use yargs coercion instead of this mess?
-	if(argv['json-config']) {
-		let dir = path.dirname(argv['json-config']);
-		path_args.forEach((path_arg) => {
-			if(argv[path_arg]) {
-				argv[path_arg] = argv[path_arg].map((file) => {
-					return path.resolve(dir, file);
-				});
-			}
-		});
-	}
-	switch(argv._[0]) {
+	switch(argv.command) {
 		case 'update':
 			_handle_update(argv);
 			break;
@@ -286,7 +272,7 @@ function _handle(argv) {
 			break;
 
 		default:
-			console.log(`Unrecognized command: ${argv._[0]}`);
+			console.log(`Unrecognized command: ${argv.command}`);
 			process.exit(1);
 	}
 }

@@ -1,7 +1,7 @@
 'use strict';
 
 describe('replace asg', function(){
-	var replace,
+	let replace,
 			sandbox,
 			expect,
 			describe_asg_spy,
@@ -41,7 +41,7 @@ describe('replace asg', function(){
 				&& params.AutoScalingGroupNames.length === 1) {
 					let name = params.AutoScalingGroupNames[0];
 					if(name === 'fake-new-asg') {
-						var instances = [{
+						let instances = [{
 							LifecycleState: 'InService',
 							HealthStatus: 'Healthy',
 							InstanceId: 'fake-instance-id-1'
@@ -256,7 +256,7 @@ describe('replace asg', function(){
 		put_hook_spy = sandbox.spy(mock_as, 'putLifecycleHookAsync');
 		del_sched_act_spy = sandbox.spy(mock_as, 'deleteScheduledActionAsync');
 		del_policy_spy = sandbox.spy(mock_as, 'deletePolicyAsync');
-		var AWSProvider = require('../../../src/api/aws_provider');
+		let AWSProvider = require('../../../src/api/aws_provider');
 		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
 
 		const mock_ec2 = {

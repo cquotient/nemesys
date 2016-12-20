@@ -2,7 +2,7 @@
 
 describe('AWSUtil', function(){
 
-	var AWSUtil,
+	let AWSUtil,
 
 			expect,
 			sinon,

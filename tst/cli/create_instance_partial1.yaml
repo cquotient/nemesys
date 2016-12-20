@@ -1,0 +1,4 @@
+---
+availability-zone: q
+vpc: testVpc
+regions: us-east-1

@@ -1,10 +1,10 @@
 'use strict';
 
-var BB = require('bluebird');
+const BB = require('bluebird');
 
-var AWSProvider = require('../aws_provider');
-var AWSUtil = require('../aws_util');
-var SGUtil = require('./sg_util');
+const AWSProvider = require('../aws_provider');
+const AWSUtil = require('../aws_util');
+const SGUtil = require('./sg_util');
 
 function _get_sg_rules(ec2, sg_id) {
 	return ec2.describeSecurityGroupsAsync({
@@ -17,7 +17,7 @@ function _get_sg_rules(ec2, sg_id) {
 
 function _get_rule_strings(api_rules) {
 	return api_rules.reduce(function(prev, curr){
-		var port_range = curr.FromPort === curr.ToPort ? curr.ToPort : `${curr.FromPort}-${curr.ToPort}`;
+		let port_range = curr.FromPort === curr.ToPort ? curr.ToPort : `${curr.FromPort}-${curr.ToPort}`;
 		if(curr.UserIdGroupPairs) {
 			prev = prev.concat(curr.UserIdGroupPairs.map((rule) => [rule.GroupId, port_range, curr.IpProtocol].join(':')));
 		}
@@ -29,7 +29,7 @@ function _get_rule_strings(api_rules) {
 }
 
 function _do_replace(region, sg_name, ingress) {
-	var EC2 = AWSProvider.get_ec2(region);
+	let EC2 = AWSProvider.get_ec2(region);
 	return AWSUtil.get_sg_id(region, sg_name)
 	.then(function(sg_id) {
 		console.log(`${region}: found security group ${sg_name} (${sg_id})`);
@@ -38,15 +38,15 @@ function _do_replace(region, sg_name, ingress) {
 			console.log(`${region}: ${sg_name} has ${sg_rules.length} rule(s)`);
 			return SGUtil.get_ip_permissions(region, ingress)
 			.then(function(ip_perms){
-				var existing_rules = _get_rule_strings(sg_rules);
-				var new_rules = _get_rule_strings(ip_perms);
-				var rules_to_add = [];
+				let existing_rules = _get_rule_strings(sg_rules);
+				let new_rules = _get_rule_strings(ip_perms);
+				let rules_to_add = [];
 				for(let i=0; i<new_rules.length; i++) {
 					if(existing_rules.indexOf(new_rules[i]) === -1) {
 						rules_to_add.push(ip_perms[i]);
 					}
 				}
-				var rules_to_delete = [];
+				let rules_to_delete = [];
 				for(let i=0; i<existing_rules.length; i++) {
 					if(new_rules.indexOf(existing_rules[i]) === -1) {
 						rules_to_delete.push(existing_rules[i]);
@@ -64,7 +64,7 @@ function _do_replace(region, sg_name, ingress) {
 				console.log(`${region}: no changes to make`);
 				return Promise.resolve();
 			}
-			var promises = [];
+			let promises = [];
 			if(add_delete.to_add.length > 0) {
 				console.log(`${region}: adding ${add_delete.to_add.length} rule(s)`);
 				promises.push(EC2.authorizeSecurityGroupIngressAsync({
@@ -81,13 +81,13 @@ function _do_replace(region, sg_name, ingress) {
 					IpPermissions: add_delete.to_delete
 				}));
 			}
-			return Promise.all(promises)
+			return Promise.all(promises);
 		});
 	});
 }
 
 function _replace(regions, sg_name, ingress) {
-	var region_promises = regions.map(function(region){
+	let region_promises = regions.map(function(region){
 		return _do_replace(region, sg_name, ingress);
 	});
 	return BB.all(region_promises);

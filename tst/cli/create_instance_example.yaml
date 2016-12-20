@@ -1,0 +1,8 @@
+---
+az: a
+ami: test_ami
+instance-type: xxxxxxxxxxxTestYaml
+ssh-key-pair: mykeys
+availability-zone: q
+vpc: testVpc
+regions: us-east-1

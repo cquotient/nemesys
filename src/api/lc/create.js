@@ -1,9 +1,9 @@
 'use strict';
 
-var BB = require('bluebird');
-var AWS = require('aws-sdk');
+const BB = require('bluebird');
+const AWS = require('aws-sdk');
 
-var AWSUtil = require('../aws_util');
+const AWSUtil = require('../aws_util');
 
 function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, spot_price) {
 	if(!ud) ud = [];
@@ -17,8 +17,8 @@ function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, 
 		AWSUtil.get_userdata_string(ud)
 	])
 	.then(function(results){
-		var bdms = AWSUtil.get_bdms(disks);
-		var params = {
+		let bdms = AWSUtil.get_bdms(disks);
+		let params = {
 			LaunchConfigurationName: lc_name,
 			AssociatePublicIpAddress: true,
 			BlockDeviceMappings: bdms,
@@ -33,9 +33,9 @@ function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, 
 			UserData: (new Buffer(results[2]).toString('base64'))
 		};
 		// we may need to create 2, so use an array for the lc param objects
-		var lc_params = [params];
+		let lc_params = [params];
 		if(spot_price) {
-			var spot_clone = JSON.parse(JSON.stringify(params));
+			let spot_clone = JSON.parse(JSON.stringify(params));
 			spot_clone.LaunchConfigurationName = lc_name + '_spot';
 			spot_clone.SpotPrice = spot_price + '';
 			lc_params.push(spot_clone);
@@ -43,11 +43,11 @@ function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, 
 		return lc_params;
 	})
 	.then(function(lc_params){
-		var AS = BB.promisifyAll(new AWS.AutoScaling({
+		let AS = BB.promisifyAll(new AWS.AutoScaling({
 			region: region,
 			apiVersion: '2011-01-01'
 		}));
-		var lc_proms = lc_params.map(function(param){
+		let lc_proms = lc_params.map(function(param){
 			return AS.createLaunchConfigurationAsync(param);
 		});
 		return BB.all(lc_proms);
@@ -55,7 +55,7 @@ function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, 
 }
 
 function create(regions, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, spot_price){
-	var region_promises = regions.map(function(region, idx){
+	let region_promises = regions.map(function(region, idx){
 		return _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud[idx], disks, spot_price);
 	});
 	return BB.all(region_promises);
