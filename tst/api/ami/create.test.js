@@ -1,7 +1,7 @@
 'use strict';
 
 describe('create ami', function(){
-	var create,
+	let create,
 			sandbox,
 			expect,
 			describe_sg_spy,

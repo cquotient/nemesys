@@ -1,7 +1,7 @@
 'use strict';
 
-let BB = require('bluebird');
-let AWS = require('aws-sdk');
+const BB = require('bluebird');
+const AWS = require('aws-sdk');
 
 function _do_delete(region, asg_name) {
 	let AS = BB.promisifyAll(new AWS.AutoScaling({

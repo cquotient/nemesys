@@ -1,11 +1,11 @@
 'use strict';
 
-let AWS = require('aws-sdk');
-let BB = require('bluebird');
+const AWS = require('aws-sdk');
+const BB = require('bluebird');
 
-let AWSUtil = require('../aws_util');
+const AWSUtil = require('../aws_util');
 
-let _delay_ms = 30000;
+const _delay_ms = 30000;
 
 function _do_update(region, asg_name, lc_name) {
 	let AS = BB.promisifyAll(new AWS.AutoScaling({

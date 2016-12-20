@@ -1,10 +1,10 @@
 'use strict';
 
-let BB = require('bluebird');
+const BB = require('bluebird');
 
-let AWSProvider = require('../aws_provider');
-let AWSUtil = require('../aws_util');
-let SGUtil = require('./sg_util');
+const AWSProvider = require('../aws_provider');
+const AWSUtil = require('../aws_util');
+const SGUtil = require('./sg_util');
 
 function _get_sg_rules(ec2, sg_id) {
 	return ec2.describeSecurityGroupsAsync({

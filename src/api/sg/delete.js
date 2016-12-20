@@ -1,9 +1,9 @@
 'use strict';
 
-let BB = require('bluebird');
-let AWS = require('aws-sdk');
+const BB = require('bluebird');
+const AWS = require('aws-sdk');
 
-let AWSUtil = require('../aws_util');
+const AWSUtil = require('../aws_util');
 
 function _do_delete(region, sg_name) {
 	return AWSUtil.get_sg_id(region, sg_name)

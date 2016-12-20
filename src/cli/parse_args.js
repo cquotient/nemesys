@@ -83,7 +83,7 @@ function parse_args (args) {
 						.option('remove', {
 							describe: 'Use this flag to remove, instead of add, the specified rules',
 							type:     'boolean'
-						})
+						});
 				})
 
 				.demand(2)

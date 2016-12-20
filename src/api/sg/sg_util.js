@@ -1,9 +1,9 @@
 'use strict';
 
-let BB = require('bluebird');
-let validator = require('validator');
+const BB = require('bluebird');
+const validator = require('validator');
 
-let AWSUtil = require('../aws_util');
+const AWSUtil = require('../aws_util');
 
 function _get_ip_permissions(region, ingress, groups_are_ids) {
 	let perms = [],

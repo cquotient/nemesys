@@ -1,8 +1,8 @@
 'use strict';
 
-let AWSProvider = require('./aws_provider');
-let BB = require('bluebird');
-let fs = BB.promisifyAll(require('fs'));
+const AWSProvider = require('./aws_provider');
+const BB = require('bluebird');
+const fs = BB.promisifyAll(require('fs'));
 
 function _get_asg(as, asg_name) {
 	return as.describeAutoScalingGroupsAsync({

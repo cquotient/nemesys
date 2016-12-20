@@ -1,9 +1,9 @@
 'use strict';
 
-let BB = require('bluebird');
+const BB = require('bluebird');
 
-let AWSUtil = require('../aws_util');
-let AWSProvider = require('../aws_provider');
+const AWSUtil = require('../aws_util');
+const AWSProvider = require('../aws_provider');
 
 function _apply_default_options(optional) {
 	optional = optional || {};

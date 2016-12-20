@@ -1,10 +1,10 @@
 'use strict';
 
-let AWS = require('aws-sdk');
-let BB = require('bluebird');
+const AWS = require('aws-sdk');
+const BB = require('bluebird');
 
-let AWSUtil = require('../aws_util');
-let SGUtil = require('./sg_util');
+const AWSUtil = require('../aws_util');
+const SGUtil = require('./sg_util');
 
 function _do_create(region, vpc_name, sg_name, desc, ingress) {
 	if(!desc) desc = sg_name;

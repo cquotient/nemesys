@@ -1,9 +1,9 @@
 'use strict';
 
-let BB = require('bluebird');
-let AWS = require('aws-sdk');
+const BB = require('bluebird');
+const AWS = require('aws-sdk');
 
-let AWSUtil = require('../aws_util');
+const AWSUtil = require('../aws_util');
 
 function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, spot_price) {
 	if(!ud) ud = [];

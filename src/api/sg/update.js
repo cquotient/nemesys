@@ -1,10 +1,10 @@
 'use strict';
 
-let BB = require('bluebird');
-let AWS = require('aws-sdk');
+const BB = require('bluebird');
+const AWS = require('aws-sdk');
 
-let AWSUtil = require('../aws_util');
-let SGUtil = require('./sg_util');
+const AWSUtil = require('../aws_util');
+const SGUtil = require('./sg_util');
 
 function _do_update(region, sg_name, ingress, should_remove) {
 	return AWSUtil.get_sg_id(region, sg_name)

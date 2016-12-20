@@ -2,7 +2,7 @@
 
 describe('parse_args', function(){
 
-	var testee,
+	let testee,
 
 		assert,
 		sinon,

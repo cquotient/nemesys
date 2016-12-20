@@ -1,9 +1,9 @@
 'use strict';
 
-let BB = require('bluebird');
+const BB = require('bluebird');
 
-let AWSUtil = require('../aws_util');
-let AWSProvider = require('../aws_provider');
+const AWSUtil = require('../aws_util');
+const AWSProvider = require('../aws_provider');
 
 function _get_eni_id(ec2, region, vpc, az, eni_name) {
 	return AWSUtil.get_vpc_id(region, vpc)

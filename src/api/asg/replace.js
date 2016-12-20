@@ -1,10 +1,10 @@
 'use strict';
 
-let BB = require('bluebird');
+const BB = require('bluebird');
 
-let AWSUtil = require('../aws_util');
-let AWSProvider = require('../aws_provider');
-let create = require('./create');
+const AWSUtil = require('../aws_util');
+const AWSProvider = require('../aws_provider');
+const create = require('./create');
 
 let _delay_ms = 30000;
 

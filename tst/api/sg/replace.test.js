@@ -2,7 +2,7 @@
 
 describe('replace sg', function(){
 
-	var replace,
+	let replace,
 			sandbox,
 			chai,
 			sinon_chai,
@@ -20,8 +20,8 @@ describe('replace sg', function(){
 		expect = require('chai').expect;
 
 		// mock ec2 api calls
-		var AWSProvider = require('../../../src/api/aws_provider');
-		var ec2_mock = {
+		let AWSProvider = require('../../../src/api/aws_provider');
+		let ec2_mock = {
 			describeSecurityGroupsAsync: function(params) {
 				if(params.Filters
 				&& params.Filters[0]) {
@@ -192,7 +192,7 @@ describe('replace sg', function(){
 	});
 
 	it('should make no changes if not necessary', function(){
-		var ingress = ['fake-sg-allow-1-name:9043',
+		let ingress = ['fake-sg-allow-1-name:9043',
 									'fake-sg-allow-1-name:9044:udp',
 									'1.2.3.4/32:9998:tcp',
 									'1.2.3.4/32:9998:udp'];
@@ -204,7 +204,7 @@ describe('replace sg', function(){
 	});
 
 	it('should add one ip rule', function(){
-		var ingress = ['fake-sg-allow-1-name:9043',
+		let ingress = ['fake-sg-allow-1-name:9043',
 									'fake-sg-allow-1-name:9044:udp',
 									'1.2.3.4/32:9998:tcp',
 									'1.2.3.4/32:9998:udp',
@@ -226,7 +226,7 @@ describe('replace sg', function(){
 	});
 
 	it('should remove one ip rule', function(){
-		var ingress = ['fake-sg-allow-1-name:9043',
+		let ingress = ['fake-sg-allow-1-name:9043',
 									'fake-sg-allow-1-name:9044:udp',
 									'1.2.3.4/32:9998:udp'];
 		return replace(['us-east-1'], 'fake-sg', ingress).then(function(result){
@@ -246,7 +246,7 @@ describe('replace sg', function(){
 	});
 
 	it('should remove one sg rule', function(){
-		var ingress = ['fake-sg-allow-1-name:9044:udp',
+		let ingress = ['fake-sg-allow-1-name:9044:udp',
 									'1.2.3.4/32:9998:tcp',
 									'1.2.3.4/32:9998:udp'];
 		return replace(['us-east-1'], 'fake-sg', ingress).then(function(result){
@@ -270,7 +270,7 @@ describe('replace sg', function(){
 	});
 
 	it('should remove many ip rules', function(){
-		var ingress = ['1.2.3.4/32:22'];
+		let ingress = ['1.2.3.4/32:22'];
 		return replace(['us-east-1'], 'fake-sg-ssh', ingress).then(function(result){
 			expect(describe_sg_spy).to.have.been.calledWith({"DryRun":false,"Filters":[{"Name":"group-name","Values":["fake-sg-ssh"]}]});
 			expect(authorize_sg_spy).to.not.have.been.called;
@@ -314,7 +314,7 @@ describe('replace sg', function(){
 	});
 
 	it('should add many ip rules, for a range', function(){
-		var ingress = [
+		let ingress = [
 			'1.2.3.4/32:7000-7001',
 			'2.2.3.4/32:7000-7001',
 			'3.2.3.4/32:7000-7001',

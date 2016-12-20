@@ -5,7 +5,7 @@
   "repository": "cquotient/nemesys",
   "scripts": {
     "pretest": "./node_modules/eslint/bin/eslint.js .",
-    "test": "./node_modules/mocha/bin/mocha tst/**/*"
+    "test": "./node_modules/mocha/bin/mocha --recursive tst"
   },
   "dependencies": {
     "aws-sdk": "2.2.26",
