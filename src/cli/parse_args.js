@@ -417,16 +417,10 @@ function parse_args (args) {
 		.argv;
 
 
-	let dir = path.dirname(argv['json-config']);
-	['user-data-files', 'region-user-data'].forEach((path_arg) => {
-		if(argv[path_arg]) {
-			argv[path_arg] = argv[path_arg].map((file) => {
-				return path.resolve(dir, file);
-			});
-		}
-	});
+	let dir = './';
 	if (argv['json-config']) {
 		for (let file of argv['json-config']) {
+			dir = path.dirname(file);
 			try {
 				let doc = JSON.parse(fs.readFileSync(file));
 				argv = Object.assign(doc, argv);
@@ -438,6 +432,7 @@ function parse_args (args) {
 	}
 	if (argv['yaml-config']) {
 		for (let file of argv['yaml-config']) {
+			dir = path.dirname(file);
 			try {
 				let doc = yaml.safeLoad(fs.readFileSync(file));
 				argv = Object.assign(doc, argv);
@@ -447,6 +442,13 @@ function parse_args (args) {
 			}
 		}
 	}
+	['user-data-files', 'region-user-data'].forEach((path_arg) => {
+		if(argv[path_arg]) {
+			argv[path_arg] = argv[path_arg].map((file) => {
+				return path.resolve(dir, file);
+			});
+		}
+	});
 
 	let command = {
 		command: argv._[0],
