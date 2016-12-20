@@ -367,7 +367,7 @@ describe('replace sg', function(){
 						ToPort: 7001
 					}
 				]
-			})
+			});
 		});
 	});
 

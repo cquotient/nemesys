@@ -3,7 +3,7 @@
 const BB = require('bluebird');
 const AWS = require('aws-sdk');
 
-var ec2_conns = {},
+let ec2_conns = {},
 		elb_conns = {};
 
 function _get_ec2(region) {

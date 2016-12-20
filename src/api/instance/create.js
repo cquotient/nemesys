@@ -1,10 +1,9 @@
 'use strict';
 
-var BB = require('bluebird');
-var AWS = require('aws-sdk');
+let BB = require('bluebird');
 
-var AWSUtil = require('../aws_util');
-var AWSProvider = require('../aws_provider');
+let AWSUtil = require('../aws_util');
+let AWSProvider = require('../aws_provider');
 
 function _get_eni_id(ec2, region, vpc, az, eni_name) {
 	return AWSUtil.get_vpc_id(region, vpc)
@@ -78,10 +77,10 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_f
 		ud_files = [rud_file].concat(ud_files);
 	}
 
-	var EC2 = AWSProvider.get_ec2(region);
+	let EC2 = AWSProvider.get_ec2(region);
 
-	var sg_ids_promise = AWSUtil.get_sg_ids(region, sg);
-	var subnet_id_promise = AWSUtil.get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
+	let sg_ids_promise = AWSUtil.get_sg_ids(region, sg);
+	let subnet_id_promise = AWSUtil.get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
 
 	return BB.all([
 		AWSUtil.get_ami_id(region, ami),
@@ -89,7 +88,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_f
 		_get_network_interface(EC2, region, vpc, az, eni_name, sg_ids_promise, subnet_id_promise)
 	])
 	.spread(function(ami_id, userdata_string, network_interface){
-		var bdms = AWSUtil.get_bdms(disks);
+		let bdms = AWSUtil.get_bdms(disks);
 		return {
 			BlockDeviceMappings: bdms,
 			EbsOptimized: !!ebs_opt,
@@ -119,7 +118,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_f
 		if(tags && tags.length > 0) {
 			console.log(`${region}: instance ${instance_id} is ready, applying tags`);
 			tags = tags.map(function(tag_str){
-				var kv = tag_str.split('=');
+				let kv = tag_str.split('=');
 				return {
 					Key: kv[0],
 					Value: kv[1]
@@ -139,7 +138,7 @@ function create(regions, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file
 	if( !(az.length === 1 || az.length === regions.length) ) {
 		return Promise.reject(new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`));
 	}
-	var region_promises = regions.map(function(region, idx){
+	let region_promises = regions.map(function(region, idx){
 		let zone = az.length == regions.length ? az[idx] : az[0];
 		let rud_file = rud_files && rud_files[idx] ? rud_files[idx] : null;
 		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt);

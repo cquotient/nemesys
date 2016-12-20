@@ -1,12 +1,12 @@
 'use strict';
 
-var BB = require('bluebird');
+let BB = require('bluebird');
 
-var AWSUtil = require('../aws_util');
-var AWSProvider = require('../aws_provider');
-var create = require('./create');
+let AWSUtil = require('../aws_util');
+let AWSProvider = require('../aws_provider');
+let create = require('./create');
 
-var _delay_ms = 30000;
+let _delay_ms = 30000;
 
 function _parse_sched_actions(sched_actions) {
 	return sched_actions.ScheduledUpdateGroupActions.map(function(action){
@@ -20,7 +20,7 @@ function _parse_sched_actions(sched_actions) {
 
 function _parse_policies(policies) {
 	return policies.ScalingPolicies.map(function(policy){
-		var parsed = {
+		let parsed = {
 			name: policy.PolicyName,
 			adjustment_type: policy.AdjustmentType,
 			alarm_names: policy.Alarms.map((alarm) => alarm.AlarmName)
@@ -61,7 +61,7 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 	return new Promise(function(resolve, reject){
 		function _check() {
 			let new_ready_count = new_asg.Instances.filter(function(instance){
-				return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy'
+				return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy';
 			}).length;
 			if(new_ready_count === old_asg.DesiredCapacity) {
 				console.log(`${region}: asg ${new_asg_name} is ready`);
@@ -109,7 +109,7 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 }
 
 function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
-	var AS = AWSProvider.get_as(region);
+	let AS = AWSProvider.get_as(region);
 
 	let sched_action_promise = AS.describeScheduledActionsAsync({AutoScalingGroupName: replace_asg}).then(_parse_sched_actions);
 	let policy_promise = AS.describePoliciesAsync({AutoScalingGroupName: replace_asg}).then(_parse_policies);
@@ -122,7 +122,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		AS.describeLifecycleHooksAsync({AutoScalingGroupName: replace_asg}).then(_parse_lifecycle_hooks)
 	])
 	.spread(function(old_asg, old_notifications, parsed_old_sched_acts, parsed_old_policies, parsed_old_hooks){
-		var options = {
+		let options = {
 			min: old_asg.MinSize,
 			max: old_asg.MaxSize,
 			desired: old_asg.DesiredCapacity,
@@ -132,10 +132,10 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 			scaling_policies: parsed_old_policies,
 			hooks: parsed_old_hooks
 		};
-		var instance_tags = old_asg.Tags.map(function(tag){
+		let instance_tags = old_asg.Tags.map(function(tag){
 			return `${tag.Key}=${tag.Value}`;
 		});
-		var error_topic;
+		let error_topic;
 		if(old_notifications && old_notifications.NotificationConfigurations.length > 0) {
 			error_topic = old_notifications.NotificationConfigurations[0].TopicARN.split(':')[5];
 		}
@@ -180,7 +180,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		});
 	})
 	.then(function(old_asg){
-		return new Promise(function(resolve, reject){
+		return new Promise(function(resolve){
 			function _check() {
 				if(old_asg.Instances.length > 0) {
 					console.log(`${region}: waiting for ${old_asg.Instances.length} instance(s) to terminate`);
@@ -202,7 +202,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		return AS.deleteAutoScalingGroupAsync({
 			AutoScalingGroupName: replace_asg
 		}).catch(function(err){
-			console.error(`${region}: ${err.message}, sleeping and retrying one time...`)
+			console.error(`${region}: ${err.message}, sleeping and retrying one time...`);
 			return BB.delay(_delay_ms).then(function(){
 				return AS.deleteAutoScalingGroupAsync({
 					AutoScalingGroupName: replace_asg
@@ -213,7 +213,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 }
 
 function replace(regions, vpc_name, replace_asg, with_asg, lc_name) {
-	var region_promises = regions.map(function(region){
+	let region_promises = regions.map(function(region){
 		return _do_replace(region, vpc_name, replace_asg, with_asg, lc_name);
 	});
 	return BB.all(region_promises);

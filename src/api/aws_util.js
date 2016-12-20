@@ -1,8 +1,8 @@
 'use strict';
 
-var AWSProvider = require('./aws_provider');
-var BB = require('bluebird');
-var fs = BB.promisifyAll(require('fs'));
+let AWSProvider = require('./aws_provider');
+let BB = require('bluebird');
+let fs = BB.promisifyAll(require('fs'));
 
 function _get_asg(as, asg_name) {
 	return as.describeAutoScalingGroupsAsync({
@@ -13,7 +13,7 @@ function _get_asg(as, asg_name) {
 }
 
 function _get_sg_id(region, group_name) {
-	var EC2 = AWSProvider.get_ec2(region);
+	let EC2 = AWSProvider.get_ec2(region);
 	return EC2.describeSecurityGroupsAsync({
 		DryRun: false,
 		Filters: [
@@ -42,13 +42,13 @@ function _get_vpc_id(region, vpc_name) {
 }
 
 function _get_userdata_string(file_names, env_vars, raw_ud_string) {
-	var ud_files_proms = file_names.map(function(path){
+	let ud_files_proms = file_names.map(function(path){
 		return fs.readFileAsync(path, 'utf-8');
 	});
 	return BB.all(ud_files_proms)
 	.then(function(ud_files_content){
 		// standard beginning of shell script user data, so we dont have to repeat it everywhere
-		var user_data_string = '#!/bin/bash\n\n';
+		let user_data_string = '#!/bin/bash\n\n';
 		user_data_string += 'set -o pipefail\n';
 		user_data_string += 'set -e -x\n';
 		user_data_string += 'exec >> /tmp/exec.log 2>&1\n\n';
@@ -57,7 +57,7 @@ function _get_userdata_string(file_names, env_vars, raw_ud_string) {
 		if(env_vars) {
 			user_data_string += '# begin env vars\n';
 			env_vars.forEach(function(env){
-				user_data_string += `export ${env}\n`
+				user_data_string += `export ${env}\n`;
 			});
 			user_data_string += '# end env vars\n';
 		}
@@ -74,7 +74,7 @@ function _get_userdata_string(file_names, env_vars, raw_ud_string) {
 }
 
 function _get_ami_id(region, ami_name) {
-	var params = {
+	let params = {
 		Filters: [
 			{
 				Name: 'name',
@@ -89,7 +89,7 @@ function _get_ami_id(region, ami_name) {
 }
 
 function _get_sg_ids(region, sg) {
-	var proms = sg.map(function(name){
+	let proms = sg.map(function(name){
 		return _get_sg_id(region, name);
 	});
 	return BB.all(proms);
@@ -98,7 +98,7 @@ function _get_sg_ids(region, sg) {
 function _get_subnet_ids(region, vpc_name, azs) {
 	return _get_vpc_id(region, vpc_name)
 	.then(function(vpc_id){
-		var filters = [
+		let filters = [
 			{
 				Name: 'vpc-id',
 				Values: [vpc_id]
@@ -120,8 +120,8 @@ function _get_subnet_ids(region, vpc_name, azs) {
 
 function _get_bdms(disks) {
 	return disks.map(function(d){
-		var d_split = d.split(':');
-		var bdm = {
+		let d_split = d.split(':');
+		let bdm = {
 			DeviceName: d_split[0]
 		};
 		if(d_split[1] === 'ebs') {

@@ -2,6 +2,10 @@
 'use strict';
 //TODO use yargs auto completion feature!
 
+const path = require('path');
+const yaml = require('js-yaml');
+const fs   = require('fs');
+
 let group_opt = {
 	alias: 'group',
 	describe: 'Name of the Autoscaling Group to create or update'
@@ -35,40 +39,37 @@ function _common_args(yargs) {
 			alias: 'regions',
 			describe: 'EC2 regions to operate in',
 			array: true,
-			choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1']
+			choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'] // TODO - let's not hardcode this :) http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html
 		})
-		.config('json-config', {
+		.option('json-config', {
 			describe: 'List of JSON files with parameters',
 			array: true
 		})
-		//TODO is there a way to use coerce, instead of having to do path normalization in
-		// arg_handler.js?
-		// .coerce('user-data-files', function(arg){
-		// 	console.log('coercing user-data');
-		// })
-		.demand(['regions']);
+		.option('yaml-config', {
+			describe: 'List of YAML files with parameters',
+			array: true
+		});
 }
 
 function parse_args (args) {
 	let argv = require('yargs')(args || process.argv)
-		.usage('nemesys {command}')
+		.usage('nemesys {command} {target} [options]')
 		// commands
 
-		.command('update', 'Update an EC2 resource', function (yargs, argv) {
+		.command('update', 'Update an EC2 resource', function (yargs) {
 			yargs
 
-				.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function (yargs, argv) {
+				.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function (yargs) {
 					yargs
 						.option('g', group_opt)
 						.option('l', lc_opt)
-						.demand(['group', 'launch-config'])
 						.example('nemesys update asg -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
 							'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
 						.help('h')
 						.alias('h', 'help');
 				})
 
-				.command('sg', 'Update a Security Group', function (yargs, argv) {
+				.command('sg', 'Update a Security Group', function (yargs) {
 					_common_args(yargs)
 						.option('s', {
 							alias:    'security-group',
@@ -83,7 +84,6 @@ function parse_args (args) {
 							describe: 'Use this flag to remove, instead of add, the specified rules',
 							type:     'boolean'
 						})
-						.demand(['security-group'])
 				})
 
 				.demand(2)
@@ -92,10 +92,10 @@ function parse_args (args) {
 				.alias('h', 'help');
 		})
 
-		.command('create', 'Create an EC2 resource', function (yargs, argv) {
+		.command('create', 'Create an EC2 resource', function (yargs) {
 			yargs
 
-				.command('asg', 'Create an Autoscaling Group', function (yargs, argv) {
+				.command('asg', 'Create an Autoscaling Group', function (yargs) {
 					_common_args(yargs)
 
 						.option('v', vpc_opt)
@@ -120,14 +120,13 @@ function parse_args (args) {
 						.option('desired-instance-count', {
 							describe: 'Desired number of instances in ASG'
 						})
-						.demand(['vpc', 'group', 'launch-config'])
 						.example('nemesys create asg -v my_vpc -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
 							'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
 						.help('h')
 						.alias('h', 'help');
 				})
 
-				.command('sg', 'Create a Security Group', function (yargs, argv) {
+				.command('sg', 'Create a Security Group', function (yargs) {
 					_common_args(yargs)
 						.option('v', vpc_opt)
 						.option('s', {
@@ -140,12 +139,11 @@ function parse_args (args) {
 						})
 						.option('i', ingress_rules_opt)
 
-						.demand(['vpc', 'security-group'])
 						.example('nemesys create sg -s ssh-access -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1',
 							'Creates a security group in ap-southeast-1 called "ssh-access", using regions.json to discover the vpc to use');
 				})
 
-				.command('lc', 'Create a Launch Configuration', function (yargs, argv) {
+				.command('lc', 'Create a Launch Configuration', function (yargs) {
 					_common_args(yargs)
 
 						.option('l', lc_opt)
@@ -190,12 +188,11 @@ function parse_args (args) {
 							describe: 'Create a clone of this Launch Configuration with the given spot price. The spot clone will have "_spot" appended to the name'
 						})
 
-						.demand(['launch-config', 'ami', 'instance-type', 'ssh-key-pair'])
 						.example('nemesys create lc -r ap-southeast-1 -l test-lc -a my_ami_name -i c3.large -k key_name -I my_role -s my_sg -u ~/userdata.sh --region-user-data ~/region_userdata.sh -d /dev/sda1:ebs:24:gp2 /dev/sdb:ephemeral:ephemeral0 -S 0.02',
 							'Creates a Launch Configuration with the given parameters, with a clone using spot instances at the given spot price');
 				})
 
-				.command('instance', 'Create an Instance', function (yargs, argv) {
+				.command('instance', 'Create an Instance', function (yargs) {
 					_common_args(yargs)
 
 						.option('a', {
@@ -261,11 +258,10 @@ function parse_args (args) {
 							describe: 'Use EBS optimization'
 						})
 
-						.demand(['ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'])
 						.example('');
 				})
 
-				.command('ami', 'Create an AMI', function (yargs, argv) {
+				.command('ami', 'Create an AMI', function (yargs) {
 					_common_args(yargs)
 
 					.option('a', {
@@ -320,7 +316,6 @@ function parse_args (args) {
 						default: false
 					})
 
-					.demand(['ami', 'base-ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'])
 					.help('h')
 					.alias('h', 'help');
 				})
@@ -330,10 +325,10 @@ function parse_args (args) {
 				.alias('h', 'help');
 		})
 
-		.command('replace', 'Replace an existing EC2 resource with a new one', function (yargs, argv) {
+		.command('replace', 'Replace an existing EC2 resource with a new one', function (yargs) {
 			yargs
 
-				.command('asg', 'Replace an Autoscaling Group', function (yargs, argv) {
+				.command('asg', 'Replace an Autoscaling Group', function (yargs) {
 					_common_args(yargs)
 						.option('v', vpc_opt)
 						.option('g', group_opt)
@@ -342,25 +337,23 @@ function parse_args (args) {
 							alias:    'old-group',
 							describe: 'Name of the Autoscaling Group to replace. Only applies to `replace` command'
 						})
-						.demand(['vpc', 'group', 'launch-config', 'old-group'])
 						.example('nemesys replace -o tracking_asg_2015_12_03 -g tracking_asg_2015_12_04 -l tracking_2015_12_04_spot -r eu-west-1',
 							'Replaces ASG tracking_asg_2015_12_03 with a new one called tracking_asg_2015_12_04, with launch config tracking_2015_12_04_spot')
 						.help('h')
-						.alias('h', 'help')
+						.alias('h', 'help');
 				})
 
-				.command('sg', 'Replace the rules on an existing Security Group', function (yargs, argv) {
+				.command('sg', 'Replace the rules on an existing Security Group', function (yargs) {
 					_common_args(yargs)
 						.option('s', {
 							alias:    'security-group',
 							describe: 'Name of the Security Group'
 						})
 						.option('i', ingress_rules_opt)
-						.demand(['security-group', 'ingress-rules'])
 						.example('nemesys replace sg -s cassandra-node -i logconsumer-server:9042 -r us-east-1',
 							'Replaces the rules in SG "cassandra-node" with just one rule allowing access from logconsumer-server on port 9042 (tcp)')
 						.help('h')
-						.alias('h', 'help')
+						.alias('h', 'help');
 				})
 
 				.demand(2)
@@ -368,19 +361,17 @@ function parse_args (args) {
 				.alias('h', 'help');
 		})
 
-		.command('delete', 'Delete an EC2 resource', function (yargs, argv) {
+		.command('delete', 'Delete an EC2 resource', function (yargs) {
 			yargs
-
-				.command('asg', 'Delete an Autoscaling Group', function (yargs, argv) {
+				.command('asg', 'Delete an Autoscaling Group', function (yargs) {
 					_common_args(yargs)
 						.option('g', group_opt)
-						.demand(['group'])
 						.example('nemesys delete asg -v my_vpc -g my_asg')
 						.help('h')
 						.alias('h', 'help');
 				})
 
-				.command('lc', 'Delete a Launch Configuration', function (yargs, argv) {
+				.command('lc', 'Delete a Launch Configuration', function (yargs) {
 					_common_args(yargs)
 
 						.option('l', lc_opt)
@@ -390,11 +381,10 @@ function parse_args (args) {
 							type:     'boolean'
 						})
 
-						.demand(['launch-config'])
 						.example('nemesys delete lc -l test-lc -r ap-southeast-1 us-east-1');
 				})
 
-				.command('sg', 'Delete a Security Group', function (yargs, argv) {
+				.command('sg', 'Delete a Security Group', function (yargs) {
 					_common_args(yargs)
 
 						.option('s', {
@@ -402,11 +392,10 @@ function parse_args (args) {
 							describe: 'Name of the Security Group'
 						})
 
-						.demand(['security-group'])
 						.example('nemesys delete sg -s my-sg');
 				})
 
-				.command('ami', 'Delete an AMI', function(yargs, argv){
+				.command('ami', 'Delete an AMI', function(yargs){
 					_common_args(yargs)
 
 					.option('a', {
@@ -414,8 +403,7 @@ function parse_args (args) {
 						description: 'AMI name'
 					})
 
-					.demand(['ami'])
-					.example('nemesys delete ami -r us-east-1 us-west-2 -a my-old-ami')
+					.example('nemesys delete ami -r us-east-1 us-west-2 -a my-old-ami');
 				})
 
 				.demand(2)
@@ -428,9 +416,87 @@ function parse_args (args) {
 		.alias('h', 'help')
 		.argv;
 
-	_validate_dependent_args(argv);
 
-	return argv;
+	let dir = path.dirname(argv['json-config']);
+	['user-data-files', 'region-user-data'].forEach((path_arg) => {
+		if(argv[path_arg]) {
+			argv[path_arg] = argv[path_arg].map((file) => {
+				return path.resolve(dir, file);
+			});
+		}
+	});
+	if (argv['json-config']) {
+		for (let file of argv['json-config']) {
+			try {
+				let doc = JSON.parse(fs.readFileSync(file));
+				argv = Object.assign(doc, argv);
+			} catch (e) {
+				e.message = 'Failure loading ' + file + e.message;
+				throw e; // bubble it up
+			}
+		}
+	}
+	if (argv['yaml-config']) {
+		for (let file of argv['yaml-config']) {
+			try {
+				let doc = yaml.safeLoad(fs.readFileSync(file));
+				argv = Object.assign(doc, argv);
+			} catch (e) {
+				e.message = 'Failure loading ' + file + e.message;
+				throw e; // bubble it up
+			}
+		}
+	}
+
+	let command = {
+		command: argv._[0],
+		target:  argv._[1],
+		opts:    argv
+	};
+
+	if (!_validate(command)) {
+		process.exit(1);
+	}
+
+	return command;
+}
+
+function _validate(command) {
+	// TODO - I really think this validation belongs to the actual commands themselves and not the arg parser
+	const demands = {
+		'update asg':      ['regions', 'group', 'launch-config'],
+		'update sg':       ['regions', 'security-group'],
+		'create asg':      ['regions', 'vpc', 'group', 'launch-config'],
+		'create sg':       ['regions', 'vpc', 'security-group'],
+		'create lc':       ['regions', 'launch-config', 'ami', 'instance-type', 'ssh-key-pair'],
+		'create instance': ['regions', 'az', 'ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
+		'create ami':      ['regions', 'ami', 'base-ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
+		'replace asg':     ['regions', 'vpc', 'group', 'launch-config', 'old-group'],
+		'replace sg':      ['regions', 'security-group', 'ingress-rules'],
+		'delete asg':      ['regions', 'group'],
+		'delete lc':       ['regions', 'launch-config'],
+		'delete sg':       ['regions', 'security-group'],
+		'delete ami':      ['regions', 'ami'],
+	};
+
+	let missing = [],
+		demand = demands[command.command + ' ' + command.target];
+
+	if (!demand || !demand.length) {
+		console.error(`Unknown command or target '${command.command} ${command.target}'`);
+		return false;
+	}
+
+	for (let opt of demand) {
+		if (!command.opts[opt]) {
+			missing.push(opt);
+		}
+	}
+	if (missing.length) {
+		console.error('Missing required arguments: ' + missing.join(', '));
+		return false;
+	}
+	return _validate_dependent_args(command.opts);
 }
 
 function _validate_dependent_args(argv) {
@@ -456,9 +522,10 @@ function _validate_dependent_args(argv) {
 
 		if (missing.length > 0) {
 			console.error('Missing required ENVs: ' + missing.join(', '));
-			process.exit(1);
+			return false;
 		}
 	}
+	return true;
 }
 
 module.exports = {

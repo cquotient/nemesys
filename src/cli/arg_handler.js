@@ -1,14 +1,12 @@
 'use strict';
 
-const path = require('path');
-
 const nemesys = require('../');
 
 function _handle_create(argv) {
-	switch(argv._[1]) {
+	switch(argv.target) {
 
 		case 'asg':
-			var optional = {
+			let optional = {
 				min: argv['min-instance-count'],
 				max: argv['max-instance-count'],
 				desired: argv['desired-instance-count']
@@ -22,7 +20,7 @@ function _handle_create(argv) {
 				argv['error-topic'],
 				argv['availability-zones'],
 				optional
-			).then(function(result){
+			).then(function(){
 				console.log('create complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -38,7 +36,7 @@ function _handle_create(argv) {
 				argv['security-group'],
 				argv['description'],
 				argv['ingress-rules']
-			).then(function(result){
+			).then(function(){
 				console.log('created security group');
 				process.exit(0);
 			}).catch(function(err){
@@ -121,13 +119,13 @@ function _handle_create(argv) {
 			break;
 
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
 
 function _handle_delete(argv) {
-	switch(argv._[1]) {
+	switch(argv.target) {
 		case 'asg':
 			nemesys.asg.delete(
 				argv['regions'],
@@ -137,7 +135,7 @@ function _handle_delete(argv) {
 				process.exit(0);
 			}).catch(function(err){
 				console.error(err.stack);
-				process.exit(1)
+				process.exit(1);
 			});
 			break;
 		case 'lc':
@@ -178,13 +176,13 @@ function _handle_delete(argv) {
 			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
 
 function _handle_replace(argv) {
-	switch(argv._[1]) {
+	switch(argv.target) {
 		case 'asg':
 			nemesys.asg.replace(
 				argv['regions'],
@@ -192,7 +190,7 @@ function _handle_replace(argv) {
 				argv['old-group'],
 				argv['group'],
 				argv['launch-config']
-			).then(function(result){
+			).then(function(){
 				console.log('replace complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -205,7 +203,7 @@ function _handle_replace(argv) {
 				argv['regions'],
 				argv['security-group'],
 				argv['ingress-rules']
-			).then(function(result){
+			).then(function(){
 				console.log('replace complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -214,19 +212,19 @@ function _handle_replace(argv) {
 			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
 
 function _handle_update(argv) {
-	switch(argv._[1]) {
+	switch(argv.target) {
 		case 'asg':
 			nemesys.asg.update(
 				argv['regions'],
 				argv['group'],
 				argv['launch-config']
-			).then(function(result){
+			).then(function(){
 				console.log('update complete');
 				process.exit(0);
 			}).catch(function(err){
@@ -246,29 +244,17 @@ function _handle_update(argv) {
 			}).catch(function(err){
 				console.error(err.stack);
 				process.exit(1);
-			})
+			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv._[0]} ${argv._[1]}`);
+			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
 
-const path_args = ['user-data-files', 'region-user-data'];
 
 function _handle(argv) {
-	//TODO is there a way to use yargs coercion instead of this mess?
-	if(argv['json-config']) {
-		let dir = path.dirname(argv['json-config']);
-		path_args.forEach((path_arg) => {
-			if(argv[path_arg]) {
-				argv[path_arg] = argv[path_arg].map((file) => {
-					return path.resolve(dir, file);
-				});
-			}
-		});
-	}
-	switch(argv._[0]) {
+	switch(argv.command) {
 		case 'update':
 			_handle_update(argv);
 			break;
@@ -286,7 +272,7 @@ function _handle(argv) {
 			break;
 
 		default:
-			console.log(`Unrecognized command: ${argv._[0]}`);
+			console.log(`Unrecognized command: ${argv.command}`);
 			process.exit(1);
 	}
 }
