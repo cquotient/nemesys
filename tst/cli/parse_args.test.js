@@ -18,7 +18,7 @@ describe('parse_args', function(){
 		sandbox = sinon.sandbox.create();
 		sandbox.stub(process, 'exit');
 		sandbox.stub(console, 'error');
-		sandbox.stub(console, 'log');
+		// sandbox.stub(console, 'log');
 		testee = require('../../src/cli/parse_args');
 	});
 
