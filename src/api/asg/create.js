@@ -2,6 +2,7 @@
 
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 const AWSProvider = require('../aws_provider');
 
@@ -24,7 +25,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	return AWSUtil.get_subnet_ids(region, vpc_name, azs)
 	.then(function(subnets){
 		// then, create an asg with those subnets
-		console.log(`${region}: found ${subnets.length} subnets`);
+		Logger.info(`${region}: found ${subnets.length} subnets`);
 		let create_params = {
 			AutoScalingGroupName: asg_name,
 			LaunchConfigurationName: lc_name,
@@ -37,7 +38,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 			HealthCheckGracePeriod: optional.hc_grace
 		};
 		if(instance_tags) {
-			console.log(`${region}: applying tags`);
+			Logger.info(`${region}: applying tags`);
 			let tags = instance_tags.map(function(tag_str){
 				let kv = tag_str.split('=');
 				return {
@@ -76,7 +77,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	// add notifications
 	.then(function(){
 		if(error_topic) {
-			console.log(`${region}: adding notification for topic ${error_topic}`);
+			Logger.info(`${region}: adding notification for topic ${error_topic}`);
 			return AWSUtil.get_account_id().then(function(id){
 				return AS.putNotificationConfigurationAsync({
 					AutoScalingGroupName: asg_name,
@@ -93,7 +94,7 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 	// add scheduled actions
 	.then(function(asg){
 		if(optional.scheduled_actions) {
-			console.log(`${region}: adding scheduled actions`);
+			Logger.info(`${region}: adding scheduled actions`);
 			let action_promises = optional.scheduled_actions.map(function(action){
 				return AS.putScheduledUpdateGroupActionAsync({
 					AutoScalingGroupName: asg_name,

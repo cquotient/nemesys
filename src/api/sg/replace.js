@@ -2,6 +2,7 @@
 
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSProvider = require('../aws_provider');
 const AWSUtil = require('../aws_util');
 const SGUtil = require('./sg_util');
@@ -32,10 +33,10 @@ function _do_replace(region, sg_name, ingress) {
 	let EC2 = AWSProvider.get_ec2(region);
 	return AWSUtil.get_sg_id(region, sg_name)
 	.then(function(sg_id) {
-		console.log(`${region}: found security group ${sg_name} (${sg_id})`);
+		Logger.info(`${region}: found security group ${sg_name} (${sg_id})`);
 		return _get_sg_rules(EC2, sg_id)
 		.then(function(sg_rules) {
-			console.log(`${region}: ${sg_name} has ${sg_rules.length} rule(s)`);
+			Logger.info(`${region}: ${sg_name} has ${sg_rules.length} rule(s)`);
 			return SGUtil.get_ip_permissions(region, ingress)
 			.then(function(ip_perms){
 				let existing_rules = _get_rule_strings(sg_rules);
@@ -61,12 +62,12 @@ function _do_replace(region, sg_name, ingress) {
 			});
 		}).then(function(add_delete){
 			if(add_delete.to_add.length === 0 && add_delete.to_delete.length === 0) {
-				console.log(`${region}: no changes to make`);
+				Logger.info(`${region}: no changes to make`);
 				return Promise.resolve();
 			}
 			let promises = [];
 			if(add_delete.to_add.length > 0) {
-				console.log(`${region}: adding ${add_delete.to_add.length} rule(s)`);
+				Logger.info(`${region}: adding ${add_delete.to_add.length} rule(s)`);
 				promises.push(EC2.authorizeSecurityGroupIngressAsync({
 					DryRun: false,
 					GroupId: sg_id,
@@ -74,7 +75,7 @@ function _do_replace(region, sg_name, ingress) {
 				}));
 			}
 			if(add_delete.to_delete.length > 0) {
-				console.log(`${region}: removing ${add_delete.to_delete.length} rule(s)`);
+				Logger.info(`${region}: removing ${add_delete.to_delete.length} rule(s)`);
 				promises.push(EC2.revokeSecurityGroupIngressAsync({
 					DryRun: false,
 					GroupId: sg_id,

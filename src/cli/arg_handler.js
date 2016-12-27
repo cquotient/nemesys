@@ -2,6 +2,8 @@
 
 const nemesys = require('../');
 
+const Logger = require('./logger');
+
 function _handle_create(cmd) {
 	switch(cmd.target) {
 
@@ -21,10 +23,10 @@ function _handle_create(cmd) {
 				cmd.opts['availability-zones'],
 				optional
 			).then(function(){
-				console.log('create complete');
+				Logger.info('create complete');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -37,10 +39,10 @@ function _handle_create(cmd) {
 				cmd.opts['description'],
 				cmd.opts['ingress-rules']
 			).then(function(){
-				console.log('created security group');
+				Logger.info('created security group');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -59,10 +61,10 @@ function _handle_create(cmd) {
 				cmd.opts['disks'],
 				cmd.opts['clone-spot-price']
 			).then(function(){
-				console.log('created launch configuration');
+				Logger.info('created launch configuration');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -86,10 +88,10 @@ function _handle_create(cmd) {
 				cmd.opts['env'],
 				cmd.opts['optimize-ebs']
 			).then(function(){
-				console.log('created instance');
+				Logger.info('created instance');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -110,16 +112,16 @@ function _handle_create(cmd) {
 				cmd.opts['availability-zone'],
 				cmd.opts['preserve-instance']
 			).then(function(){
-				console.log('created ami');
+				Logger.info('created ami');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
 
 		default:
-			console.log(`Unrecognized command: ${cmd.command} ${cmd.target}`);
+			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
 			process.exit(1);
 	}
 }
@@ -131,10 +133,10 @@ function _handle_delete(argv) {
 				argv['regions'],
 				argv['group']
 			).then(function(){
-				console.log('deleted autoscaling group');
+				Logger.info('deleted autoscaling group');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -144,10 +146,10 @@ function _handle_delete(argv) {
 				argv['launch-config'],
 				argv['delete-spot-clone']
 			).then(function(){
-				console.log('deleted launch config');
+				Logger.info('deleted launch config');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -156,10 +158,10 @@ function _handle_delete(argv) {
 				argv['regions'],
 				argv['security-group']
 			).then(function(){
-				console.log('deleted security group');
+				Logger.info('deleted security group');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -168,15 +170,15 @@ function _handle_delete(argv) {
 				argv['regions'],
 				argv['ami']
 			).then(function(){
-				console.log('deleted ami');
+				Logger.info('deleted ami');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
+			Logger.info(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
@@ -191,10 +193,10 @@ function _handle_replace(argv) {
 				argv['group'],
 				argv['launch-config']
 			).then(function(){
-				console.log('replace complete');
+				Logger.info('replace complete');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -204,15 +206,15 @@ function _handle_replace(argv) {
 				argv['security-group'],
 				argv['ingress-rules']
 			).then(function(){
-				console.log('replace complete');
+				Logger.info('replace complete');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
+			Logger.info(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
@@ -225,10 +227,10 @@ function _handle_update(argv) {
 				argv['group'],
 				argv['launch-config']
 			).then(function(){
-				console.log('update complete');
+				Logger.info('update complete');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
@@ -239,15 +241,15 @@ function _handle_update(argv) {
 				argv['ingress-rules'],
 				argv['remove']
 			).then(function(){
-				console.log('updated security group');
+				Logger.info('updated security group');
 				process.exit(0);
 			}).catch(function(err){
-				console.error(err.stack);
+				Logger.error(err.stack);
 				process.exit(1);
 			});
 			break;
 		default:
-			console.log(`Unrecognized command: ${argv.command} ${argv.target}`);
+			Logger.info(`Unrecognized command: ${argv.command} ${argv.target}`);
 			process.exit(1);
 	}
 }
@@ -272,7 +274,7 @@ function _handle(argv) {
 			break;
 
 		default:
-			console.log(`Unrecognized command: ${argv.command}`);
+			Logger.info(`Unrecognized command: ${argv.command}`);
 			process.exit(1);
 	}
 }

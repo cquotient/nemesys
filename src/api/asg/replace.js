@@ -2,6 +2,7 @@
 
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 const AWSProvider = require('../aws_provider');
 const create = require('./create');
@@ -64,10 +65,10 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 				return instance.LifecycleState === 'InService' && instance.HealthStatus === 'Healthy';
 			}).length;
 			if(new_ready_count === old_asg.DesiredCapacity) {
-				console.log(`${region}: asg ${new_asg_name} is ready`);
+				Logger.info(`${region}: asg ${new_asg_name} is ready`);
 				resolve();
 			} else {
-				console.log(`${region}: ${new_ready_count} healthy instances in ${new_asg_name}, but we want ${old_asg.DesiredCapacity} - waiting 30s`);
+				Logger.info(`${region}: ${new_ready_count} healthy instances in ${new_asg_name}, but we want ${old_asg.DesiredCapacity} - waiting 30s`);
 				setTimeout(function(){
 					AWSUtil.get_asg(AWSProvider.get_as(region), new_asg_name).then(function(asg){
 						new_asg = asg;
@@ -78,7 +79,7 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 		_check();
 	}).then(function(){
 		//then wait for the elb to report that all instances in the asg are healthy in the elb, too
-		console.log(`${region}: waiting for all hosts to be healthy in load balancer`);
+		Logger.info(`${region}: waiting for all hosts to be healthy in load balancer`);
 		return new Promise(function(resolve, reject){
 			function _check() {
 				AWSUtil.get_asg(AWSProvider.get_as(region), new_asg_name).then(function(asg){
@@ -95,10 +96,10 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 						return prev.concat(curr.InstanceStates.filter((obj) => obj.State !== 'InService').map((obj) => obj.InstanceId));
 					}, []);
 					if(unhealthy.length > 0) {
-						console.log(`${region}: found ${unhealthy.length} unhealthy instances (${unhealthy.join(', ')}) - waiting 30s`);
+						Logger.info(`${region}: found ${unhealthy.length} unhealthy instances (${unhealthy.join(', ')}) - waiting 30s`);
 						setTimeout(_check, _delay_ms);
 					} else {
-						console.log(`${region}: all hosts healthy in load balancer`);
+						Logger.info(`${region}: all hosts healthy in load balancer`);
 						resolve();
 					}
 				}).catch(reject);
@@ -142,13 +143,13 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		return create([region], vpc_name, with_asg, lc_name, instance_tags, error_topic, null, options).then(function(){
 			return AWSUtil.get_asg(AS, with_asg);
 		}).then(function(new_asg){
-			console.log(`${region}: new asg ${with_asg} created`);
-			console.log(`${region}: waiting for some healthy instances`);
+			Logger.info(`${region}: new asg ${with_asg} created`);
+			Logger.info(`${region}: waiting for some healthy instances`);
 			return _wait_for_health(region, with_asg, new_asg, old_asg);
 		});
 	})
 	.then(function(){
-		console.log(`${region}: removing scheduled actions for ${replace_asg}`);
+		Logger.info(`${region}: removing scheduled actions for ${replace_asg}`);
 		return sched_action_promise.then(function(sched_actions){
 			return BB.all(sched_actions.map(function(action){
 				return AS.deleteScheduledActionAsync({
@@ -159,7 +160,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		});
 	})
 	.then(function(){
-		console.log(`${region}: removing scaling policies for ${replace_asg}`);
+		Logger.info(`${region}: removing scaling policies for ${replace_asg}`);
 		return policy_promise.then(function(policies){
 			return BB.all(policies.map(function(policy){
 				return AS.deletePolicyAsync({
@@ -170,7 +171,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		});
 	})
 	.then(function(){
-		console.log(`${region}: lowering capacity to 0 for ${replace_asg}`);
+		Logger.info(`${region}: lowering capacity to 0 for ${replace_asg}`);
 		return AS.updateAutoScalingGroupAsync({
 			AutoScalingGroupName: replace_asg,
 			DesiredCapacity: 0,
@@ -183,14 +184,14 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		return new Promise(function(resolve){
 			function _check() {
 				if(old_asg.Instances.length > 0) {
-					console.log(`${region}: waiting for ${old_asg.Instances.length} instance(s) to terminate`);
+					Logger.info(`${region}: waiting for ${old_asg.Instances.length} instance(s) to terminate`);
 					setTimeout(function(){
 						AWSUtil.get_asg(AS, replace_asg).then(function(asg){
 							old_asg = asg;
 						}).then(_check);
 					}, _delay_ms);
 				} else {
-					console.log(`${region}: all instances terminated`);
+					Logger.info(`${region}: all instances terminated`);
 					resolve();
 				}
 			}
@@ -198,11 +199,11 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 		});
 	})
 	.then(function(){
-		console.log(`${region}: deleting ${replace_asg}`);
+		Logger.info(`${region}: deleting ${replace_asg}`);
 		return AS.deleteAutoScalingGroupAsync({
 			AutoScalingGroupName: replace_asg
 		}).catch(function(err){
-			console.error(`${region}: ${err.message}, sleeping and retrying one time...`);
+			Logger.error(`${region}: ${err.message}, sleeping and retrying one time...`);
 			return BB.delay(_delay_ms).then(function(){
 				return AS.deleteAutoScalingGroupAsync({
 					AutoScalingGroupName: replace_asg
