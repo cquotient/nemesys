@@ -2,6 +2,7 @@
 
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSProvider = require('../aws_provider');
 
 function _do_delete(region, ami_name) {
@@ -13,7 +14,7 @@ function _do_delete(region, ami_name) {
 			}
 		]
 	}).then(function(result){
-		console.log(`${region}: deleting image ${ami_name}(${result.Images[0].ImageId})`);
+		Logger.info(`${region}: deleting image ${ami_name}(${result.Images[0].ImageId})`);
 		return AWSProvider.get_ec2(region).deregisterImageAsync({
 			ImageId: result.Images[0].ImageId
 		}).then(() => result.Images[0]);
@@ -25,7 +26,7 @@ function _do_delete(region, ami_name) {
 			}
 		});
 		if(snapshot_ids.length > 0) {
-			console.log(`${region}: deleting ${snapshot_ids.length} ebs snapshots for ${ami_name}`);
+			Logger.info(`${region}: deleting ${snapshot_ids.length} ebs snapshots for ${ami_name}`);
 			let snap_del_promises = snapshot_ids.map(function(snap_id){
 				return AWSProvider.get_ec2(region).deleteSnapshotAsync({
 					SnapshotId: snap_id

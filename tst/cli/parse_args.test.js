@@ -3,12 +3,14 @@
 describe('parse_args', function(){
 
 	let testee,
+		Logger,
 
 		assert,
 		sinon,
 		sandbox;
 
 	before(function(){
+		Logger = require('../../src/logger');
 		assert = require('chai').assert;
 		sinon = require('sinon');
 		sinon.assert.expose(require('chai').assert, { prefix: "" });
@@ -17,8 +19,6 @@ describe('parse_args', function(){
 	beforeEach(function(){
 		sandbox = sinon.sandbox.create();
 		sandbox.stub(process, 'exit');
-		sandbox.stub(console, 'error');
-		sandbox.stub(console, 'log');
 		testee = require('../../src/cli/parse_args');
 	});
 
@@ -131,11 +131,11 @@ describe('parse_args', function(){
 				];
 				let actual = testee.parse_args(commands.concat(opts));
 				assert.calledOnce(process.exit);
-				assert.match(console.error.args[0][0], /Missing required arguments:/);
-				assert.match(console.error.args[0][0], /regions/);
-				assert.match(console.error.args[0][0], /ssh-key-pair/);
-				assert.match(console.error.args[0][0], /availability-zone/);
-				assert.match(console.error.args[0][0], /availability-zone/);
+				assert.match(Logger.error.args[0][0], /Missing required arguments:/);
+				assert.match(Logger.error.args[0][0], /regions/);
+				assert.match(Logger.error.args[0][0], /ssh-key-pair/);
+				assert.match(Logger.error.args[0][0], /availability-zone/);
+				assert.match(Logger.error.args[0][0], /availability-zone/);
 			});
 
 			it('errors if missing required envs', function(){
@@ -144,9 +144,9 @@ describe('parse_args', function(){
 
 				testee.parse_args(commands.concat(opts));
 				assert.calledOnce(process.exit);
-				assert.match(console.error.args[0][0], /Missing required ENVs:/);
-				assert.match(console.error.args[0][0], /rum/);
-				assert.match(console.error.args[0][0], /ale/);
+				assert.match(Logger.error.args[0][0], /Missing required ENVs:/);
+				assert.match(Logger.error.args[0][0], /rum/);
+				assert.match(Logger.error.args[0][0], /ale/);
 			});
 
 			it('does no error if required envs are passed', function(){

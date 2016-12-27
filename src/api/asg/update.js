@@ -3,6 +3,7 @@
 const AWS = require('aws-sdk');
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 
 const _delay_ms = 30000;
@@ -28,9 +29,9 @@ function _do_update(region, asg_name, lc_name) {
 		if(!asg) {
 			return Promise.reject(new Error(`No ASG found for name ${asg_name} in ${region}`));
 		}
-		console.log(`${region}: current launch config: ${asg.LaunchConfigurationName}`);
-		console.log(`${region}: current instance count: ${asg.Instances.length}`);
-		console.log(`${region}: replacing launch config with ${lc_name}`);
+		Logger.info(`${region}: current launch config: ${asg.LaunchConfigurationName}`);
+		Logger.info(`${region}: current instance count: ${asg.Instances.length}`);
+		Logger.info(`${region}: replacing launch config with ${lc_name}`);
 		return AS.updateAutoScalingGroupAsync({
 			AutoScalingGroupName: asg_name,
 			LaunchConfigurationName: lc_name
@@ -41,7 +42,7 @@ function _do_update(region, asg_name, lc_name) {
 		//
 	})
 	.then(function(asg){
-		console.log(`${region}: launch config updated, increasing capacity and replacing instances...`);
+		Logger.info(`${region}: launch config updated, increasing capacity and replacing instances...`);
 		return AS.updateAutoScalingGroupAsync({
 			AutoScalingGroupName: asg_name,
 			DesiredCapacity: asg.DesiredCapacity + 1,
@@ -72,10 +73,10 @@ function _do_update(region, asg_name, lc_name) {
 					}
 				});
 				if(new_not_ready.length === 0) {
-					console.log(`${region}: ${new_not_ready.length} instance(s) ready with new launch config (${lc_name})`);
+					Logger.info(`${region}: ${new_not_ready.length} instance(s) ready with new launch config (${lc_name})`);
 					if(old.length === 0) {
 						// if all the new instances are ready and there are no old ones left, then we are done
-						console.log(`${region}: all instances updated, lowering capacity`);
+						Logger.info(`${region}: all instances updated, lowering capacity`);
 						AS.updateAutoScalingGroupAsync({
 							AutoScalingGroupName: asg_name,
 							DesiredCapacity: asg.DesiredCapacity - 1,
@@ -84,7 +85,7 @@ function _do_update(region, asg_name, lc_name) {
 					} else {
 						// this means the new instances are ready, so we need to get rid of
 						// another old one
-						console.log(`${region}: ${old.length} instances remaining with old launch config`);
+						Logger.info(`${region}: ${old.length} instances remaining with old launch config`);
 						AS.terminateInstanceInAutoScalingGroupAsync({
 							InstanceId: old[0].InstanceId,
 							ShouldDecrementDesiredCapacity: false
@@ -101,7 +102,7 @@ function _do_update(region, asg_name, lc_name) {
 				} else {
 					// this means we the new instances aren't ready yet, which could mean
 					// we havent waited long enough or there is a problem with the new launch config
-					console.log(`${region}: waiting for ${new_not_ready.length} instance(s) with new launch config to come online...`);
+					Logger.info(`${region}: waiting for ${new_not_ready.length} instance(s) with new launch config to come online...`);
 					timeout = setTimeout(function(){
 						AWSUtil.get_asg(AS, asg_name).then(function(_asg){
 							asg = _asg;

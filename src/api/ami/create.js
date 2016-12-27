@@ -2,6 +2,7 @@
 
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSProvider = require('../aws_provider');
 const AWSUtil = require('../aws_util');
 const create_instance = require('../instance/create');
@@ -24,7 +25,7 @@ function _wait_for_spinup_complete(region, instance_id) {
 				&& _is_tag_present(result.Reservations[0].Instances[0].Tags, 'Spinup', 'complete')) {
 					resolve(instance_id);
 				} else {
-					console.log(`${region}: waiting for instance ${instance_id} spinup to complete with tag Spinup=complete`);
+					Logger.info(`${region}: waiting for instance ${instance_id} spinup to complete with tag Spinup=complete`);
 					setTimeout(_check, 30000);
 				}
 			}).catch(reject);
@@ -34,18 +35,18 @@ function _wait_for_spinup_complete(region, instance_id) {
 }
 
 function _wait_for_image(region, image_id) {
-	console.log(`${region}: waiting for image ${image_id} to be available`);
+	Logger.info(`${region}: waiting for image ${image_id} to be available`);
 	return AWSProvider.get_ec2(region).waitForAsync('imageAvailable', {
 		ImageIds: [image_id]
 	}).then(function(){
-		console.log(`${region}: image ${image_id} is available`);
+		Logger.info(`${region}: image ${image_id} is available`);
 	}).then(() => image_id);
 }
 
 function _do_create(create_region, instance_id, copy_regions, ami_name, disks, preserve_instance){
 	return _wait_for_spinup_complete(create_region, instance_id)
 	.then(function(instance_id){
-		console.log(`${create_region}: ${instance_id} ready, creating image ${ami_name}`);
+		Logger.info(`${create_region}: ${instance_id} ready, creating image ${ami_name}`);
 		return AWSProvider.get_ec2(create_region).createImageAsync({
 			InstanceId: instance_id,
 			Name: ami_name,
@@ -55,7 +56,7 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks, p
 		return _wait_for_image(create_region, image_id);
 	}).then(function(image_id){
 		if(copy_regions.length > 0) {
-			console.log(`${create_region}: image is ready to copy, copying to: ${JSON.stringify(copy_regions)}`);
+			Logger.info(`${create_region}: image is ready to copy, copying to: ${JSON.stringify(copy_regions)}`);
 			let copy_image_promises = copy_regions.map(function(region){
 				return AWSProvider.get_ec2(region).copyImageAsync({
 					Name: ami_name,
@@ -71,10 +72,10 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks, p
 		}
 	}).then(function(){
 		if(preserve_instance) {
-			console.log(`${create_region}: ${instance_id} will remain online`);
+			Logger.info(`${create_region}: ${instance_id} will remain online`);
 			return Promise.resolve();
 		} else {
-			console.log(`${create_region}: terminating instance ${instance_id}`);
+			Logger.info(`${create_region}: terminating instance ${instance_id}`);
 			return AWSProvider.get_ec2(create_region).terminateInstancesAsync({
 				InstanceIds: [instance_id]
 			});
@@ -92,7 +93,7 @@ function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files
 	// create in first region, then copy to others
 	return create_instance([regions[0]], vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, spinup_complete_ud, disks, az, tags)
 	.then(function(instance_ids){ //create_instance is for many regions, so result is an array of ids
-		console.log(`${regions[0]}: instance (${instance_ids[0]}) created`);
+		Logger.info(`${regions[0]}: instance (${instance_ids[0]}) created`);
 		return _do_create(regions[0], instance_ids[0], regions.slice(1), ami_name, disks, preserve_instance);
 	});
 }

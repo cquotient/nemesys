@@ -6,6 +6,8 @@ const path = require('path');
 const yaml = require('js-yaml');
 const fs   = require('fs');
 
+const Logger = require('../logger');
+
 let group_opt = {
 	alias: 'group',
 	describe: 'Name of the Autoscaling Group to create or update'
@@ -52,7 +54,13 @@ function _common_args(yargs) {
 }
 
 function parse_args (args) {
-	let argv = require('yargs')(args || process.argv)
+	let yargs;
+	if(args) {
+		yargs = require('yargs')(args);
+	} else {
+		yargs = require('yargs');
+	}
+	let argv = yargs
 		.usage('nemesys {command} {target} [options]')
 		// commands
 
@@ -485,7 +493,7 @@ function _validate(command) {
 		demand = demands[command.command + ' ' + command.target];
 
 	if (!demand || !demand.length) {
-		console.error(`Unknown command or target '${command.command} ${command.target}'`);
+		Logger.error(`Unknown command or target '${command.command} ${command.target}'`);
 		return false;
 	}
 
@@ -495,7 +503,7 @@ function _validate(command) {
 		}
 	}
 	if (missing.length) {
-		console.error('Missing required arguments: ' + missing.join(', '));
+		Logger.error('Missing required arguments: ' + missing.join(', '));
 		return false;
 	}
 	return _validate_dependent_args(command.opts);
@@ -523,7 +531,7 @@ function _validate_dependent_args(argv) {
 		}
 
 		if (missing.length > 0) {
-			console.error('Missing required ENVs: ' + missing.join(', '));
+			Logger.error('Missing required ENVs: ' + missing.join(', '));
 			return false;
 		}
 	}

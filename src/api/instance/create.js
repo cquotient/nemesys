@@ -2,6 +2,7 @@
 
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 const AWSProvider = require('../aws_provider');
 
@@ -62,7 +63,7 @@ function _resolve_instance(ec2, region, instance_id) {
 				&& result.Reservations[0].Instances.length === 1) {
 					resolve(instance_id);
 				} else {
-					console.log(`${region}: waiting for instance ${instance_id} to be ready`);
+					Logger.info(`${region}: waiting for instance ${instance_id} to be ready`);
 					setTimeout(_check, 5000);
 				}
 			}).catch(reject);
@@ -108,7 +109,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_f
 		};
 	})
 	.then(function(params){
-		console.log(`${region}: launching instance`);
+		Logger.info(`${region}: launching instance`);
 		return EC2.runInstancesAsync(params);
 	})
 	.then(function(data){
@@ -116,7 +117,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_f
 	})
 	.then(function(instance_id){
 		if(tags && tags.length > 0) {
-			console.log(`${region}: instance ${instance_id} is ready, applying tags`);
+			Logger.info(`${region}: instance ${instance_id} is ready, applying tags`);
 			tags = tags.map(function(tag_str){
 				let kv = tag_str.split('=');
 				return {

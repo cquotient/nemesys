@@ -3,6 +3,7 @@
 const AWS = require('aws-sdk');
 const BB = require('bluebird');
 
+const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 const SGUtil = require('./sg_util');
 
@@ -22,7 +23,7 @@ function _do_create(region, vpc_name, sg_name, desc, ingress) {
 		});
 	})
 	.then(function(result){
-		console.log(`${region}: created security group ${sg_name} (${result.GroupId})`);
+		Logger.info(`${region}: created security group ${sg_name} (${result.GroupId})`);
 		if(ingress && ingress.length > 0) {
 			return SGUtil.get_ip_permissions(region, ingress)
 			.then(function(ip_perms){
@@ -33,7 +34,7 @@ function _do_create(region, vpc_name, sg_name, desc, ingress) {
 				});
 			})
 			.then(function(){
-				console.log(`${region}: successfully applied ${ingress.length} sg ingress rules to ${sg_name}`);
+				Logger.info(`${region}: successfully applied ${ingress.length} sg ingress rules to ${sg_name}`);
 			});
 		}
 	});
