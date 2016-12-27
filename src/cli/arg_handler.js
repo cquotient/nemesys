@@ -2,7 +2,7 @@
 
 const nemesys = require('../');
 
-const Logger = require('./logger');
+const Logger = require('../logger');
 
 function _handle_create(cmd) {
 	switch(cmd.target) {
