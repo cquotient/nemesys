@@ -69,4 +69,25 @@ describe('update sg', function(){
 		});
 	});
 
+	it('should default to ssh port', function(){
+		let ingress = ['1.2.3.4/32'];
+		return update(['us-east-1', 'us-west-2'], 'fake-sg', ingress)
+		.then(function(){
+			expect(authorize_sg_spy).to.have.been.calledWith({
+				DryRun: false,
+				GroupId: 'fake-sg-id',
+				IpPermissions: [{
+					FromPort: 22,
+					ToPort: 22,
+					IpProtocol: 'tcp',
+					IpRanges: [
+						{
+							CidrIp: '1.2.3.4/32'
+						}
+					]
+				}]
+			});
+		});
+	});
+
 });
