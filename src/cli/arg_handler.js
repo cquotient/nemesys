@@ -254,7 +254,6 @@ function _handle_update(argv) {
 	}
 }
 
-
 function _handle(argv) {
 	switch(argv.command) {
 		case 'update':
