@@ -14,7 +14,11 @@ function _get_ip_permissions(region, ingress, groups_are_ids) {
 		if(!parts[1]) {
 			parts[1] = '22';
 		}
-		if(validator.isIP(parts[0].split('/')[0]) || parts[0] === '0.0.0.0/0') {
+		let potential_ip_parts = parts[0].split('/');
+		if(!potential_ip_parts[1]) {
+			potential_ip_parts[1] = '32'; //CIDR bit mask
+		}
+		if(validator.isIP(potential_ip_parts[0]) || parts[0] === '0.0.0.0/0') {
 			let protocol = parts[2] ? parts[2] : 'tcp';
 			let port_range = parts[1].split('-');
 			perms.push({
@@ -23,7 +27,7 @@ function _get_ip_permissions(region, ingress, groups_are_ids) {
 				IpProtocol: protocol,
 				IpRanges: [
 					{
-						CidrIp: parts[0]
+						CidrIp: potential_ip_parts.join('/')
 					}
 				]
 			});
