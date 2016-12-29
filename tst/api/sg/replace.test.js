@@ -4,7 +4,6 @@ describe('replace sg', function(){
 
 	let replace,
 			sandbox,
-			chai,
 			sinon_chai,
 			expect,
 			describe_sg_spy,
@@ -14,10 +13,10 @@ describe('replace sg', function(){
 	beforeEach(function(){
 		replace = require('../../../src/api/sg/replace');
 		sandbox = require('sinon').sandbox.create();
-		chai = require('chai');
+		let chai = require('chai');
 		sinon_chai = require('sinon-chai');
 		chai.use(sinon_chai);
-		expect = require('chai').expect;
+		expect = chai.expect;
 
 		// mock ec2 api calls
 		let AWSProvider = require('../../../src/api/aws_provider');
