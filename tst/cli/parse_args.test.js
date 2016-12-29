@@ -18,7 +18,6 @@ describe('parse_args', function(){
 
 	beforeEach(function(){
 		sandbox = sinon.sandbox.create();
-		sandbox.stub(process, 'exit');
 		testee = require('../../src/cli/parse_args');
 	});
 
