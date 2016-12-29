@@ -10,6 +10,10 @@ function _get_ip_permissions(region, ingress, groups_are_ids) {
 			groups_to_lookup = [];
 	ingress.forEach(function(obj){
 		let parts = obj.split(':');
+		//apply some defaults
+		if(!parts[1]) {
+			parts[1] = '22';
+		}
 		if(validator.isIP(parts[0].split('/')[0]) || parts[0] === '0.0.0.0/0') {
 			let protocol = parts[2] ? parts[2] : 'tcp';
 			let port_range = parts[1].split('-');
