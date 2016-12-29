@@ -219,13 +219,13 @@ function _handle_replace(argv) {
 	}
 }
 
-function _handle_update(argv) {
-	switch(argv.target) {
+function _handle_update(cmd) {
+	switch(cmd.target) {
 		case 'asg':
 			nemesys.asg.update(
-				argv['regions'],
-				argv['group'],
-				argv['launch-config']
+				cmd.opts['regions'],
+				cmd.opts['group'],
+				cmd.opts['launch-config']
 			).then(function(){
 				Logger.info('update complete');
 				process.exit(0);
@@ -236,10 +236,10 @@ function _handle_update(argv) {
 			break;
 		case 'sg':
 			nemesys.sg.update(
-				argv['regions'],
-				argv['security-group'],
-				argv['ingress-rules'],
-				argv['remove']
+				cmd.opts['regions'],
+				cmd.opts['security-group'],
+				cmd.opts['ingress-rules'],
+				cmd.opts['remove']
 			).then(function(){
 				Logger.info('updated security group');
 				process.exit(0);
@@ -249,31 +249,31 @@ function _handle_update(argv) {
 			});
 			break;
 		default:
-			Logger.info(`Unrecognized command: ${argv.command} ${argv.target}`);
+			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
 			process.exit(1);
 	}
 }
 
-function _handle(argv) {
-	switch(argv.command) {
+function _handle(cmd) {
+	switch(cmd.command) {
 		case 'update':
-			_handle_update(argv);
+			_handle_update(cmd);
 			break;
 
 		case 'create':
-			_handle_create(argv);
+			_handle_create(cmd);
 			break;
 
 		case 'replace':
-			_handle_replace(argv);
+			_handle_replace(cmd);
 			break;
 
 		case 'delete':
-			_handle_delete(argv);
+			_handle_delete(cmd);
 			break;
 
 		default:
-			Logger.info(`Unrecognized command: ${argv.command}`);
+			Logger.info(`Unrecognized command: ${cmd.command}`);
 			process.exit(1);
 	}
 }

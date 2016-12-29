@@ -22,7 +22,7 @@ describe('arg_handler', function(){
 		sandbox.restore();
 	});
 
-	describe.only('update', function(){
+	describe('update', function(){
 
 		describe('sg', function(){
 			let update_sg_stub;
