@@ -1,10 +1,10 @@
 'use strict';
 
 const BB = require('bluebird');
-const AWS = require('aws-sdk');
 
 const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
+const AWSProvider = require('../aws_provider');
 const SGUtil = require('./sg_util');
 
 function _do_update(region, sg_name, ingress, should_remove) {
@@ -16,11 +16,7 @@ function _do_update(region, sg_name, ingress, should_remove) {
 				Logger.info(`${region}: removing ${ingress.length} ingress rules`);
 				return SGUtil.get_ip_permissions(region, ingress)
 				.then(function(ip_perms){
-					let EC2 = BB.promisifyAll(new AWS.EC2({
-						region: region,
-						apiVersion: '2015-10-01'
-					}));
-					return EC2.revokeSecurityGroupIngressAsync({
+					return AWSProvider.get_ec2(region).revokeSecurityGroupIngressAsync({
 						DryRun: false,
 						GroupId: sg_id,
 						IpPermissions: ip_perms
@@ -33,11 +29,7 @@ function _do_update(region, sg_name, ingress, should_remove) {
 				Logger.info(`${region}: adding ${ingress.length} ingress rules`);
 				return SGUtil.get_ip_permissions(region, ingress)
 				.then(function(ip_perms){
-					let EC2 = BB.promisifyAll(new AWS.EC2({
-						region: region,
-						apiVersion: '2015-10-01'
-					}));
-					return EC2.authorizeSecurityGroupIngressAsync({
+					return AWSProvider.get_ec2(region).authorizeSecurityGroupIngressAsync({
 						DryRun: false,
 						GroupId: sg_id,
 						IpPermissions: ip_perms
