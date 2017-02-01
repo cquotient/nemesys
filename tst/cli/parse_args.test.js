@@ -7,13 +7,15 @@ describe('parse_args', function(){
 
 		assert,
 		sinon,
-		sandbox;
+		sandbox,
+		path;
 
 	before(function(){
 		Logger = require('../../src/logger');
 		assert = require('chai').assert;
 		sinon = require('sinon');
 		sinon.assert.expose(require('chai').assert, { prefix: "" });
+		path = require('path');
 	});
 
 	beforeEach(function(){
@@ -32,10 +34,11 @@ describe('parse_args', function(){
 		});
 
 		describe('file loading', function(){
+
 			it('loads json file', function(){
 				let commands = ['create', 'instance'],
 					opts = [
-						'--json-config=' + __dirname + '/create_instance_example.json',
+						'--json-config=' + __dirname + '/create_instance_example.json'
 					];
 				let actual = testee.parse_args(commands.concat(opts));
 				assert.notCalled(process.exit);
@@ -45,7 +48,9 @@ describe('parse_args', function(){
 				assert.equal(actual.opts['availability-zone'], 'q');
 				assert.equal(actual.opts['vpc'], 'testVpc');
 				assert.equal(actual.opts['regions'], 'us-east-1');
+				assert.equal(actual.opts['region-user-data'][0], path.resolve(__dirname, 'file1'));
 			});
+
 			it('loads yaml file', function(){
 				let commands = ['create', 'instance'],
 					opts = [
@@ -60,6 +65,7 @@ describe('parse_args', function(){
 				assert.equal(actual.opts['vpc'], 'testVpc');
 				assert.equal(actual.opts['regions'], 'us-east-1');
 			});
+
 			it('loads multiple files, merging with commandline', function(){
 				let commands = ['create', 'instance'],
 					opts = [
@@ -76,6 +82,7 @@ describe('parse_args', function(){
 				assert.equal(actual.opts['vpc'], 'testVpc');
 				assert.equal(actual.opts['regions'], 'us-east-1');
 			});
+
 			it('overrides files with command line', function(){
 				let commands = ['create', 'instance'],
 					opts = [
