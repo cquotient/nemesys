@@ -31,6 +31,23 @@ function _handle_create(cmd) {
 			});
 			break;
 
+		case 'alb':
+			nemesys.alb.create(
+				cmd.opts['regions'],
+				cmd.opts['vpc'],
+				cmd.opts['security-group'],
+				cmd.opts['name'],
+				cmd.opts['target_groups'],
+				cmd.opts['options'] || {}
+			).then(function(){
+				Logger.info('create ALB complete');
+				process.exit(0);
+			}).catch(function(err){
+				Logger.error(err.stack);
+				process.exit(1);
+			});
+			break;
+
 		case 'sg':
 			nemesys.sg.create(
 				cmd.opts['regions'],
