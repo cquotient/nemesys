@@ -57,7 +57,7 @@ function _handle_create(cmd) {
 				cmd.opts['security-groups'],
 				cmd.opts['iam-role'],
 				cmd.opts['user-data-files'],
-				cmd.opts['region-user-data'] || [],
+				cmd.opts['region-user-data'] || [], //yargs default breaks merging command line args w/ config file, so do it here
 				cmd.opts['disks'],
 				cmd.opts['clone-spot-price']
 			).then(function(){
@@ -79,7 +79,7 @@ function _handle_create(cmd) {
 				cmd.opts['security-groups'],
 				cmd.opts['iam-role'],
 				cmd.opts['user-data-files'],
-				cmd.opts['region-user-data'] || [],
+				cmd.opts['region-user-data'] || [], //yargs default breaks merging command line args w/ config file, so do it here
 				null, //raw userdata string not supported from command line atm
 				cmd.opts['disks'],
 				cmd.opts['availability-zone'],
@@ -107,7 +107,7 @@ function _handle_create(cmd) {
 				cmd.opts['security-groups'],
 				cmd.opts['iam-role'],
 				cmd.opts['user-data-files'],
-				cmd.opts['region-user-data'] || [],
+				cmd.opts['region-user-data'] || [], //yargs default breaks merging command line args w/ config file, so do it here
 				cmd.opts['disks'],
 				cmd.opts['availability-zone'],
 				cmd.opts['preserve-instance']
