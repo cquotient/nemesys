@@ -472,7 +472,7 @@ function parse_args (args) {
 
 //deletes undefined properties, so we don't override things in the config file w/ "undefined" just because it is defined as an option
 function del_undef(obj) {
-	Object.keys(obj).filter((key) => !obj[key]).forEach((key) => delete obj[key]);
+	Object.keys(obj).filter((key) => obj[key] === undefined).forEach((key) => delete obj[key]);
 }
 
 function _validate(command) {
