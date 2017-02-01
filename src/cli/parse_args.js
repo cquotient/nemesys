@@ -183,8 +183,7 @@ function parse_args (args) {
 						})
 						.option('region-user-data', {
 							describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
-							array:    true,
-							default:  []
+							array:    true
 						})
 						.option('d', {
 							alias:    'disks',
@@ -231,8 +230,7 @@ function parse_args (args) {
 						})
 						.option('region-user-data', {
 							describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
-							array:    true,
-							default:  []
+							array:    true
 						})
 						.option('d', {
 							alias:    'disks',
@@ -304,8 +302,7 @@ function parse_args (args) {
 					})
 					.option('region-user-data', {
 						describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
-						array:    true,
-						default:  []
+						array:    true
 					})
 					.option('d', {
 						alias:    'disks',
@@ -431,6 +428,7 @@ function parse_args (args) {
 			dir = path.dirname(file);
 			try {
 				let doc = JSON.parse(fs.readFileSync(file));
+				del_undef(argv);
 				argv = Object.assign(doc, argv);
 			} catch (e) {
 				e.message = 'Failure loading ' + file + e.message;
@@ -443,6 +441,7 @@ function parse_args (args) {
 			dir = path.dirname(file);
 			try {
 				let doc = yaml.safeLoad(fs.readFileSync(file));
+				del_undef(argv);
 				argv = Object.assign(doc, argv);
 			} catch (e) {
 				e.message = 'Failure loading ' + file + e.message;
@@ -469,6 +468,11 @@ function parse_args (args) {
 	}
 
 	return command;
+}
+
+//deletes undefined properties, so we don't override things in the config file w/ "undefined" just because it is defined as an option
+function del_undef(obj) {
+	Object.keys(obj).filter((key) => obj[key] === undefined).forEach((key) => delete obj[key]);
 }
 
 function _validate(command) {
