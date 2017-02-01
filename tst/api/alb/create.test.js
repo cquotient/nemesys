@@ -6,7 +6,8 @@ chai.use(require('sinon-chai'));
 const expect = chai.expect;
 
 describe.only('create ami', function(){
-	let testee, sandbox, regions, vpc_name, vpc_id, sg_name, sg_id, subnet_ids, lb_name, target_groups, mock_elb;
+	let testee, sandbox, regions, vpc_name, vpc_id, sg_name, sg_id, subnet_ids, lb_name, target_groups, mock_elb,
+		ssl_config, options;
 
 	before(function(){
 		testee = require('../../../src/api/alb/create');
@@ -31,6 +32,8 @@ describe.only('create ami', function(){
 		target_groups = [
 			{ name: 'my_target', port: 443 }
 		];
+		ssl_config = {};
+		options = {};
 
 		mock_elb = {
 			createLoadBalancerAsync: sinon.stub().returns(Promise.resolve({
@@ -58,7 +61,7 @@ describe.only('create ami', function(){
 	});
 
 	it('creates LB without targets', function () {
-		return testee(regions, vpc_name, sg_name, lb_name, target_groups, {})
+		return testee(regions, vpc_name, sg_name, lb_name, target_groups, ssl_config, options)
 			.then(() => {
 				expect(mock_elb.createLoadBalancerAsync.callCount).to.equal(1);
 				expect(mock_elb.createTargetGroupAsync.callCount).to.equal(1);
@@ -77,7 +80,7 @@ describe.only('create ami', function(){
 				]
 			}
 		];
-		return testee(regions, vpc_name, sg_name, lb_name, target_groups, {})
+		return testee(regions, vpc_name, sg_name, lb_name, target_groups, ssl_config, options)
 			.then(() => {
 				expect(mock_elb.createLoadBalancerAsync.callCount).to.equal(1);
 				expect(mock_elb.createTargetGroupAsync.callCount).to.equal(1);
@@ -95,7 +98,7 @@ describe.only('create ami', function(){
 				]
 			}
 		];
-		return testee(regions, vpc_name, sg_name, lb_name, target_groups, {})
+		return testee(regions, vpc_name, sg_name, lb_name, target_groups, ssl_config, options)
 			.then(() => {
 				expect(mock_elb.createLoadBalancerAsync.callCount).to.equal(1);
 				expect(mock_elb.createTargetGroupAsync.callCount).to.equal(1);

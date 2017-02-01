@@ -38,6 +38,7 @@ function _handle_create(cmd) {
 				cmd.opts['security-group'],
 				cmd.opts['name'],
 				cmd.opts['target_groups'],
+				cmd.opts['ssl_config'],
 				cmd.opts['options'] || {}
 			).then(function(){
 				Logger.info('create ALB complete');

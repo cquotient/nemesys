@@ -7,14 +7,19 @@ const AWSProvider = require('../aws_provider');
 const AWSUtil = require('../aws_util');
 
 function _create_elb (aws, lb_name, subnet_ids, opts, sg_id) {
-	return aws.createLoadBalancerAsync({
+	let cfg = {
 		Name:           lb_name,
 		Subnets:        subnet_ids,
 		IpAddressType:  opts.ip_address_type,
 		Scheme:         opts.scheme,
 		SecurityGroups: [sg_id],
-		//Tags:           opts.tags,
-	});
+	};
+
+	if (opts.tags && opt.tags.length) {
+		cfg.Tags = opts.tags
+	}
+
+	return aws.createLoadBalancerAsync();
 }
 
 function _register_indiv_targets (tg, aws) {
@@ -139,9 +144,9 @@ function _create_listener (aws, lb, target_groups) {
 	return BB.all(promises);
 }
 
-function create (regions, vpc_name, sg_name, lb_name, target_groups, options) {
+function create (regions, vpc_name, sg_name, lb_name, target_groups, ssl_config, options) {
 	let opts = {
-		ip_address_type: 'ipv4', //'dualstack',
+		ip_address_type: 'ipv4', //'dualstack', // TODO - get an error about ip6 CIDR subnets
 		scheme: options.internal ? 'internal' : 'internet-facing',
 		tags: [], // TODO
 	};
