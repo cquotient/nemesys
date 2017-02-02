@@ -160,7 +160,7 @@ function create (regions, vpc_name, sg_name, lb_name, target_groups, ssl_config,
 
 	for (let region of regions) {
 		Logger.info(`Creating ALB ${lb_name} for ${region}`);
-		const elb = AWSProvider.get_elb(region);
+		const elb = AWSProvider.get_elbv2(region);
 		let lb;
 
 		let p = BB.all([

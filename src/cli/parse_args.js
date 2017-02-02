@@ -146,6 +146,18 @@ function parse_args (args) {
 							alias: 's',
 							describe: 'Security Group name new ALB should be tied to.'
 						})
+						.option('target-groups', {
+							alias: 's',
+							describe: 'JSON string of array of target groups (just use a file!)'
+						})
+						.option('ssl-config', {
+							alias: 's',
+							describe: 'JSON string of ssl config map (just use a file!)'
+						})
+						.option('options', {
+							alias: 's',
+							describe: 'JSON string of options map (just use a file!)'
+						})
 				})
 
 				.command('sg', 'Create a Security Group', function (yargs) {

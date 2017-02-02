@@ -51,7 +51,7 @@ describe.only('create ami', function(){
 		};
 
 		let AWSProvider = require('../../../src/api/aws_provider');
-		sandbox.stub(AWSProvider, 'get_elb').returns(mock_elb);
+		sandbox.stub(AWSProvider, 'get_elbv2').returns(mock_elb);
 
 		let AWSUtils = require('../../../src/api/aws_util');
 		sandbox.stub(AWSUtils, 'get_vpc_id').returns(vpc_id);

@@ -32,13 +32,22 @@ function _handle_create(cmd) {
 			break;
 
 		case 'alb':
+			if (typeof cmd.opts['target-groups'] === 'string') {
+				cmd.opts['target-groups'] = JSON.parse(cmd.opts['target-groups']);
+			}
+			if (typeof cmd.opts['ssl-config'] === 'string') {
+				cmd.opts['ssl-config'] = JSON.parse(cmd.opts['ssl-config']);
+			}
+			if (typeof cmd.opts['options'] === 'string') {
+				cmd.opts['options'] = JSON.parse(cmd.opts['options']);
+			}
 			nemesys.alb.create(
 				cmd.opts['regions'],
 				cmd.opts['vpc'],
 				cmd.opts['security-group'],
 				cmd.opts['name'],
-				cmd.opts['target_groups'],
-				cmd.opts['ssl_config'],
+				cmd.opts['target-groups'],
+				cmd.opts['ssl-config'],
 				cmd.opts['options'] || {}
 			).then(function(){
 				Logger.info('create ALB complete');
