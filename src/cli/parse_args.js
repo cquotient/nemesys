@@ -157,7 +157,7 @@ function parse_args (args) {
 						.option('options', {
 							alias: 's',
 							describe: 'JSON string of options map (just use a file!)'
-						})
+						});
 				})
 
 				.command('sg', 'Create a Security Group', function (yargs) {

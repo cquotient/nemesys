@@ -5,9 +5,9 @@ const sinon = require('sinon');
 chai.use(require('sinon-chai'));
 const expect = chai.expect;
 
-describe.only('create ami', function(){
+describe('create ami', function(){
 	let testee, sandbox, regions, vpc_name, vpc_id, sg_name, sg_id, subnet_ids, lb_name, target_groups, mock_elb,
-		ssl_config, options;
+		mock_ec2, ssl_config, options;
 
 	before(function(){
 		testee = require('../../../src/api/alb/create');
@@ -47,11 +47,21 @@ describe.only('create ami', function(){
 			createTargetGroupAsync: sinon.stub().returns(Promise.resolve({
 				TargetGroups: [ { TargetGroupArn: 'tg_arn' } ],
 			})),
+		};
 
+		mock_ec2 = {
+			describeInstancesAsync: sinon.stub().returns(Promise.resolve({
+				Reservations: [
+					{
+						Instances: [{ InstanceId: 'i-pizzaheaven' }]
+					}
+				]
+			}))
 		};
 
 		let AWSProvider = require('../../../src/api/aws_provider');
 		sandbox.stub(AWSProvider, 'get_elbv2').returns(mock_elb);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 
 		let AWSUtils = require('../../../src/api/aws_util');
 		sandbox.stub(AWSUtils, 'get_vpc_id').returns(vpc_id);
@@ -65,7 +75,7 @@ describe.only('create ami', function(){
 			.then(() => {
 				expect(mock_elb.createLoadBalancerAsync.callCount).to.equal(1);
 				expect(mock_elb.createTargetGroupAsync.callCount).to.equal(1);
-				expect(mock_elb.createListenerAsync.callCount).to.equal(1);
+				expect(mock_elb.createListenerAsync.callCount).to.equal(2);
 				expect(mock_elb.registerTargetsAsync.callCount).to.equal(0);
 			});
 	});
@@ -84,7 +94,7 @@ describe.only('create ami', function(){
 			.then(() => {
 				expect(mock_elb.createLoadBalancerAsync.callCount).to.equal(1);
 				expect(mock_elb.createTargetGroupAsync.callCount).to.equal(1);
-				expect(mock_elb.createListenerAsync.callCount).to.equal(1);
+				expect(mock_elb.createListenerAsync.callCount).to.equal(2);
 				expect(mock_elb.registerTargetsAsync.callCount).to.equal(1);
 			});
 	});
@@ -102,7 +112,7 @@ describe.only('create ami', function(){
 			.then(() => {
 				expect(mock_elb.createLoadBalancerAsync.callCount).to.equal(1);
 				expect(mock_elb.createTargetGroupAsync.callCount).to.equal(1);
-				expect(mock_elb.createListenerAsync.callCount).to.equal(1);
+				expect(mock_elb.createListenerAsync.callCount).to.equal(2);
 				expect(mock_elb.registerTargetsAsync.callCount).to.equal(1);
 			});
 	});

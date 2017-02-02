@@ -16,7 +16,7 @@ function _create_elb (aws, lb_name, subnet_ids, opts, sg_id) {
 	};
 
 	if (opts.tags && opts.tags.length) {
-		cfg.Tags = opts.tags
+		cfg.Tags = opts.tags;
 	}
 
 	return aws.createLoadBalancerAsync(cfg);
