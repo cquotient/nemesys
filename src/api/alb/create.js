@@ -15,34 +15,60 @@ function _create_elb (aws, lb_name, subnet_ids, opts, sg_id) {
 		SecurityGroups: [sg_id],
 	};
 
-	if (opts.tags && opt.tags.length) {
+	if (opts.tags && opts.tags.length) {
 		cfg.Tags = opts.tags
 	}
 
-	return aws.createLoadBalancerAsync();
+	return aws.createLoadBalancerAsync(cfg);
 }
 
-function _register_indiv_targets (tg, aws) {
-	let promise = Promise.resolve();
+function _get_targets_by_name (name, region) {
+	const ec2 = AWSProvider.get_ec2(region),
+		cfg = {
+			Filters: [
+				{
+					Name: 'tag:Name',
+					Values: [ name ]
+				},
+			]
+		};
+
+	return ec2.describeInstancesAsync(cfg);
+}
+
+function _register_indiv_targets (elb, tg, region) {
+	let promise = Promise.resolve(),
+		targets_cfg = [];
 
 	if (tg.targets && tg.targets.length) {
 		let promises = [];
 
 		for (let target of tg.targets) {
 			if (target.instance_id) {
-				promises.push(Promise.resolve({
+				targets_cfg.push({
 					Id:   target.instance_id,
 					Port: target.port,
-				}));
+				});
+				promises.push(Promise.resolve());
 			}
 			if (target.instance_name) {
-				// TODO - look up all instances with name
+				promises.push(_get_targets_by_name(target.instance_name, region)
+					.then(data => {
+						for (let r of data.Reservations) {
+							for (let i of r.Instances) {
+								targets_cfg.push({
+									Id:   i.InstanceId,
+									Port: target.port,
+								});
+							}
+						}
+					}));
 			}
 		}
 
 		promise = BB.all(promises)
-			.then((targets_cfg) => {
-				return aws.registerTargetsAsync({
+			.then(() => {
+				return elb.registerTargetsAsync({
 					TargetGroupArn: tg.arn,
 					Targets:        targets_cfg
 				});
@@ -53,7 +79,7 @@ function _register_indiv_targets (tg, aws) {
 }
 
 
-function _create_targets (aws, target_groups, vpc_id) {
+function _create_targets (elb, target_groups, vpc_id, region) {
 	let tg_promises = [];
 
 	for (let target_group of target_groups) {
@@ -66,7 +92,7 @@ function _create_targets (aws, target_groups, vpc_id) {
 			health_path:        '/pulse',
 		});
 
-		let p = aws.createTargetGroupAsync({
+		let p = elb.createTargetGroupAsync({
 			Name:                       tg.name,
 			Port:                       tg.port,
 			Protocol:                   tg.protocol,
@@ -83,7 +109,7 @@ function _create_targets (aws, target_groups, vpc_id) {
 		p = p.then((result) => {
 			tg.arn = result.TargetGroups[0].TargetGroupArn;
 
-			return _register_indiv_targets(tg, aws).then(() => tg);
+			return _register_indiv_targets(elb, tg, region).then(() => tg);
 		});
 
 		tg_promises.push(p);
@@ -92,7 +118,7 @@ function _create_targets (aws, target_groups, vpc_id) {
 	return Promise.all(tg_promises);
 }
 
-function _todo_make_name (aws, tg, port, proto, lb) {
+function _create_listener (aws, tg, port, proto, lb, ssl_config) {
 	let cfg = {
 		DefaultActions:  [
 			{
@@ -102,11 +128,11 @@ function _todo_make_name (aws, tg, port, proto, lb) {
 		],
 		Port:            port,
 		Protocol:        proto,
-		LoadBalancerArn: lb.LoadBalancerArn,
+		LoadBalancerArn: lb.arn,
 	};
-	if (tg.protocol === 'HTTPS') {
-		cfg.SslPolicy = 'STRING_VALUE';
-		cfg.Certificates = [{CertificateArn: 'STRING_VALUE'},];
+	if (proto === 'HTTPS') {
+		cfg.SslPolicy = ssl_config.policy;
+		cfg.Certificates = [{ CertificateArn: ssl_config.cert },];
 	}
 	return aws.createListenerAsync(cfg);
 	//.then((lsnr) => {
@@ -131,12 +157,12 @@ function _todo_make_name (aws, tg, port, proto, lb) {
 	//});
 }
 
-function _create_listener (aws, lb, target_groups) {
+function _create_listeners (aws, lb, target_groups, ssl_config) {
 	let promises = [];
 
 	for (let tg of target_groups) {
-		promises.push(_todo_make_name(aws, tg, 80, 'HTTP', lb));
-		// promises.push(_todo_make_name(aws, tg, 443, 'HTTPS', lb));
+		promises.push(_create_listener(aws, tg, 80, 'HTTP', lb));
+		promises.push(_create_listener(aws, tg, 443, 'HTTPS', lb, ssl_config));
 
 		// TODO - the first TG should be the default one and all the others are optional rules added.
 	}
@@ -154,22 +180,25 @@ function create (regions, vpc_name, sg_name, lb_name, target_groups, ssl_config,
 
 	for (let region of regions) {
 		Logger.info(`Creating ALB ${lb_name} for ${region}`);
-		const aws = AWSProvider.get_elb(region);
+		const elb = AWSProvider.get_elb(region);
 		let lb;
 
 		let p = BB.all([
 			AWSUtil.get_vpc_id(region, vpc_name),
 			AWSUtil.get_sg_id(region, sg_name),
 			AWSUtil.get_subnet_ids(region, vpc_name),
-		]).spread((vpc_id, sg_id, subnet_ids) => _create_elb(aws, lb_name, subnet_ids, opts, sg_id)
+		]).spread((vpc_id, sg_id, subnet_ids) => _create_elb(elb, lb_name, subnet_ids, opts, sg_id)
 			.then((data) => {
-				lb = data.LoadBalancers[0];
-				return _create_targets(aws, target_groups, vpc_id);
+				lb = {
+					arn: data.LoadBalancers[0].LoadBalancerArn,
+					// ssl_config:
+				};
+				return _create_targets(elb, target_groups, vpc_id, region);
 			})
-			.then((target_groups) => _create_listener(aws, lb, target_groups)))
+			.then((target_groups) => _create_listeners(elb, lb, target_groups, ssl_config)))
 			.then(() => Logger.info(`Finished creating ALB ${lb_name} for ${region}`));
 
-		// TODO - add alarms
+		// TODO - add alarms setup
 
 		promises.push(p);
 	}
