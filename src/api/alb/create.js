@@ -2,9 +2,9 @@
 
 const BB = require('bluebird');
 
-const Logger = require('../../logger');
+const Logger      = require('../../logger');
+const AWSUtil     = require('../aws_util');
 const AWSProvider = require('../aws_provider');
-const AWSUtil = require('../aws_util');
 
 function _create_elb (aws, lb_name, subnet_ids, opts, sg_id) {
 	let cfg = {
@@ -85,11 +85,11 @@ function _create_targets (elb, target_groups, vpc_id, region) {
 	for (let target_group of target_groups) {
 		let tg = Object.assign({}, target_group, {
 			protocol:           'HTTP',
+			health_path:        '/pulse',
 			health_interval:    30,
 			health_timeout:     5,
 			health_threshold:   2,
 			health_unthreshold: 2,
-			health_path:        '/pulse',
 		});
 
 		let p = elb.createTargetGroupAsync({
@@ -135,26 +135,6 @@ function _create_listener (aws, tg, port, proto, lb, ssl_config) {
 		cfg.Certificates = [{ CertificateArn: ssl_config.cert },];
 	}
 	return aws.createListenerAsync(cfg);
-	//.then((lsnr) => {
-	// return aws.createRuleAsync({
-	// 	Actions:     [
-	// 		{
-	// 			TargetGroupArn: tg.arn,
-	// 			Type:           'forward',
-	// 		},
-	// 	],
-	// 	Conditions:  [
-	// 		{
-	// 			Field:  'path-pattern',
-	// 			Values: [
-	// 				'STRING_VALUE', // eg. '/img/*'
-	// 			]
-	// 		},
-	// 	],
-	// 	ListenerArn: lsnr.Listeners[0].ListenerArn,
-	// 	Priority:    priority++
-	// });
-	//});
 }
 
 function _create_listeners (aws, lb, target_groups, ssl_config) {
@@ -191,7 +171,6 @@ function create (regions, vpc_name, sg_name, lb_name, target_groups, ssl_config,
 			.then((data) => {
 				lb = {
 					arn: data.LoadBalancers[0].LoadBalancerArn,
-					// ssl_config:
 				};
 				return _create_targets(elb, target_groups, vpc_id, region);
 			})
