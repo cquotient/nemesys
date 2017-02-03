@@ -130,24 +130,57 @@ function _create_listener (aws, tg, port, proto, lb, ssl_config) {
 		Protocol:        proto,
 		LoadBalancerArn: lb.arn,
 	};
-	if (proto === 'HTTPS') {
+	if (ssl_config) {
 		cfg.SslPolicy = ssl_config.policy;
 		cfg.Certificates = [{ CertificateArn: ssl_config.cert },];
 	}
-	return aws.createListenerAsync(cfg);
+	return aws.createListenerAsync(cfg)
+		.then((data) => data.Listeners[0].ListenerArn);
+}
+
+function _add_rule_to_listener (aws, lstn_arn, tg, priority) {
+	let patterns = Array.isArray(tg.patterns) ? tg.patterns : [tg.patterns];
+	let cfg = {
+		Actions: [
+			{
+				TargetGroupArn: tg.arn,
+				Type: 'forward'
+			}
+		],
+		Conditions: [
+			{
+				Field: 'path-pattern',
+				Values: patterns
+			}
+		],
+		ListenerArn: lstn_arn,
+		Priority:priority
+	};
+
+	return aws.createRuleAsync(cfg);
 }
 
 function _create_listeners (aws, lb, target_groups, ssl_config) {
 	let promises = [];
 
-	for (let tg of target_groups) {
-		promises.push(_create_listener(aws, tg, 80, 'HTTP', lb));
-		promises.push(_create_listener(aws, tg, 443, 'HTTPS', lb, ssl_config));
-
-		// TODO - the first TG should be the default one and all the others are optional rules added.
+	if (!target_groups || !target_groups.length) {
+		return Promise.resolve();
 	}
 
-	return BB.all(promises);
+	// Create the default rule
+	let tg = target_groups.shift();
+	return BB.all([_create_listener(aws, tg, 80, 'HTTP', lb),
+					_create_listener(aws, tg, 443, 'HTTPS', lb, ssl_config)])
+		.spread((http_arn, https_arn) => {
+			// The remaining should all be rules.
+			let priority = 1;
+			for (let tg of target_groups) {
+				promises.push(_add_rule_to_listener(aws, http_arn, tg, priority++));
+				promises.push(_add_rule_to_listener(aws, https_arn, tg, priority++));
+				// TODO - the first TG should be the default one and all the others are optional rules added.
+			}
+		})
+		.then(() => BB.all(promises));
 }
 
 function create (regions, vpc_name, sg_name, lb_name, target_groups, ssl_config, options) {
