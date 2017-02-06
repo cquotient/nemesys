@@ -100,7 +100,7 @@ function parse_args (args) {
 				.alias('h', 'help');
 		})
 
-		.command('create', 'Create an EC2 resource', function (yargs) {
+		.command('create', 'Create an AWS resource', function (yargs) {
 			yargs
 
 				.command('asg', 'Create an Autoscaling Group', function (yargs) {
@@ -132,6 +132,32 @@ function parse_args (args) {
 							'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
 						.help('h')
 						.alias('h', 'help');
+				})
+
+				.command('alb', 'Create an Application Load Balancer', function (yargs) {
+					_common_args(yargs)
+
+						.option('v', vpc_opt)
+						.option('name', {
+							alias: 'n',
+							describe: 'Name of ALB',
+						})
+						.option('security-group', {
+							alias: 's',
+							describe: 'Security Group name new ALB should be tied to.'
+						})
+						.option('target-groups', {
+							alias: 's',
+							describe: 'JSON string of array of target groups (just use a file!)'
+						})
+						.option('ssl-config', {
+							alias: 's',
+							describe: 'JSON string of ssl config map (just use a file!)'
+						})
+						.option('options', {
+							alias: 's',
+							describe: 'JSON string of options map (just use a file!)'
+						});
 				})
 
 				.command('sg', 'Create a Security Group', function (yargs) {
@@ -482,6 +508,7 @@ function _validate(command) {
 		'update sg':       ['regions', 'security-group'],
 		'create asg':      ['regions', 'vpc', 'group', 'launch-config'],
 		'create sg':       ['regions', 'vpc', 'security-group'],
+		'create alb':      ['regions', 'vpc', 'security-group', 'name'],
 		'create lc':       ['regions', 'launch-config', 'ami', 'instance-type', 'ssh-key-pair'],
 		'create instance': ['regions', 'ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
 		'create ami':      ['regions', 'ami', 'base-ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],

@@ -1,7 +1,11 @@
 'use strict';
+const fs = require('fs');
+const path = require('path');
 
-exports.asg = require('./api/asg');
-exports.sg = require('./api/sg');
-exports.lc = require('./api/lc');
-exports.instance = require('./api/instance');
-exports.ami = require('./api/ami');
+fs.readdirSync(path.join(__dirname, 'api')).forEach((file) => {
+	let f = path.join(__dirname, 'api', file);
+	if (fs.statSync(f).isDirectory()) {
+		exports[file] = require(f);
+	}
+});
+

@@ -1,6 +1,6 @@
 {
   "name": "nemesys",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "author": "CQuotient Engineering",
   "repository": "cquotient/nemesys",
   "scripts": {
@@ -8,11 +8,11 @@
     "test": "./node_modules/mocha/bin/mocha --recursive tst"
   },
   "dependencies": {
-    "aws-sdk": "2.2.26",
-    "bluebird": "3.0.6",
+    "aws-sdk": "2.9.0",
+    "bluebird": "3.4.7",
     "js-yaml": "3.7.0",
     "validator": "4.4.0",
-    "yargs": "6.5.0"
+    "yargs": "6.6.0"
   },
   "main": "src/",
   "bin": {

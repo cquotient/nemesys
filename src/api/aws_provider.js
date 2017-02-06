@@ -4,7 +4,7 @@ const BB = require('bluebird');
 const AWS = require('aws-sdk');
 
 let ec2_conns = {},
-		elb_conns = {};
+	elb_conns = {};
 
 function _get_ec2(region) {
 	if(!ec2_conns[region]) {
@@ -46,8 +46,19 @@ function _get_elb(region) {
 	return elb_conns[region];
 }
 
+function _get_elbv2(region) {
+	if(!elb_conns[region]) {
+		elb_conns[region] = BB.promisifyAll(new AWS.ELBv2({
+			region: region,
+			apiVersion: '2015-12-01'
+		}));
+	}
+	return elb_conns[region];
+}
+
 exports.get_ec2 = _get_ec2;
 exports.get_as = _get_as;
 exports.get_iam = _get_iam;
 exports.get_cw = _get_cloudwatch;
 exports.get_elb = _get_elb;
+exports.get_elbv2 = _get_elbv2;
