@@ -6,7 +6,7 @@ const Logger      = require('../../logger');
 const AWSUtil     = require('../aws_util');
 const AWSProvider = require('../aws_provider');
 
-function _create_elb (aws, lb_name, subnet_ids, opts, sg_id) {
+function _create_alb (aws, lb_name, subnet_ids, opts, sg_id) {
 	let cfg = {
 		Name:           lb_name,
 		Subnets:        subnet_ids,
@@ -200,7 +200,7 @@ function create (regions, vpc_name, sg_name, lb_name, target_groups, ssl_config,
 			AWSUtil.get_vpc_id(region, vpc_name),
 			AWSUtil.get_sg_id(region, sg_name),
 			AWSUtil.get_subnet_ids(region, vpc_name),
-		]).spread((vpc_id, sg_id, subnet_ids) => _create_elb(elb, lb_name, subnet_ids, opts, sg_id)
+		]).spread((vpc_id, sg_id, subnet_ids) => _create_alb(elb, lb_name, subnet_ids, opts, sg_id)
 			.then((data) => {
 				lb = {
 					arn: data.LoadBalancers[0].LoadBalancerArn,
