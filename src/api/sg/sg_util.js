@@ -96,7 +96,7 @@ function _get_my_ip() {
 				body += chunk;
 			});
 			resp.on('end', function () {
-				resolve(body);
+				resolve(body.replace('\n',''));
 			});
 		}).on('error', reject);
 	});
