@@ -84,7 +84,7 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks, p
 }
 
 function _gen_spinup_complete_ud(region) {
-	return `aws ec2 create-tags --region ${region} --resources \`ec2metadata --instance-id\` --tags Key=Spinup,Value=complete\n`;
+	return `\naws ec2 create-tags --region ${region} --resources \`ec2metadata --instance-id\` --tags Key=Spinup,Value=complete\n`;
 }
 
 function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, disks, az, preserve_instance){
