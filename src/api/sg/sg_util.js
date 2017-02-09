@@ -78,4 +78,19 @@ function _get_ip_permissions(region, ingress, groups_are_ids) {
 	}
 }
 
+function _get_my_ip() {
+	return new Promise(function(resolve, reject){
+		let body = '';
+		require('https').get('https://ipv4.icanhazip.com/', function(resp){
+			resp.on('data', function (chunk) {
+				body += chunk;
+			});
+			resp.on('end', function () {
+				resolve(body);
+			});
+		}).on('error', reject);
+	});
+}
+
 exports.get_ip_permissions = _get_ip_permissions;
+exports.get_my_ip = _get_my_ip;
