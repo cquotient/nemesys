@@ -1,6 +1,6 @@
 'use strict';
 
-describe('SGUtil', function(){
+describe.skip('SGUtil', function(){
 	let SGUtil,
 
 			expect;
@@ -16,14 +16,7 @@ describe('SGUtil', function(){
 
 		before(function(){
 			sandbox = require('sinon').sandbox.create();
-			let EventEmitter = require('events');
-			class fake_emitter extends EventEmitter {}
-			sandbox.stub(require('https'), 'get', function(url, cb){
-				let obj = new fake_emitter();
-				cb(obj);
-				obj.emit('data', 'fake_ip');
-				obj.emit('end');
-			});
+
 		});
 
 		after(function(){

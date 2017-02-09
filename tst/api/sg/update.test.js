@@ -42,6 +42,14 @@ describe('update sg', function(){
 		};
 		authorize_sg_spy = sandbox.spy(ec2_mock, 'authorizeSecurityGroupIngressAsync');
 		sandbox.stub(AWSProvider, 'get_ec2', () => ec2_mock);
+		let EventEmitter = require('events');
+		class fake_emitter extends EventEmitter {}
+		sandbox.stub(require('https'), 'get', function(url, cb){
+			let obj = new fake_emitter();
+			cb(obj);
+			obj.emit('data', 'fake_ip');
+			obj.emit('end');
+		});
 	});
 
 	afterEach(function(){
@@ -133,4 +141,24 @@ describe('update sg', function(){
 		});
 	});
 
+	it('should look up {me}', function(){
+		let ingress = ['me'];
+		return update(['us-east-1'], 'fake-sg', ingress)
+		.then(function(){
+			expect(authorize_sg_spy).to.have.been.calledWith({
+				DryRun: false,
+				GroupId: 'fake-sg-id',
+				IpPermissions: [{
+					FromPort: 22,
+					ToPort: 22,
+					IpProtocol: 'tcp',
+					IpRanges: [
+						{
+							CidrIp: 'fake_ip/32'
+						}
+					]
+				}]
+			});
+		});
+	});
 });
