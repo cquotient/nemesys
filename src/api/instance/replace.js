@@ -77,7 +77,7 @@ function wait_until_healthy(region, lbName, instanceId) {
 			});
 	}
 
-	return helper(region, lbName, instanceId, 10);
+	return helper(region, lbName, instanceId, 20);
 }
 
 function get_instance_lb(region, instanceId) {
