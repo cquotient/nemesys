@@ -78,6 +78,6 @@ describe('instance replace', function () {
 	});
 
 	it('should replace an instance', function () {
-		return instance.replace('us-east-1', 'old-instance', 'new-instance');
+		return instance.replace(['us-east-1'], 'old-instance', 'new-instance');
 	});
 });

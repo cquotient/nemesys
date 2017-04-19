@@ -115,9 +115,9 @@ describe('instance copy', function () {
 
 	it('should copy an existing instance', function () {
 		return instance
-			.copy('us-east-1', 'old-instance', 'new-instance')
-			.then(function (newInstanceId) {
-				expect(newInstanceId).eql('456');
+			.copy(['us-east-1'], 'old-instance', 'new-instance')
+			.then(function (result) {
+				expect(result).eql(['456']);
 			});
 	});
 });

@@ -7,14 +7,25 @@ const AWSUtil = require('../aws_util');
 const logger = require('../../logger');
 
 module.exports = function (regions, target_name, source_name) {
-	const region = regions[0];
+	return Promise.all(regions.map(function (region) {
+		return replace(region, target_name, source_name);
+	}));
+};
 
+function replace(region, target_name, source_name) {
 	let target, source, lbName;
 
 	return Promise.all([
 		AWSUtil.get_instance_by_name(region, target_name),
 		AWSUtil.get_instance_by_name(region, source_name)
 	]).spread(function (t, s) {
+		if (t == null) {
+			throw new Error(`Instance not found: ${target_name}`);
+		}
+		if (s == null) {
+			throw new Error(`Instance not found: ${source_name}`);
+		}
+
 		target = t;
 		source = s;
 	}).then(function () {
@@ -34,7 +45,7 @@ module.exports = function (regions, target_name, source_name) {
 		logger.info(`Terminate ${target_name}`);
 		return terminate_instance(region, target.InstanceId);
 	});
-};
+}
 
 function wait_until_healthy(region, lbName, instanceId) {
 	function helper(region, lbName, instanceId, retry) {

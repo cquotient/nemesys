@@ -160,7 +160,13 @@ function _get_instance_by_name(region, name) {
 			]
 		})
 		.then(function (data) {
-			return data.Reservations[0].Instances[0];
+			if (data.Reservations &&
+				data.Reservations.length &&
+				data.Reservations[0].Instances &&
+				data.Reservations[0].Instances.length) {
+					return data.Reservations[0].Instances[0];
+			}
+			return null;
 		});
 }
 

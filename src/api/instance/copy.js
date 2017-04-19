@@ -6,11 +6,19 @@ const AWSUtil = require('../aws_util');
 const logger = require('../../logger');
 
 module.exports = function (regions, instance_name, rename) {
-	const region = regions[0];
+	return Promise.all(regions.map(function (region) {
+		return copy(region, instance_name, rename);
+	}));
+};
 
+function copy(region, instance_name, rename) {
 	return AWSUtil
 		.get_instance_by_name(region, instance_name)
 		.then(function (instance) {
+			if (instance == null) {
+				throw new Error(`Instance not found: ${instance_name}`);
+			}
+
 			logger.info(`Copy attributes from ${instance_name}`);
 			return copy_instance_attrs(region, instance.InstanceId);
 		})
@@ -24,7 +32,7 @@ module.exports = function (regions, instance_name, rename) {
 		.then(function (data) {
 			return data.Instances[0].InstanceId;
 		});
-};
+}
 
 function rename_instance(instance_attrs, rename) {
 	let Tags = instance_attrs.TagSpecifications[0].Tags;
@@ -59,9 +67,8 @@ function get_instance_info(region, instanceId) {
 			InstanceIds: [instanceId]
 		})
 		.then(function (data) {
-			return data.Reservations[0].Instances[0];
-		})
-		.then(function (instance) {
+			const instance = data.Reservations[0].Instances[0];
+
 			return {
 				ImageId: instance.ImageId,
 				IamInstanceProfile: pick(instance.IamInstanceProfile, ['Arn']),
@@ -118,16 +125,20 @@ function get_instance_volumes(region, instanceId) {
 			]
 		})
 		.then(function (data) {
-			const volumes = data.Volumes.map(function (vol) {
-				return {
-					DeviceName: vol.Attachments[0].Device,
-					Ebs: {
-						VolumeType: vol.VolumeType,
-						VolumeSize: vol.Size,
-						DeleteOnTermination: true
-					}
-				};
-			});
+			const volumes = data.Volumes
+				.filter(function (vol) {
+					return !!vol.Attachments.length;
+				})
+				.map(function (vol) {
+					return {
+						DeviceName: vol.Attachments[0].Device,
+						Ebs: {
+							VolumeType: vol.VolumeType,
+							VolumeSize: vol.Size,
+							DeleteOnTermination: true
+						}
+					};
+				});
 
 			return {BlockDeviceMappings: volumes};
 		});
