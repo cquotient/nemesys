@@ -240,6 +240,19 @@ function _handle_replace(cmd) {
 				process.exit(1);
 			});
 			break;
+		case 'instance':
+			nemesys.instance.replace(
+				cmd.opts['regions'],
+				cmd.opts['target'],
+				cmd.opts['source']
+			).then(function () {
+				Logger.info('replace complete');
+				process.exit(0);
+			}).catch(function (err) {
+				Logger.error(err.stack);
+				process.exit(1);
+			});
+			break;
 		default:
 			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
 			process.exit(1);
@@ -281,6 +294,27 @@ function _handle_update(cmd) {
 	}
 }
 
+function _handle_copy(cmd) {
+	switch(cmd.target) {
+		case 'instance':
+			nemesys.instance.copy(
+				cmd.opts['regions'],
+				cmd.opts['instance'],
+				cmd.opts['rename']
+			).then(function (id) {
+				Logger.info(`copied instance to ${id}`);
+				process.exit(0);
+			}).catch(function(err){
+				Logger.error(err.stack);
+				process.exit(1);
+			});
+			break;
+		default:
+			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
+			process.exit(1);
+	}
+}
+
 function _handle(cmd) {
 	switch(cmd.command) {
 		case 'update':
@@ -297,6 +331,10 @@ function _handle(cmd) {
 
 		case 'delete':
 			_handle_delete(cmd);
+			break;
+
+		case 'copy':
+			_handle_copy(cmd);
 			break;
 
 		default:
