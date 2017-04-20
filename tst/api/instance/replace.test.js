@@ -43,6 +43,25 @@ const mock_elb = {
 				{State: 'InService'}
 			]
 		});
+	},
+	waitForAsync: function (state, params) {
+		expect(state).to.eql('instanceInService');
+		expect(params).to.eql({
+			LoadBalancerName: 'lb',
+			Instances: [
+				{
+					InstanceId: '123'
+				}
+			]
+		});
+
+		return Promise.resolve({
+			InstanceStates: [
+				{
+					State: 'InService'
+				}
+			]
+		});
 	}
 };
 

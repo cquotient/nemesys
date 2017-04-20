@@ -15,10 +15,6 @@ function copy(region, instance_name, rename) {
 	return AWSUtil
 		.get_instance_by_name(region, instance_name)
 		.then(function (instance) {
-			if (instance == null) {
-				throw new Error(`Instance not found: ${instance_name}`);
-			}
-
 			logger.info(`Copy attributes from ${instance_name}`);
 			return copy_instance_attrs(region, instance.InstanceId);
 		})
@@ -30,7 +26,25 @@ function copy(region, instance_name, rename) {
 			return AWSProvider.get_ec2(region).runInstancesAsync(params);
 		})
 		.then(function (data) {
-			return data.Instances[0].InstanceId;
+			logger.info('Wait for instance intialization');
+			return wait_until_runnning(region, data.Instances[0].InstanceId);
+		});
+}
+
+function wait_until_runnning(region, instanceId) {
+	return AWSProvider
+		.get_ec2(region)
+		.waitForAsync('instanceRunning', {
+			InstanceIds: [instanceId]
+		})
+		.then(function (data) {
+			const instance = data.Reservations[0].Instances[0];
+
+			if (instance.State.Name !== 'running') {
+				throw new Error(instance.StateReason.Message);
+			}
+
+			return instance.InstanceId;
 		});
 }
 

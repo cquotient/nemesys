@@ -160,13 +160,19 @@ function _get_instance_by_name(region, name) {
 			]
 		})
 		.then(function (data) {
-			if (data.Reservations &&
-				data.Reservations.length &&
-				data.Reservations[0].Instances &&
-				data.Reservations[0].Instances.length) {
-					return data.Reservations[0].Instances[0];
+			const instances = data.Reservations.reduce(function (result, current) {
+				return result.concat(current.Instances);
+			}, []);
+
+			if (!instances.length) {
+				throw new Error(`Instance not found: ${name}`);
 			}
-			return null;
+
+			if (instances.length > 1) {
+				throw new Error(`Instance name is not unique: ${name}`);
+			}
+
+			return instances[0];
 		});
 }
 

@@ -19,13 +19,6 @@ function replace(region, target_name, source_name) {
 		AWSUtil.get_instance_by_name(region, target_name),
 		AWSUtil.get_instance_by_name(region, source_name)
 	]).spread(function (t, s) {
-		if (t == null) {
-			throw new Error(`Instance not found: ${target_name}`);
-		}
-		if (s == null) {
-			throw new Error(`Instance not found: ${source_name}`);
-		}
-
 		target = t;
 		source = s;
 	}).then(function () {
@@ -48,36 +41,23 @@ function replace(region, target_name, source_name) {
 }
 
 function wait_until_healthy(region, lbName, instanceId) {
-	function helper(region, lbName, instanceId, retry) {
-		return AWSProvider
-			.get_elb(region)
-			.describeInstanceHealthAsync({
-				LoadBalancerName: lbName,
-				Instances: [
-					{InstanceId: instanceId}
-				]
-			})
-			.then(function (data) {
-				const healthy = data.InstanceStates.every(function (state) {
-					return state.State === 'InService';
-				});
-
-				if (!healthy) {
-					if (retry) {
-						logger.info('Retry in 30 seconds');
-						return new Promise(function (resolve) {
-							setTimeout(function () {
-								resolve(helper(region, lbName, instanceId, retry - 1));
-							}, 30000);
-						});
-					} else {
-						throw new Error('Health check failed');
-					}
+	return AWSProvider
+		.get_elb(region)
+		.waitForAsync('instanceInService', {
+			LoadBalancerName: lbName,
+			Instances: [
+				{
+					InstanceId: instanceId
 				}
-			});
-	}
+			]
+		})
+		.then(function (data) {
+			const state = data.InstanceStates[0];
 
-	return helper(region, lbName, instanceId, 20);
+			if (state.State !== 'InService') {
+				throw new Error(state.Description);
+			}
+		});
 }
 
 function get_instance_lb(region, instanceId) {

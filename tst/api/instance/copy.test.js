@@ -95,6 +95,26 @@ const mock_ec2 = {
 			]
 		});
 		return Promise.resolve({Volumes: []});
+	},
+	waitForAsync: function (state, params) {
+		expect(state).to.eql('instanceRunning');
+		expect(params).to.eql({
+			InstanceIds: ['456']
+		});
+		return Promise.resolve({
+			Reservations: [
+				{
+					Instances: [
+						{
+							InstanceId: '456',
+							State: {
+								Name: 'running'
+							}
+						}
+					]
+				}
+			]
+		});
 	}
 };
 
