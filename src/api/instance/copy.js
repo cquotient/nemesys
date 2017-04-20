@@ -149,7 +149,7 @@ function get_instance_volumes(region, instanceId) {
 						Ebs: {
 							VolumeType: vol.VolumeType,
 							VolumeSize: vol.Size,
-							DeleteOnTermination: true
+							DeleteOnTermination: vol.Attachments[0].DeleteOnTermination
 						}
 					};
 				});
