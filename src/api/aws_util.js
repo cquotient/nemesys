@@ -169,7 +169,10 @@ function _get_instance_by_name(region, name) {
 			}
 
 			if (instances.length > 1) {
-				throw new Error(`Instance name is not unique: ${name}`);
+				const instanceIds = instances.map(function (instance) {
+					return instance.InstanceId;
+				});
+				throw new Error(`Instance name not unique: ${name} is used by ${instanceIds.join(',')}`);
 			}
 
 			return instances[0];
