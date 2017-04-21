@@ -68,9 +68,8 @@ function copy_instance_attrs(region, instanceId) {
 			get_instance_userdata(region, instanceId),
 			get_instance_volumes(region, instanceId)
 		])
-		.spread(function () {
-			let args = [].slice.call(arguments);
-			return Object.assign.apply(Object, [{}].concat(args));
+		.spread(function (instance_info, instance_userdata, instance_volumes) {
+			return Object.assign({}, instance_info, instance_userdata, instance_volumes);
 		});
 }
 
