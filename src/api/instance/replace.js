@@ -23,8 +23,12 @@ function replace(region, target_name, source_name) {
 		source = s;
 	}).then(function () {
 		return get_instance_lb(region, target.InstanceId);
-	}).then(function (name) {
-		lbName = name;
+	}).then(function (lb) {
+		if (lb == null) {
+			throw new Error(`Instance ${target_name} is not linked to a load balancer`);
+		}
+
+		lbName = lb.LoadBalancerName;
 	}).then(function () {
 		logger.info(`Attach ${source_name} to ${lbName}`);
 		return attach_to_lb(region, lbName, source.InstanceId);
@@ -68,9 +72,6 @@ function get_instance_lb(region, instanceId) {
 					return instance.InstanceId === instanceId;
 				});
 			});
-		})
-		.then(function (lb) {
-			return lb.LoadBalancerName;
 		});
 }
 
