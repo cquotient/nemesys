@@ -398,7 +398,7 @@ function parse_args (args) {
 							describe: 'Target instance name'
 						})
 						.option('i', ingress_rules_opt)
-						.example('nemesys replace instance -s 123 -t 456 -r us-east-1',	'Replaces target instance with src instance')
+						.example('nemesys replace instance -s source-instance-name -t target-instance-name -r us-east-1', 'Replaces target instance with src instance')
 						.help('h')
 						.alias('h', 'help');
 				})
@@ -470,7 +470,7 @@ function parse_args (args) {
 							alias: 'rename',
 							describe: 'New instance name'
 						})
-						.example('nemesys copy instance -i 123 -n new-name')
+						.example('nemesys copy instance -i instance-name -n new-instance-name -r us-east-1')
 						.help('h')
 						.alias('h', 'help');
 				});
