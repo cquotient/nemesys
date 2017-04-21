@@ -85,7 +85,9 @@ function get_instance_info(region, instanceId) {
 
 			return {
 				ImageId: instance.ImageId,
-				IamInstanceProfile: pick(instance.IamInstanceProfile, ['Arn']),
+				IamInstanceProfile: {
+					Arn: instance.IamInstanceProfile.Arn
+				},
 				MaxCount: 1,
 				MinCount: 1,
 				Placement: instance.Placement,
@@ -156,12 +158,4 @@ function get_instance_volumes(region, instanceId) {
 
 			return {BlockDeviceMappings: volumes};
 		});
-}
-
-function pick(obj, keys) {
-	const result = {};
-	keys.forEach(function (k) {
-		result[k] = obj[k];
-	});
-	return result;
 }
