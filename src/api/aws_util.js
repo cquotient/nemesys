@@ -144,6 +144,41 @@ function _get_account_id() {
 	});
 }
 
+function _get_instance_by_name(region, name) {
+	return AWSProvider
+		.get_ec2(region)
+		.describeInstancesAsync({
+			Filters: [
+				{
+					Name: 'tag:Name',
+					Values: [name]
+				},
+				{
+					Name: 'instance-state-name',
+					Values: ['running']
+				}
+			]
+		})
+		.then(function (data) {
+			const instances = data.Reservations.reduce(function (result, current) {
+				return result.concat(current.Instances);
+			}, []);
+
+			if (!instances.length) {
+				throw new Error(`Instance not found: ${name}`);
+			}
+
+			if (instances.length > 1) {
+				const instanceIds = instances.map(function (instance) {
+					return instance.InstanceId;
+				});
+				throw new Error(`Instance name not unique: ${name} is used by ${instanceIds.join(',')}`);
+			}
+
+			return instances[0];
+		});
+}
+
 exports.get_asg = _get_asg;
 exports.get_sg_id = _get_sg_id;
 exports.get_vpc_id = _get_vpc_id;
@@ -152,5 +187,5 @@ exports.get_ami_id = _get_ami_id;
 exports.get_sg_ids = _get_sg_ids;
 exports.get_subnet_ids = _get_subnet_ids;
 exports.get_account_id = _get_account_id;
-
-exports.get_bdms =_get_bdms;
+exports.get_bdms = _get_bdms;
+exports.get_instance_by_name = _get_instance_by_name;

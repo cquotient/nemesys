@@ -387,6 +387,22 @@ function parse_args (args) {
 						.alias('h', 'help');
 				})
 
+				.command('instance', 'Replace instance with another', function (yargs) {
+					_common_args(yargs)
+						.option('s', {
+							alias:    'source',
+							describe: 'Source instance name'
+						})
+						.option('t', {
+							alias:    'target',
+							describe: 'Target instance name'
+						})
+						.option('i', ingress_rules_opt)
+						.example('nemesys replace instance -s source-instance-name -t target-instance-name -r us-east-1', 'Replaces target instance with src instance')
+						.help('h')
+						.alias('h', 'help');
+				})
+
 				.demand(2)
 				.help('h')
 				.alias('h', 'help');
@@ -442,6 +458,23 @@ function parse_args (args) {
 				.alias('h', 'help');
 		})
 
+		.command('copy', 'Copy an EC2 resource', function (yargs) {
+			yargs
+				.command('instance', 'Copy an instance', function (yargs) {
+					_common_args(yargs)
+						.option('i', {
+							alias: 'instance',
+							describe: 'Instance name'
+						})
+						.option('n', {
+							alias: 'rename',
+							describe: 'New instance name'
+						})
+						.example('nemesys copy instance -i instance-name -n new-instance-name -r us-east-1')
+						.help('h')
+						.alias('h', 'help');
+				});
+		})
 		.demand(2)
 		.help('h')
 		.alias('h', 'help')
@@ -504,20 +537,22 @@ function del_undef(obj) {
 function _validate(command) {
 	// TODO - I really think this validation belongs to the actual commands themselves and not the arg parser
 	const demands = {
-		'update asg':      ['regions', 'group', 'launch-config'],
-		'update sg':       ['regions', 'security-group'],
-		'create asg':      ['regions', 'vpc', 'group', 'launch-config'],
-		'create sg':       ['regions', 'vpc', 'security-group'],
-		'create alb':      ['regions', 'vpc', 'security-group', 'name'],
-		'create lc':       ['regions', 'launch-config', 'ami', 'instance-type', 'ssh-key-pair'],
-		'create instance': ['regions', 'ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
-		'create ami':      ['regions', 'ami', 'base-ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
-		'replace asg':     ['regions', 'vpc', 'group', 'launch-config', 'old-group'],
-		'replace sg':      ['regions', 'security-group', 'ingress-rules'],
-		'delete asg':      ['regions', 'group'],
-		'delete lc':       ['regions', 'launch-config'],
-		'delete sg':       ['regions', 'security-group'],
-		'delete ami':      ['regions', 'ami'],
+		'update asg':       ['regions', 'group', 'launch-config'],
+		'update sg':        ['regions', 'security-group'],
+		'create asg':       ['regions', 'vpc', 'group', 'launch-config'],
+		'create sg':        ['regions', 'vpc', 'security-group'],
+		'create alb':       ['regions', 'vpc', 'security-group', 'name'],
+		'create lc':        ['regions', 'launch-config', 'ami', 'instance-type', 'ssh-key-pair'],
+		'create instance':  ['regions', 'ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
+		'create ami':       ['regions', 'ami', 'base-ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
+		'replace asg':      ['regions', 'vpc', 'group', 'launch-config', 'old-group'],
+		'replace sg':       ['regions', 'security-group', 'ingress-rules'],
+		'replace instance': ['regions', 'source', 'target'],
+		'delete asg':       ['regions', 'group'],
+		'delete lc':        ['regions', 'launch-config'],
+		'delete sg':        ['regions', 'security-group'],
+		'delete ami':       ['regions', 'ami'],
+		'copy instance':    ['regions', 'instance', 'rename']
 	};
 
 	let missing = [],
