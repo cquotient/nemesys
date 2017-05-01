@@ -28,6 +28,9 @@ function _get_sg_id(region, group_name) {
 }
 
 function _get_vpc_id(region, vpc_name) {
+	if(!vpc_name) {
+		return Promise.resolve();
+	}
 	return AWSProvider.get_ec2(region).describeVpcsAsync({
 		Filters: [
 			{
@@ -82,13 +85,19 @@ function _get_ami_id(region, ami_name) {
 			}
 		]
 	};
-	return AWSProvider.get_ec2(region).describeImagesAsync(params)
+return AWSProvider.get_ec2(region).describeImagesAsync(params)
 	.then(function(data){
+		if(!data.hasOwnProperty('Images') || !data.Images.length) {
+			return null;
+		}
 		return data.Images[0].ImageId;
 	});
 }
 
 function _get_sg_ids(region, sg) {
+	if(!sg) {
+		return Promise.resolve();
+	}
 	let proms = sg.map(function(name){
 		return _get_sg_id(region, name);
 	});
@@ -119,6 +128,9 @@ function _get_subnet_ids(region, vpc_name, azs) {
 }
 
 function _get_bdms(disks) {
+	if(!disks) {
+		return null;
+	}
 	return disks.map(function(d){
 		let d_split = d.split(':');
 		let bdm = {
@@ -180,6 +192,9 @@ function _get_instance_by_name(region, name) {
 }
 
 function _get_network_interface(region, vpc, az, eni_name, sg) {
+	if(!sg || !vpc || !az) {
+		return Promise.resolve();
+	}
 	let subnet_id_promise = _get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
 	let sg_ids_promise = _get_sg_ids(region, sg);
 	return BB.all([
