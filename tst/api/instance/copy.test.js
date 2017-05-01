@@ -331,7 +331,6 @@ describe('instance copy', function () {
 		return instance
 			.copy(['us-east-1'], 'old-instance', 'new-instance', 'fake-vpc-id', null, null, null, ['fake-sg-id'], null, null, null, null, null, null, null, 'fake-network-interface-id', null, null)
 			.then(function (result) {
-				console.log(require('util').inspect(mock_ec2.runInstancesAsync.getCall(0).args, { depth: null }));
 				let expected = expected_run_args;
 				expected.NetworkInterfaces = {
 					DeviceIndex: 0,
