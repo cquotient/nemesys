@@ -257,7 +257,6 @@ describe('instance copy', function () {
 		return instance
 			.copy(['us-east-1'], 'old-instance', 'new-instance', null, null, null, null, null, null, null, null, null, null, null, null, null, null, false)
 			.then(function (result) {
-				console.log(require('util').inspect(mock_ec2.runInstancesAsync.getCall(0).args, { depth: null }));
 				let expected = expected_run_args;
 				expected.EbsOptimized = false;
 				expect(mock_ec2.runInstancesAsync.calledWith(expected)).to.be.true;
