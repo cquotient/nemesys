@@ -28,6 +28,45 @@ describe('instance copy', function () {
 					]
 				})
 			),
+			describeVpcsAsync: sandbox.stub().returns(
+				Promise.resolve({
+					Vpcs: [
+						{
+							VpcId: 'fake-vpc-id'
+						}
+					]
+				})
+			),
+			describeSubnetsAsync: sandbox.stub().returns(
+				Promise.resolve({
+					Subnets: [
+						{
+							SubnetId: 'fake-subnet-1'
+						},
+						{
+							SubnetId: 'fake-subnet-2'
+						}
+					]
+				})
+			),
+			describeSecurityGroupsAsync: sandbox.stub().returns(
+				Promise.resolve({
+					"SecurityGroups": [
+						{
+							GroupId: 'fake-sg-id'
+						}
+					]
+				})
+			),
+			describeNetworkInterfacesAsync: sandbox.stub().returns(
+				Promise.resolve({
+					"NetworkInterfaces": [
+						{
+							NetworkInterfaceId: 'fake-network-interface-id'
+						}
+					]
+				})
+			),
 			describeInstancesAsync: sandbox.stub().returns(
 				Promise.resolve({
 					Reservations: [
@@ -259,6 +298,45 @@ describe('instance copy', function () {
 			.then(function (result) {
 				let expected = expected_run_args;
 				expected.EbsOptimized = false;
+				expect(mock_ec2.runInstancesAsync.calledWith(expected)).to.be.true;
+
+				expect(mock_ec2.describeInstancesAsync.calledWith({
+					InstanceIds: ['123']
+				})).to.be.true;
+
+				expect(mock_ec2.describeInstanceAttributeAsync.calledWith({
+					Attribute: 'userData',
+					InstanceId: '123'
+				})).to.be.true;
+
+				expect(mock_ec2.describeVolumesAsync.calledWith({
+					Filters: [
+						{
+							Name: "attachment.instance-id",
+							Values: ['123']
+						}
+					]
+				})).to.be.true;
+
+				expect(mock_ec2.waitForAsync.calledWith(
+					'instanceRunning',
+					{InstanceIds: ['456']}
+				)).to.be.true;
+
+				expect(result).eql(['456']);
+			});
+	});
+
+	it('should copy an existing instance but use the provided ENI', function () {
+		return instance
+			.copy(['us-east-1'], 'old-instance', 'new-instance', 'fake-vpc-id', null, null, null, ['fake-sg-id'], null, null, null, null, null, null, null, 'fake-network-interface-id', null, null)
+			.then(function (result) {
+				console.log(require('util').inspect(mock_ec2.runInstancesAsync.getCall(0).args, { depth: null }));
+				let expected = expected_run_args;
+				expected.NetworkInterfaces = {
+					DeviceIndex: 0,
+					NetworkInterfaceId: 'fake-network-interface-id'
+				};
 				expect(mock_ec2.runInstancesAsync.calledWith(expected)).to.be.true;
 
 				expect(mock_ec2.describeInstancesAsync.calledWith({
