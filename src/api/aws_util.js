@@ -192,7 +192,7 @@ function _get_instance_by_name(region, name) {
 }
 
 function _get_network_interface(region, vpc, az, eni_name, sg) {
-	if(!sg || !vpc || !az) {
+	if(!sg || !vpc) {
 		return Promise.resolve();
 	}
 	let subnet_id_promise = _get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
