@@ -222,7 +222,7 @@ function _get_network_interface(region, vpc, az, eni_name, sg) {
 }
 
 function _get_ud_files(ud_files, rud_files, region_index) {
-	// TODO: currently insance copy/create do not support raw userdata strings.
+	// TODO: currently instance copy/create do not support raw userdata strings.
 	let rud_file = rud_files && rud_files[region_index] ? rud_files[region_index] : null;
 	if(!ud_files) ud_files = [];
 	if(rud_file) {
