@@ -23,14 +23,8 @@ function _resolve_instance(ec2, region, instance_id) {
 	});
 }
 
-function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt) {
-	if(!ud_files) ud_files = [];
-	if(rud_file) {
-		ud_files = [rud_file].concat(ud_files);
-	}
-
+function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt) {
 	let EC2 = AWSProvider.get_ec2(region);
-
 	return BB.all([
 		AWSUtil.get_ami_id(region, ami),
 		AWSUtil.get_userdata_string(ud_files, env_vars, raw_ud_string),
@@ -89,8 +83,8 @@ function create(regions, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file
 	}
 	let region_promises = regions.map(function(region, idx){
 		let zone = az.length == regions.length ? az[idx] : az[0];
-		let rud_file = rud_files && rud_files[idx] ? rud_files[idx] : null;
-		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt);
+		let userdata_files = AWSUtil.get_ud_files(ud_files, rud_files, idx);
+		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, userdata_files, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt);
 	});
 	return BB.all(region_promises);
 }

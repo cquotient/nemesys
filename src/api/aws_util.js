@@ -221,6 +221,16 @@ function _get_network_interface(region, vpc, az, eni_name, sg) {
 	});
 }
 
+function _get_ud_files(ud_files, rud_files, region_index) {
+	// TODO: currently insance copy/create do not support raw userdata strings.
+	let rud_file = rud_files && rud_files[region_index] ? rud_files[region_index] : null;
+	if(!ud_files) ud_files = [];
+	if(rud_file) {
+		ud_files = [rud_file].concat(ud_files);
+	}
+	return ud_files;
+}
+
 function _get_eni_id(region, vpc, az, eni_name) {
 	let EC2 = AWSProvider.get_ec2(region);
 	return _get_vpc_id(region, vpc)
@@ -258,3 +268,4 @@ exports.get_bdms = _get_bdms;
 exports.get_instance_by_name = _get_instance_by_name;
 exports.get_network_interface = _get_network_interface;
 exports.get_eni_id = _get_eni_id;
+exports.get_ud_files = _get_ud_files;

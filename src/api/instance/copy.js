@@ -12,11 +12,7 @@ module.exports = function (regions, instance_name, rename, vpc, ami, i_type, key
 		if (az) {
 			zone = az.length == regions.length ? az[idx] : az[0];
 		}
-		let rud_file = rud_files && rud_files[idx] ? rud_files[idx] : null;
-		if(!ud_files) ud_files = [];
-		if(rud_file) {
-			ud_files = [rud_file].concat(ud_files);
-		}
+		let userdata_files = AWSUtil.get_ud_files(ud_files, raw_ud_string, idx);
 		let override_opts = {
 			vpc: vpc,
 			ami: ami,
@@ -24,7 +20,7 @@ module.exports = function (regions, instance_name, rename, vpc, ami, i_type, key
 			key_name: key_name,
 			sg: sg,
 			iam: iam,
-			ud_files: ud_files,
+			ud_files: userdata_files,
 			disks: disks,
 			az: zone,
 			tags: tags,
