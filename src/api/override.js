@@ -4,11 +4,12 @@ const Promise = require('bluebird');
 const AWSUtil = require('./aws_util');
 
 function _build_override_params(region, oo) {
+	// If these fail, we fall back to the default parameters
 	return Promise.all([
-			AWSUtil.get_ami_id(region, oo.ami),
-			AWSUtil.get_userdata_string(oo.ud_files, oo.env_vars, oo.raw_ud_string),
-			AWSUtil.get_network_interface(region, oo.vpc, oo.az, oo.eni_name, oo.sg),
-			AWSUtil.get_bdms(oo.disks)
+			AWSUtil.get_ami_id(region, oo.ami).catch(() => null),
+			AWSUtil.get_userdata_string(oo.ud_files, oo.env_vars, oo.raw_ud_string).catch(() => null),
+			AWSUtil.get_network_interface(region, oo.vpc, oo.az, oo.eni_name, oo.sg).catch(() => null),
+			AWSUtil.get_bdms(oo.disks) // Not a promise
 		])
 		.spread(function(ami_id, userdata_string, network_interface, bdms){
 			let config = {
