@@ -29,7 +29,7 @@ function _get_sg_id(region, group_name) {
 
 function _get_vpc_id(region, vpc_name) {
 	if(!vpc_name) {
-		return Promise.reject('Must provide a VPC name.');
+		return Promise.reject(new Error('Must provide a VPC name.'));
 	}
 	return AWSProvider.get_ec2(region).describeVpcsAsync({
 		Filters: [
@@ -96,7 +96,7 @@ return AWSProvider.get_ec2(region).describeImagesAsync(params)
 
 function _get_sg_ids(region, sg) {
 	if(!sg) {
-		return Promise.reject('Must provide a list of security groups');
+		return Promise.reject(new Error('Must provide a list of security groups'));
 	}
 	let proms = sg.map(function(name){
 		return _get_sg_id(region, name);
@@ -193,7 +193,7 @@ function _get_instance_by_name(region, name) {
 
 function _get_network_interface(region, vpc, az, eni_name, sg) {
 	if(!sg || !vpc) {
-		return Promise.reject('Must provide security groups and VPC');
+		return Promise.reject(new Error('Must provide security groups and VPC'));
 	}
 	let subnet_id_promise = _get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
 	let sg_ids_promise = _get_sg_ids(region, sg);
