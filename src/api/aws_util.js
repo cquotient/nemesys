@@ -156,6 +156,23 @@ function _get_account_id() {
 	});
 }
 
+function _get_instance_tag_specifications(tags) {
+	if(!tags || !tags.length) {
+		return null;
+	}
+	let split_tags;
+	if (tags && tags.length > 0) {
+		split_tags = tags.map(function(tag_str) {
+			let kv = tag_str.split('=');
+			return {Key: kv[0], Value: kv[1]};
+		});
+	}
+	return [{
+		ResourceType: 'instance',
+		Tags: split_tags
+	}];
+}
+
 function _get_instance_by_name(region, name) {
 	return AWSProvider
 		.get_ec2(region)
@@ -265,6 +282,7 @@ exports.get_sg_ids = _get_sg_ids;
 exports.get_subnet_ids = _get_subnet_ids;
 exports.get_account_id = _get_account_id;
 exports.get_bdms = _get_bdms;
+exports.get_instance_tag_specifications = _get_instance_tag_specifications;
 exports.get_instance_by_name = _get_instance_by_name;
 exports.get_network_interface = _get_network_interface;
 exports.get_eni_id = _get_eni_id;

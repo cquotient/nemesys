@@ -327,6 +327,55 @@ describe('instance copy', function () {
 			});
 	});
 
+	it('should copy an existing instance and use the provided tags', function () {
+		return instance
+			.copy(['us-east-1'], 'old-instance', 'new-instance', null, null, null, null, null, null, null, null, null, null, null, ['Tag=overridden-tag'], null, null, null)
+			.then(function (result) {
+				let expected = expected_run_args;
+				expected.TagSpecifications = [
+					{
+						ResourceType: 'instance',
+						Tags: [
+							{
+								Key: 'Name',
+								Value: 'new-instance'
+							},
+							{
+								Key: 'Tag',
+								Value: 'overridden-tag'
+							}
+						]
+					}
+				];
+				expect(mock_ec2.runInstancesAsync.calledWith(expected)).to.be.true;
+
+				expect(mock_ec2.describeInstancesAsync.calledWith({
+					InstanceIds: ['123']
+				})).to.be.true;
+
+				expect(mock_ec2.describeInstanceAttributeAsync.calledWith({
+					Attribute: 'userData',
+					InstanceId: '123'
+				})).to.be.true;
+
+				expect(mock_ec2.describeVolumesAsync.calledWith({
+					Filters: [
+						{
+							Name: "attachment.instance-id",
+							Values: ['123']
+						}
+					]
+				})).to.be.true;
+
+				expect(mock_ec2.waitForAsync.calledWith(
+					'instanceRunning',
+					{InstanceIds: ['456']}
+				)).to.be.true;
+
+				expect(result).eql(['456']);
+			});
+	});
+
 	it('should copy an existing instance but use the provided ENI', function () {
 		return instance
 			.copy(['us-east-1'], 'old-instance', 'new-instance', 'fake-vpc-id', null, null, null, ['fake-sg-id'], null, null, null, null, null, null, null, 'fake-network-interface-id', null, null)

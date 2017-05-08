@@ -9,15 +9,17 @@ function _build_override_params(region, oo) {
 			AWSUtil.get_ami_id(region, oo.ami).catch(() => null),
 			AWSUtil.get_userdata_string(oo.ud_files, oo.env_vars, oo.raw_ud_string).catch(() => null),
 			AWSUtil.get_network_interface(region, oo.vpc, oo.az, oo.eni_name, oo.sg).catch(() => null),
-			AWSUtil.get_bdms(oo.disks) // Not a promise
+			AWSUtil.get_bdms(oo.disks), // Not a promise,
+			AWSUtil.get_instance_tag_specifications(oo.tags) // Not a promise
 		])
-		.spread(function(ami_id, userdata_string, network_interface, bdms){
+		.spread(function(ami_id, userdata_string, network_interface, bdms, tags){
 			let config = {
 				BlockDeviceMappings: bdms,
 				ImageId: ami_id,
 				InstanceType: oo.i_type,
 				KeyName: oo.key_name,
 				NetworkInterfaces: network_interface,
+				TagSpecifications: tags
 			};
 			if (typeof(oo.ebs_opt) === 'boolean') {
 				config.EbsOptimized = !!oo.ebs_opt;
