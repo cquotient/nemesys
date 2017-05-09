@@ -470,7 +470,62 @@ function parse_args (args) {
 							alias: 'rename',
 							describe: 'New instance name'
 						})
-						.example('nemesys copy instance -i instance-name -n new-instance-name -r us-east-1')
+						.option('a', {
+							alias:       'ami',
+							description: 'AMI name'
+						})
+						.option('b', {
+							alias: 'base-ami',
+							description: 'Name of the base AMI to override with'
+						})
+						.option('t', {
+							alias:    'instance-type',
+							describe: 'EC2 API name of the instance type to use on the copied instance (ie, m3.large)'
+						})
+						.option('k', {
+							alias:    'ssh-key-pair',
+							describe: 'Name of the ssh key pair to use for instances using this Launch Configuration'
+						})
+						.option('I', {
+							alias:    'iam-role',
+							describe: 'IAM role to use on the copied instance'
+						})
+						.option('s', {
+							alias:    'security-groups',
+							describe: 'Name of the Security Group(s) to apply to instances using this Launch Configuration',
+							array:    true
+						})
+						.option('u', {
+							alias:    'user-data-files',
+							describe: 'Shell script files to combine to form the user data on the copied instance',
+							array:    true
+						})
+						.option('region-user-data', {
+							describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
+							array:    true
+						})
+						.option('d', {
+							alias:    'disks',
+							describe: 'Disks to attach to the copied instance using this Launch Configuration',
+							array:    true
+						})
+						.option('z', {
+							alias:    'availability-zone',
+							describe: 'Availability zone to launch the copied instance in. If more than one, will be used in order of regions arg',
+							array:    true
+						})
+						.option('v', vpc_opt)
+						.option('preserve-instance', {
+							describe: 'Keep instance running after creating AMI',
+							type: 'boolean',
+							default: false
+						})
+						.option('T', {
+							alias:    'tags',
+							describe: 'Tags to apply, in the form of Name=value',
+							array:    true
+						})
+						.example('nemesys copy instance -i instance-name -n new-instance-name -r us-east-1 -t m4.2xlarge')
 						.help('h')
 						.alias('h', 'help');
 				});

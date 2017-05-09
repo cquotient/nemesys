@@ -300,7 +300,23 @@ function _handle_copy(cmd) {
 			nemesys.instance.copy(
 				cmd.opts['regions'],
 				cmd.opts['instance'],
-				cmd.opts['rename']
+				cmd.opts['rename'],
+				// Copy supports all parameters supported by 'create'
+				cmd.opts['vpc'],
+				cmd.opts['ami'],
+				cmd.opts['instance-type'],
+				cmd.opts['ssh-key-pair'],
+				cmd.opts['security-groups'],
+				cmd.opts['iam-role'],
+				cmd.opts['user-data-files'],
+				cmd.opts['region-user-data'] || [], //yargs default breaks merging command line args w/ config file, so do it here
+				null, //raw userdata string not supported from command line atm
+				cmd.opts['disks'],
+				cmd.opts['availability-zone'],
+				cmd.opts['tags'],
+				cmd.opts['network-interface'],
+				cmd.opts['env'],
+				cmd.opts['optimize-ebs']
 			).then(function (id) {
 				Logger.info(`copied instance to ${id}`);
 				process.exit(0);

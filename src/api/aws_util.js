@@ -28,6 +28,9 @@ function _get_sg_id(region, group_name) {
 }
 
 function _get_vpc_id(region, vpc_name) {
+	if(!vpc_name) {
+		return Promise.reject(new Error('Must provide a VPC name.'));
+	}
 	return AWSProvider.get_ec2(region).describeVpcsAsync({
 		Filters: [
 			{
@@ -82,13 +85,19 @@ function _get_ami_id(region, ami_name) {
 			}
 		]
 	};
-	return AWSProvider.get_ec2(region).describeImagesAsync(params)
+return AWSProvider.get_ec2(region).describeImagesAsync(params)
 	.then(function(data){
+		if(!data.hasOwnProperty('Images') || !data.Images.length) {
+			return null;
+		}
 		return data.Images[0].ImageId;
 	});
 }
 
 function _get_sg_ids(region, sg) {
+	if(!sg) {
+		return Promise.reject(new Error('Must provide a list of security groups'));
+	}
 	let proms = sg.map(function(name){
 		return _get_sg_id(region, name);
 	});
@@ -119,6 +128,9 @@ function _get_subnet_ids(region, vpc_name, azs) {
 }
 
 function _get_bdms(disks) {
+	if(!disks) {
+		return null;
+	}
 	return disks.map(function(d){
 		let d_split = d.split(':');
 		let bdm = {
@@ -142,6 +154,23 @@ function _get_account_id() {
 	.then(function(resp){
 		return resp.User.Arn.split(':')[4];
 	});
+}
+
+function _get_instance_tag_specifications(tags) {
+	if(!tags || !tags.length) {
+		return null;
+	}
+	let split_tags;
+	if (tags && tags.length > 0) {
+		split_tags = tags.map(function(tag_str) {
+			let kv = tag_str.split('=');
+			return {Key: kv[0], Value: kv[1]};
+		});
+	}
+	return [{
+		ResourceType: 'instance',
+		Tags: split_tags
+	}];
 }
 
 function _get_instance_by_name(region, name) {
@@ -179,6 +208,71 @@ function _get_instance_by_name(region, name) {
 		});
 }
 
+function _get_network_interface(region, vpc, az, eni_name, sg) {
+	if(!sg || !vpc) {
+		return Promise.reject(new Error('Must provide security groups and VPC'));
+	}
+	let subnet_id_promise = _get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
+	let sg_ids_promise = _get_sg_ids(region, sg);
+	return BB.all([
+		sg_ids_promise,
+		subnet_id_promise
+	])
+	.then(function(results){
+		if(eni_name) {
+			return _get_eni_id(region, vpc, az, eni_name)
+			.then(function(eni_id){
+				return {
+					DeviceIndex: 0,
+					NetworkInterfaceId: eni_id
+				};
+			});
+		} else {
+			return Promise.resolve({
+				AssociatePublicIpAddress: true,
+				DeviceIndex: 0,
+				Groups: results[0],
+				SubnetId: results[1]
+			});
+		}
+	});
+}
+
+function _get_ud_files(ud_files, rud_files, region_index) {
+	// TODO: currently instance copy/create do not support raw userdata strings.
+	let rud_file = rud_files && rud_files[region_index] ? rud_files[region_index] : null;
+	if(!ud_files) ud_files = [];
+	if(rud_file) {
+		ud_files = [rud_file].concat(ud_files);
+	}
+	return ud_files;
+}
+
+function _get_eni_id(region, vpc, az, eni_name) {
+	let EC2 = AWSProvider.get_ec2(region);
+	return _get_vpc_id(region, vpc)
+	.then(function(vpc_id){
+		return EC2.describeNetworkInterfacesAsync({
+			Filters: [
+				{
+					Name: 'vpc-id',
+					Values: [vpc_id]
+				},
+				{
+					Name: 'availability-zone',
+					Values: [region + az]
+				},
+				{
+					Name: 'tag:Name',
+					Values: [eni_name]
+				}
+			]
+		});
+	}).then(function(data){
+		return data.NetworkInterfaces[0].NetworkInterfaceId;
+	});
+}
+
 exports.get_asg = _get_asg;
 exports.get_sg_id = _get_sg_id;
 exports.get_vpc_id = _get_vpc_id;
@@ -188,4 +282,8 @@ exports.get_sg_ids = _get_sg_ids;
 exports.get_subnet_ids = _get_subnet_ids;
 exports.get_account_id = _get_account_id;
 exports.get_bdms = _get_bdms;
+exports.get_instance_tag_specifications = _get_instance_tag_specifications;
 exports.get_instance_by_name = _get_instance_by_name;
+exports.get_network_interface = _get_network_interface;
+exports.get_eni_id = _get_eni_id;
+exports.get_ud_files = _get_ud_files;

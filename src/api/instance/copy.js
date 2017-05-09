@@ -4,14 +4,35 @@ const Promise = require('bluebird');
 const AWSProvider = require('../aws_provider');
 const AWSUtil = require('../aws_util');
 const logger = require('../../logger');
+const Override = require('../override');
 
-module.exports = function (regions, instance_name, rename) {
-	return Promise.all(regions.map(function (region) {
-		return copy(region, instance_name, rename);
+module.exports = function (regions, instance_name, rename, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt) {
+	return Promise.all(regions.map(function (region, idx) {
+		let zone;
+		if (az) {
+			zone = az.length == regions.length ? az[idx] : az[0];
+		}
+		let userdata_files = AWSUtil.get_ud_files(ud_files, raw_ud_string, idx);
+		let override_opts = {
+			vpc: vpc,
+			ami: ami,
+			i_type: i_type,
+			key_name: key_name,
+			sg: sg,
+			iam: iam,
+			ud_files: userdata_files,
+			disks: disks,
+			az: zone,
+			tags: tags,
+			eni_name: eni_name,
+			env_vars: env_vars,
+			ebs_opt: ebs_opt
+		};
+		return copy(region, instance_name, rename, override_opts);
 	}));
 };
 
-function copy(region, instance_name, rename) {
+function copy(region, instance_name, rename, override_opts) {
 	return AWSUtil
 		.get_instance_by_name(region, instance_name)
 		.then(function (instance) {
@@ -19,7 +40,9 @@ function copy(region, instance_name, rename) {
 			return copy_instance_attrs(region, instance.InstanceId);
 		})
 		.then(function (instance_attrs) {
-			return rename_instance(instance_attrs, rename);
+			return Override.merge_config(region, instance_attrs, override_opts).then(merged => {
+				return rename_instance(merged, rename);
+			});
 		})
 		.then(function (params) {
 			logger.info(`Start instance ${rename}`);

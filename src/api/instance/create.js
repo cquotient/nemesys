@@ -6,55 +6,6 @@ const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 const AWSProvider = require('../aws_provider');
 
-function _get_eni_id(ec2, region, vpc, az, eni_name) {
-	return AWSUtil.get_vpc_id(region, vpc)
-	.then(function(vpc_id){
-		return ec2.describeNetworkInterfacesAsync({
-			Filters: [
-				{
-					Name: 'vpc-id',
-					Values: [vpc_id]
-				},
-				{
-					Name: 'availability-zone',
-					Values: [region + az]
-				},
-				{
-					Name: 'tag:Name',
-					Values: [eni_name]
-				}
-			]
-		});
-	}).then(function(data){
-		return data.NetworkInterfaces[0].NetworkInterfaceId;
-	});
-}
-
-function _get_network_interface(ec2, region, vpc, az, eni_name, sg_ids_promise, subnet_id_promise) {
-	return BB.all([
-		sg_ids_promise,
-		subnet_id_promise
-	])
-	.then(function(results){
-		if(eni_name) {
-			return _get_eni_id(ec2, region, vpc, az, eni_name)
-			.then(function(eni_id){
-				return {
-					DeviceIndex: 0,
-					NetworkInterfaceId: eni_id
-				};
-			});
-		} else {
-			return Promise.resolve({
-				AssociatePublicIpAddress: true,
-				DeviceIndex: 0,
-				Groups: results[0],
-				SubnetId: results[1]
-			});
-		}
-	});
-}
-
 function _resolve_instance(ec2, region, instance_id) {
 	return new Promise(function(resolve, reject){
 		function _check(){
@@ -72,24 +23,15 @@ function _resolve_instance(ec2, region, instance_id) {
 	});
 }
 
-function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt) {
-	if(!ud_files) ud_files = [];
-	if(rud_file) {
-		ud_files = [rud_file].concat(ud_files);
-	}
-
+function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt) {
 	let EC2 = AWSProvider.get_ec2(region);
-
-	let sg_ids_promise = AWSUtil.get_sg_ids(region, sg);
-	let subnet_id_promise = AWSUtil.get_subnet_ids(region, vpc, [az]).then((subnet_ids) => subnet_ids[0]);
-
 	return BB.all([
 		AWSUtil.get_ami_id(region, ami),
 		AWSUtil.get_userdata_string(ud_files, env_vars, raw_ud_string),
-		_get_network_interface(EC2, region, vpc, az, eni_name, sg_ids_promise, subnet_id_promise)
+		AWSUtil.get_network_interface(region, vpc, az, eni_name, sg),
+		AWSUtil.get_bdms(disks)
 	])
-	.spread(function(ami_id, userdata_string, network_interface){
-		let bdms = AWSUtil.get_bdms(disks);
+	.spread(function(ami_id, userdata_string, network_interface, bdms){
 		return {
 			BlockDeviceMappings: bdms,
 			EbsOptimized: !!ebs_opt,
@@ -141,8 +83,8 @@ function create(regions, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file
 	}
 	let region_promises = regions.map(function(region, idx){
 		let zone = az.length == regions.length ? az[idx] : az[0];
-		let rud_file = rud_files && rud_files[idx] ? rud_files[idx] : null;
-		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt);
+		let userdata_files = AWSUtil.get_ud_files(ud_files, rud_files, idx);
+		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, userdata_files, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt);
 	});
 	return BB.all(region_promises);
 }
