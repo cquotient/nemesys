@@ -520,6 +520,11 @@ function parse_args (args) {
 							type: 'boolean',
 							default: false
 						})
+						.option('T', {
+							alias:    'tags',
+							describe: 'Tags to apply, in the form of Name=value',
+							array:    true
+						})
 						.example('nemesys copy instance -i instance-name -n new-instance-name -r us-east-1 -t m4.2xlarge')
 						.help('h')
 						.alias('h', 'help');
