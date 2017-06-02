@@ -1,16 +1,16 @@
-#nemesys [![Build Status](https://travis-ci.org/cquotient/nemesys.svg)](https://travis-ci.org/cquotient/nemesys)
+# nemesys [![Build Status](https://travis-ci.org/cquotient/nemesys.svg)](https://travis-ci.org/cquotient/nemesys)
 
 nemesys is a tool for managing EC2 resources in multiple regions. It is built on the simple assumption that these resources have the same name in every region.
 
 Please note that while we use this internally on our team at Demandware, this is very much a beta piece of software. We appreciate any feedback!
 
-#Usage#
+# Usage
 ```
 npm install -g nemesys
 nemesys --help
 ```
 
-#Examples#
+# Examples
 To create a Launch Configuration:
 ```
 nemesys create lc -r ap-southeast-1 -l test-lc -a my_ami_name -i c3.large -k key_name -I my_role -s my_sg -u ~/userdata.sh --region-user-data ~/region_userdata.sh -d /dev/sda1:ebs:24:gp2 /dev/sdb:ephemeral:ephemeral0 -S 0.02
