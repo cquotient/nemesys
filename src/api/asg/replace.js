@@ -83,7 +83,7 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 		return new Promise(function(resolve, reject){
 			function _check() {
 				AWSUtil.get_asg(AWSProvider.get_as(region), new_asg_name).then(function(asg){
-					let new_instance_ids = new_asg.Instances.map((instance) => instance.InstanceId);
+					let new_instance_ids = asg.Instances.map((instance) => instance.InstanceId);
 					let inst_elb_check_proms = asg.LoadBalancerNames.map(function(elb){
 						return AWSProvider.get_elb(region).describeInstanceHealthAsync({
 							LoadBalancerName: elb,
