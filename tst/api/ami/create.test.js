@@ -153,7 +153,7 @@ describe('create ami', function(){
 
 			expected_ud += 'echo "hi there"\n';
 			expected_ud += 'echo "my friend"\n';
-			expected_ud += '\naws ec2 create-tags --region us-east-1 --resources `ec2metadata --instance-id` --tags Key=Spinup,Value=complete\n';
+			expected_ud += '\naws ec2 create-tags --region us-east-1 --resources `curl http://169.254.169.254/latest/meta-data/instance-id` --tags Key=Spinup,Value=complete\n';
 
 			expect(run_instances_spy).to.have.been.calledWith({
 				BlockDeviceMappings: [
