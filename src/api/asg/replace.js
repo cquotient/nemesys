@@ -93,7 +93,10 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 					return BB.all(inst_elb_check_proms);
 				}).then(function(elb_results){
 					let unhealthy = elb_results.reduce(function(prev, curr){
-						return prev.concat(curr.InstanceStates.filter((obj) => obj.State && obj.State !== 'InService').map((obj) => obj.InstanceId));
+						return prev.concat(curr.InstanceStates
+							.filter((obj) => obj.State && obj.State !== 'InService' && obj.State !== 'Terminated')
+							.map((obj) => obj.InstanceId)
+						);
 					}, []);
 					if(unhealthy.length > 0) {
 						Logger.info(`${region}: found ${unhealthy.length} unhealthy instances (${unhealthy.join(', ')}) - waiting 30s`);
