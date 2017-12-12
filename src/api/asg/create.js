@@ -52,6 +52,10 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 			create_params.LoadBalancerNames = [ optional.elb_name ];
 			create_params.HealthCheckType = 'ELB';
 		}
+		if(optional.tg_arn) {
+			create_params.TargetGroupARNs = [ optional.tg_arn ];
+			create_params.HealthCheckType = 'ELB';
+		}
 		return AS.createAutoScalingGroupAsync(create_params);
 	})
 	// enable metric collection

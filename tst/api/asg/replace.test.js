@@ -65,7 +65,7 @@ describe('replace asg', function(){
 										'fake-elb1'
 									],
 									TargetGroupARNs: [
-										'fake-target-arn'
+										'fake-tg-arn'
 									],
 									HealthCheckType: 'elb',
 									HealthCheckGracePeriod: 60,
@@ -98,7 +98,7 @@ describe('replace asg', function(){
 										'fake-elb1'
 									],
 									TargetGroupARNs: [
-										'fake-target-arn'
+										'fake-tg-arn'
 									],
 									HealthCheckType: 'elb',
 									HealthCheckGracePeriod: 60,
@@ -398,7 +398,8 @@ describe('replace asg', function(){
 					}
 				],
 				HealthCheckType: 'ELB',
-				LoadBalancerNames: ['fake-elb1']
+				LoadBalancerNames: ['fake-elb1'],
+				TargetGroupARNs: ['fake-tg-arn']
 			});
 			expect(put_notifcation_spy).to.have.been.calledWith({
 				AutoScalingGroupName: 'fake-new-asg',

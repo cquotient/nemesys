@@ -132,6 +132,7 @@ function _do_replace(region, vpc_name, replace_asg, with_asg, lc_name) {
 			desired: old_asg.DesiredCapacity,
 			hc_grace: old_asg.HealthCheckGracePeriod,
 			elb_name: old_asg.LoadBalancerNames[0],
+			tg_arn: old_asg.TargetGroupARNs[0],
 			scheduled_actions: parsed_old_sched_acts,
 			scaling_policies: parsed_old_policies,
 			hooks: parsed_old_hooks
