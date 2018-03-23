@@ -127,11 +127,15 @@ function _get_subnet_ids(region, vpc_name, azs) {
 	});
 }
 
+// function _get_snapshot_id_for_name(snapshot_name) {
+//
+// }
+
 function _get_bdms(disks) {
 	if(!disks) {
 		return null;
 	}
-	return disks.map(function(d){
+	return Promise.resolve(disks.map(function(d){
 		let d_split = d.split(':');
 		let bdm = {
 			DeviceName: d_split[0]
@@ -146,7 +150,7 @@ function _get_bdms(disks) {
 			bdm.VirtualName = d_split[2];
 		}
 		return bdm;
-	});
+	}));
 }
 
 function _get_account_id() {
