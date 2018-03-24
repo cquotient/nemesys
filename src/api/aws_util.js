@@ -166,9 +166,7 @@ function _get_bdms(region, disks) {
 		} else {
 			return Promise.resolve(bdm);
 		}
-	})).then(function(results){
-		return results;
-	});
+	}));
 }
 
 function _get_account_id() {
