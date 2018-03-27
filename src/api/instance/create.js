@@ -29,7 +29,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 		AWSUtil.get_ami_id(region, ami),
 		AWSUtil.get_userdata_string(ud_files, env_vars, raw_ud_string),
 		AWSUtil.get_network_interface(region, vpc, az, eni_name, sg),
-		AWSUtil.get_bdms(disks)
+		AWSUtil.get_bdms(region, disks)
 	])
 	.spread(function(ami_id, userdata_string, network_interface, bdms){
 		return {

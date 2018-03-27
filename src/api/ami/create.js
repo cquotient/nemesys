@@ -47,11 +47,13 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks, p
 	return _wait_for_spinup_complete(create_region, instance_id)
 	.then(function(instance_id){
 		Logger.info(`${create_region}: ${instance_id} ready, creating image ${ami_name}`);
-		return AWSProvider.get_ec2(create_region).createImageAsync({
-			InstanceId: instance_id,
-			Name: ami_name,
-			BlockDeviceMappings: AWSUtil.get_bdms(disks)
-		}).then((result) => result.ImageId);
+		return AWSUtil.get_bdms(create_region, disks).then(function(bdms){
+			return AWSProvider.get_ec2(create_region).createImageAsync({
+				InstanceId: instance_id,
+				Name: ami_name,
+				BlockDeviceMappings: bdms
+			}).then((result) => result.ImageId);
+		});
 	}).then(function(image_id){
 		return _wait_for_image(create_region, image_id);
 	}).then(function(image_id){

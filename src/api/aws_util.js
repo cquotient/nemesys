@@ -127,11 +127,24 @@ function _get_subnet_ids(region, vpc_name, azs) {
 	});
 }
 
-function _get_bdms(disks) {
+function _get_snapshot_id_for_name(region, snapshot_name) {
+	return AWSProvider.get_ec2(region).describeSnapshotsAsync({
+		Filters: [
+			{
+				Name: 'tag:Name',
+				Values: [snapshot_name]
+			}
+		]
+	}).then(function(response){
+		return response.Snapshots[0].SnapshotId;
+	});
+}
+
+function _get_bdms(region, disks) {
 	if(!disks) {
 		return null;
 	}
-	return disks.map(function(d){
+	return BB.all(disks.map(function(d){
 		let d_split = d.split(':');
 		let bdm = {
 			DeviceName: d_split[0]
@@ -145,8 +158,15 @@ function _get_bdms(disks) {
 		} else { //this means d_split[1] (which is the device type) is 'ephemeral'
 			bdm.VirtualName = d_split[2];
 		}
-		return bdm;
-	});
+		if(bdm.Ebs && d_split[4]) {
+			return _get_snapshot_id_for_name(region, d_split[4]).then(function(snapshot_id){
+				bdm.Ebs.SnapshotId = snapshot_id;
+				return bdm;
+			});
+		} else {
+			return Promise.resolve(bdm);
+		}
+	}));
 }
 
 function _get_account_id() {
