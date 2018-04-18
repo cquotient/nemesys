@@ -104,7 +104,7 @@ describe('instance create', function () {
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync.calledWith(expected_run_args)).to.be.true;
 
-				expect(mock_ec2.waitForAsync.calledWith('instanceExist', {
+				expect(mock_ec2.waitForAsync.calledWith('instanceExists', {
 						InstanceIds: ['123']
 				})).to.be.true;
 

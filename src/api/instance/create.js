@@ -38,7 +38,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 		return EC2.runInstancesAsync(params);
 	})
 	.then(function(data){
-		return AWSUtil.wait_until_status(region, data.Instances[0].InstanceId, 'instanceExist');
+		return AWSUtil.wait_until_status(region, data.Instances[0].InstanceId, 'instanceExists');
 	})
 	.then(function(instance_id){
 		if(tags && tags.length > 0) {
