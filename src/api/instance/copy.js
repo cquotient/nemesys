@@ -50,26 +50,10 @@ function copy(region, instance_name, rename, override_opts) {
 		})
 		.then(function (data) {
 			logger.info('Wait for instance intialization');
-			return wait_until_runnning(region, data.Instances[0].InstanceId);
+			return AWSUtil.wait_until_status(region, data.Instances[0].InstanceId, 'instanceRunning');
 		});
 }
 
-function wait_until_runnning(region, instanceId) {
-	return AWSProvider
-		.get_ec2(region)
-		.waitForAsync('instanceRunning', {
-			InstanceIds: [instanceId]
-		})
-		.then(function (data) {
-			const instance = data.Reservations[0].Instances[0];
-
-			if (instance.State.Name !== 'running') {
-				throw new Error(instance.StateReason.Message);
-			}
-
-			return instance.InstanceId;
-		});
-}
 
 function rename_instance(instance_attrs, rename) {
 	let Tags = instance_attrs.TagSpecifications[0].Tags;

@@ -293,6 +293,28 @@ function _get_eni_id(region, vpc, az, eni_name) {
 	});
 }
 
+// uses waitFor to poll an instance for a specific state
+// state can be any state accepted by waitForAysnc
+// https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#waitFor-property
+function _wait_until_status(region, instanceId, state) {
+	return AWSProvider
+		.get_ec2(region)
+		.waitForAsync(state, {
+			InstanceIds: [instanceId]
+		})
+		.then(function (data) {
+			const instance = data.Reservations[0].Instances[0];
+
+			if (state == 'instanceRunning' && instance.State.Name !== 'running') {
+				throw new Error(instance.StateReason.Message);
+			}
+
+			return instance.InstanceId;
+
+		});
+}
+
+
 exports.get_asg = _get_asg;
 exports.get_sg_id = _get_sg_id;
 exports.get_vpc_id = _get_vpc_id;
@@ -307,3 +329,4 @@ exports.get_instance_by_name = _get_instance_by_name;
 exports.get_network_interface = _get_network_interface;
 exports.get_eni_id = _get_eni_id;
 exports.get_ud_files = _get_ud_files;
+exports.wait_until_status = _wait_until_status;

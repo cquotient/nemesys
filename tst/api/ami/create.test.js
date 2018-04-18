@@ -95,7 +95,18 @@ describe('create ami', function(){
 			},
 			waitForAsync: function(state, params){
 				return Promise.resolve({
-
+					Reservations: [
+						{
+							Instances: [
+								{
+									InstanceId: 'fake-instance-id-1',
+									State: {
+										Name: 'running'
+									}
+								}
+							]
+						}
+					]
 				});
 			},
 			copyImageAsync: function(){

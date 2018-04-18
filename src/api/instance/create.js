@@ -6,23 +6,6 @@ const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 const AWSProvider = require('../aws_provider');
 
-function _resolve_instance(ec2, region, instance_id) {
-	return new Promise(function(resolve, reject){
-		function _check(){
-			ec2.describeInstancesAsync({InstanceIds: [instance_id]}).then(function(result){
-				if(result.Reservations.length === 1
-				&& result.Reservations[0].Instances.length === 1) {
-					resolve(instance_id);
-				} else {
-					Logger.info(`${region}: waiting for instance ${instance_id} to be ready`);
-					setTimeout(_check, 5000);
-				}
-			}).catch(reject);
-		}
-		_check();
-	});
-}
-
 function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt) {
 	let EC2 = AWSProvider.get_ec2(region);
 	return BB.all([
@@ -55,7 +38,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 		return EC2.runInstancesAsync(params);
 	})
 	.then(function(data){
-		return _resolve_instance(EC2, region, data.Instances[0].InstanceId);
+		return AWSUtil.wait_until_status(region, data.Instances[0].InstanceId, 'instanceExists');
 	})
 	.then(function(instance_id){
 		if(tags && tags.length > 0) {
