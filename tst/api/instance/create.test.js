@@ -54,6 +54,9 @@ describe('instance create', function () {
 					]
 				})
 			),
+			createTagsAsync: sandbox.stub().returns(
+				Promise.resolve({})
+			),
 			waitForAsync: sandbox.stub().returns(
 				Promise.resolve({
 					Reservations: [
@@ -101,8 +104,8 @@ describe('instance create', function () {
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync.calledWith(expected_run_args)).to.be.true;
 
-				expect(mock_ec2.describeInstancesAsync.calledWith({
-					InstanceIds: ['123']
+				expect(mock_ec2.waitForAysnc.calledWith('instanceExist', {
+						InstanceIds: ['123']
 				})).to.be.true;
 
 				expect(result).eql(['123']);
