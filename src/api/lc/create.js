@@ -1,9 +1,9 @@
 'use strict';
 
 const BB = require('bluebird');
-const AWS = require('aws-sdk');
 
 const AWSUtil = require('../aws_util');
+const AWSProvider = require('../aws_provider');
 
 function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, spot_price) {
 	if(!ud) ud = [];
@@ -14,14 +14,14 @@ function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, 
 	return BB.all([
 		AWSUtil.get_ami_id(region, ami),
 		AWSUtil.get_sg_ids(region, sg),
-		AWSUtil.get_userdata_string(ud)
+		AWSUtil.get_userdata_string(ud),
+		AWSUtil.get_bdms(region, disks)
 	])
 	.then(function(results){
-		let bdms = AWSUtil.get_bdms(disks);
 		let params = {
 			LaunchConfigurationName: lc_name,
 			AssociatePublicIpAddress: true,
-			BlockDeviceMappings: bdms,
+			BlockDeviceMappings: results[3],
 			IamInstanceProfile: iam,
 			ImageId: results[0],
 			InstanceMonitoring: {
@@ -43,12 +43,8 @@ function _do_create(region, lc_name, ami, i_type, key, sg, iam, ud, rud, disks, 
 		return lc_params;
 	})
 	.then(function(lc_params){
-		let AS = BB.promisifyAll(new AWS.AutoScaling({
-			region: region,
-			apiVersion: '2011-01-01'
-		}));
 		let lc_proms = lc_params.map(function(param){
-			return AS.createLaunchConfigurationAsync(param);
+			return AWSProvider.get_as(region).createLaunchConfigurationAsync(param);
 		});
 		return BB.all(lc_proms);
 	});
