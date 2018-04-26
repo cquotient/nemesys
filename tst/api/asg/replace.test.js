@@ -490,9 +490,19 @@ describe('replace asg', function(){
 
 			expect(desc_inst_health_spy).to.have.been.calledWith({
 				LoadBalancerName: 'fake-elb1',
+				Instances: [
+					{
+						InstanceId: 'fake-instance-id-1'
+					}
+				]
 			});
 			expect(desc_target_health_spy).to.have.been.calledWith({
-				TargetGroupArn: 'fake-tg-arn'
+				TargetGroupArn: 'fake-tg-arn',
+				Targets: [
+					{
+						Id: 'fake-instance-id-1'
+					}
+				]
 			});
 
 		});

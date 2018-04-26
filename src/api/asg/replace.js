@@ -83,16 +83,19 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 		return new Promise(function(resolve, reject){
 			function _check() {
 				AWSUtil.get_asg(AWSProvider.get_as(region), new_asg_name).then(function(asg){
+					let new_instance_ids = asg.Instances.map((instance) => instance.InstanceId);
 					let inst_elb_check_proms = BB.all(asg.LoadBalancerNames.map(function(elb){
 						return AWSProvider.get_elb(region).describeInstanceHealthAsync({
-							LoadBalancerName: elb
+							LoadBalancerName: elb,
+							Instances: new_instance_ids.map( (inst_id) => ({InstanceId: inst_id}) )
 						});
 					})).reduce((prev, curr) => {
 							return prev.concat(curr.InstanceStates);
 						}, []);
 					let inst_tg_check_proms = BB.all(asg.TargetGroupARNs.map(function(tg){
 						return AWSProvider.get_elbv2(region).describeTargetHealthAsync({
-							TargetGroupArn: tg
+							TargetGroupArn: tg,
+							Targets: new_instance_ids.map( (inst_id) => ({Id: inst_id}) )
 						});
 					})).reduce((prev, curr) => {
 							return prev.concat(curr.TargetHealthDescriptions);
@@ -102,19 +105,22 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 							let result = [];
 							result = result.concat(elb_result
 								.filter(obj => {
-									return obj.State != 'InService' && obj.State != 'Terminated';
+									return obj.State != 'InService' && obj.State != 'Terminated' && obj.State != 'OutOfService';
 								}).map(instance => {
 									return instance.InstanceId;
 								})
 							);
 							result = result.concat(tg_result
 								.filter(obj => {
-									return obj.TargetHealth.State != 'healthy';
+									return obj.TargetHealth.State != 'healthy' && obj.TargetHealth.State != 'unused';
 								}).map(instance => {
 									return instance.Target.Id;
 								})
 							);
-							return result;
+							return result
+								.filter((item, pos, self) => {
+									return self.indexOf(item) == pos;
+								});
 						});
 				}).then(function(unhealthy){
 					if(unhealthy.length > 0) {
