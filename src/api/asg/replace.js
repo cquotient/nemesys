@@ -105,14 +105,14 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 							let result = [];
 							result = result.concat(elb_result
 								.filter(obj => {
-									return obj.State != 'InService' && obj.State != 'Terminated' && obj.State != 'OutOfService';
+									return obj.State == 'InService';
 								}).map(instance => {
 									return instance.InstanceId;
 								})
 							);
 							result = result.concat(tg_result
 								.filter(obj => {
-									return obj.TargetHealth.State != 'healthy' && obj.TargetHealth.State != 'unused';
+									return obj.TargetHealth.State != 'healthy';
 								}).map(instance => {
 									return instance.Target.Id;
 								})
@@ -122,9 +122,9 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 									return self.indexOf(item) == pos;
 								});
 						});
-				}).then(function(unhealthy){
-					if(unhealthy.length > 0) {
-						Logger.info(`${region}: found ${unhealthy.length} unhealthy instances (${unhealthy.join(', ')}) - waiting 30s`);
+				}).then(function(healthy){
+					if(healthy.length != new_asg.DesiredCapacity && new_asg.DesiredCapacity != 0) {
+						Logger.info(`${region}: found ${healthy.length} healthy instances in load balancer, but we want (${new_asg.DesiredCapacity}) - waiting 30s`);
 						setTimeout(_check, _delay_ms);
 					} else {
 						Logger.info(`${region}: all hosts healthy in load balancer`);
