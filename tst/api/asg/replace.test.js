@@ -23,7 +23,8 @@ describe('replace asg', function(){
 			put_alarm_spy,
 			del_sched_act_spy,
 			del_policy_spy,
-			desc_inst_health_spy;
+			desc_inst_health_spy,
+			desc_target_health_spy;
 
 	before(function(){
 		replace = require('../../../src/api/asg/replace');
@@ -36,83 +37,58 @@ describe('replace asg', function(){
 	beforeEach(function(){
 		sandbox = require('sinon').sandbox.create();
 		const mock_as = {
-			describeAutoScalingGroupsAsync: function(params){
+			describeAutoScalingGroupsAsync: function(params) {
+
+				let loadbalancernames, targetgrouparns, instances;
+
 				if(params.AutoScalingGroupNames
 				&& params.AutoScalingGroupNames.length === 1) {
 					let name = params.AutoScalingGroupNames[0];
+
 					if(name === 'fake-new-asg') {
-						let instances = [{
+						loadbalancernames = ['fake-elb1'];
+						targetgrouparns = ['fake-tg-arn'];
+						instances = [{
 							LifecycleState: 'InService',
 							HealthStatus: 'Healthy',
 							InstanceId: 'fake-instance-id-1'
 						}];
-						//TODO: need a way to fake having instances become healthy
-						return Promise.resolve({
-							AutoScalingGroups: [
-								{
-									AutoScalingGroupName: params.AutoScalingGroupNames[0],
-									AutoScalingGroupARN: 'fake-asg-arn',
-									LaunchConfigurationName: 'fake-asg-lc',
-									MinSize: 0,
-									MaxSize: 2,
-									DesiredCapacity: 1,
-									DefaultCooldown: 120,
-									AvailabilityZones: [
-										'fake-az1',
-										'fake-az2'
-									],
-									LoadBalancerNames: [
-										'fake-elb1'
-									],
-									TargetGroupARNs: [
-										'fake-tg-arn'
-									],
-									HealthCheckType: 'elb',
-									HealthCheckGracePeriod: 60,
-									Instances: instances,
-									Tags: [
-										{
-											Key: 'Name',
-											Value: 'fake-name'
-										}
-									]
-								}
-							]
-						});
-					} else {
-						return Promise.resolve({
-							AutoScalingGroups: [
-								{
-									AutoScalingGroupName: params.AutoScalingGroupNames[0],
-									AutoScalingGroupARN: 'fake-asg-arn',
-									LaunchConfigurationName: 'fake-asg-lc',
-									MinSize: 0,
-									MaxSize: 2,
-									DesiredCapacity: 1,
-									DefaultCooldown: 120,
-									AvailabilityZones: [
-										'fake-az1',
-										'fake-az2'
-									],
-									LoadBalancerNames: [
-										'fake-elb1'
-									],
-									TargetGroupARNs: [
-										'fake-tg-arn'
-									],
-									HealthCheckType: 'elb',
-									HealthCheckGracePeriod: 60,
-									Instances: [],
-									Tags: [
-										{
-											Key: 'Name',
-											Value: 'fake-name'
-										}
-									]
-								}
-							]
-						});
+					} else if(name === 'fake-old-asg') {
+						loadbalancernames = ['fake-elb1'];
+						targetgrouparns = ['fake-tg-arn'];
+						instances = [];
 					}
+
+					//TODO: need a way to fake having instances become healthy
+					return Promise.resolve({
+						AutoScalingGroups: [
+							{
+								AutoScalingGroupName: params.AutoScalingGroupNames[0],
+								AutoScalingGroupARN: 'fake-asg-arn',
+								LaunchConfigurationName: 'fake-asg-lc',
+								MinSize: 0,
+								MaxSize: 2,
+								DesiredCapacity: 1,
+								DefaultCooldown: 120,
+								AvailabilityZones: [
+									'fake-az1',
+									'fake-az2'
+								],
+								LoadBalancerNames: loadbalancernames,
+								TargetGroupARNs: targetgrouparns,
+								HealthCheckType: 'elb',
+								HealthCheckGracePeriod: 60,
+								Instances: instances,
+								Tags: [
+									{
+										Key: 'Name',
+										Value: 'fake-name'
+									}
+								]
+							}
+						]
+					});
+
 				} else {
 					return Promise.reject(new Error('bad arg for mocked describeAutoScalingGroupsAsync'));
 				}
@@ -341,6 +317,25 @@ describe('replace asg', function(){
 		};
 		sandbox.stub(AWSProvider, 'get_elb', () => mock_elb);
 		desc_inst_health_spy = sandbox.spy(mock_elb, 'describeInstanceHealthAsync');
+
+		const mock_elbv2 = {
+			describeTargetHealthAsync: function(params){
+				return Promise.resolve({
+					TargetHealthDescriptions: [
+						{
+							Target: {
+								Id: 'fake-instance-id-2'
+							},
+							TargetHealth: {
+								State: 'healthy'
+							}
+						}
+					]
+				});
+			}
+		};
+		sandbox.stub(AWSProvider, 'get_elbv2', () => mock_elbv2);
+		desc_target_health_spy = sandbox.spy(mock_elbv2, 'describeTargetHealthAsync');
 	});
 
 	afterEach(function(){
@@ -501,6 +496,15 @@ describe('replace asg', function(){
 					}
 				]
 			});
+			expect(desc_target_health_spy).to.have.been.calledWith({
+				TargetGroupArn: 'fake-tg-arn',
+				Targets: [
+					{
+						Id: 'fake-instance-id-1'
+					}
+				]
+			});
+
 		});
 	});
 

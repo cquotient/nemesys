@@ -84,22 +84,47 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 			function _check() {
 				AWSUtil.get_asg(AWSProvider.get_as(region), new_asg_name).then(function(asg){
 					let new_instance_ids = asg.Instances.map((instance) => instance.InstanceId);
-					let inst_elb_check_proms = asg.LoadBalancerNames.map(function(elb){
+					let inst_elb_check_proms = BB.all(asg.LoadBalancerNames.map(function(elb){
 						return AWSProvider.get_elb(region).describeInstanceHealthAsync({
 							LoadBalancerName: elb,
 							Instances: new_instance_ids.map( (inst_id) => ({InstanceId: inst_id}) )
 						});
-					});
-					return BB.all(inst_elb_check_proms);
-				}).then(function(elb_results){
-					let unhealthy = elb_results.reduce(function(prev, curr){
-						return prev.concat(curr.InstanceStates
-							.filter((obj) => obj.State && obj.State !== 'InService' && obj.State !== 'Terminated')
-							.map((obj) => obj.InstanceId)
-						);
-					}, []);
-					if(unhealthy.length > 0) {
-						Logger.info(`${region}: found ${unhealthy.length} unhealthy instances (${unhealthy.join(', ')}) - waiting 30s`);
+					})).reduce((prev, curr) => {
+							return prev.concat(curr.InstanceStates);
+						}, []);
+					let inst_tg_check_proms = BB.all(asg.TargetGroupARNs.map(function(tg){
+						return AWSProvider.get_elbv2(region).describeTargetHealthAsync({
+							TargetGroupArn: tg,
+							Targets: new_instance_ids.map( (inst_id) => ({Id: inst_id}) )
+						});
+					})).reduce((prev, curr) => {
+							return prev.concat(curr.TargetHealthDescriptions);
+						}, []);
+					return BB.all([inst_elb_check_proms, inst_tg_check_proms])
+						.spread((elb_result, tg_result) => {
+							let result = [];
+							result = result.concat(elb_result
+								.filter(obj => {
+									return obj.State == 'InService';
+								}).map(instance => {
+									return instance.InstanceId;
+								})
+							);
+							result = result.concat(tg_result
+								.filter(obj => {
+									return obj.TargetHealth.State != 'healthy';
+								}).map(instance => {
+									return instance.Target.Id;
+								})
+							);
+							return result
+								.filter((item, pos, self) => {
+									return self.indexOf(item) == pos;
+								});
+						});
+				}).then(function(healthy){
+					if(healthy.length != new_asg.DesiredCapacity && new_asg.DesiredCapacity != 0) {
+						Logger.info(`${region}: found ${healthy.length} healthy instances in load balancer, but we want (${new_asg.DesiredCapacity}) - waiting 30s`);
 						setTimeout(_check, _delay_ms);
 					} else {
 						Logger.info(`${region}: all hosts healthy in load balancer`);
