@@ -39,7 +39,7 @@ describe('replace asg', function(){
 		const mock_as = {
 			describeAutoScalingGroupsAsync: function(params) {
 
-				let loadbalancernames, targetgrouparns, instances;
+				let loadbalancernames, targetgrouparns, instances, des_cap;
 
 				if(params.AutoScalingGroupNames
 				&& params.AutoScalingGroupNames.length === 1) {
@@ -52,11 +52,22 @@ describe('replace asg', function(){
 							LifecycleState: 'InService',
 							HealthStatus: 'Healthy',
 							InstanceId: 'fake-instance-id-1'
+						},{
+							LifecycleState: 'InService',
+							HealthStatus: 'Healthy',
+							InstanceId: 'fake-instance-id-2'
 						}];
+						des_cap = 2;
 					} else if(name === 'fake-old-asg') {
 						loadbalancernames = ['fake-elb1'];
 						targetgrouparns = ['fake-tg-arn'];
 						instances = [];
+						des_cap = 2;
+					} else if(name === 'fake-empty-asg' || name === 'fake-new-empty-asg') {
+						instances = [];
+						loadbalancernames = ['fake-elb1'];
+						targetgrouparns = ['fake-tg-arn'];
+						des_cap = 0;
 					}
 
 					//TODO: need a way to fake having instances become healthy
@@ -68,7 +79,7 @@ describe('replace asg', function(){
 								LaunchConfigurationName: 'fake-asg-lc',
 								MinSize: 0,
 								MaxSize: 2,
-								DesiredCapacity: 1,
+								DesiredCapacity: des_cap,
 								DefaultCooldown: 120,
 								AvailabilityZones: [
 									'fake-az1',
@@ -305,13 +316,17 @@ describe('replace asg', function(){
 		const mock_elb = {
 			describeInstanceHealthAsync: function(params){
 				//TODO need a way to fake instance starting unhealthy and becoming healthy!
-				return Promise.resolve({
-					InstanceStates: [
-						{
-							InstanceId: 'fake-instance-id-1',
+				let instances = [];
+				if(params && params.Instances) {
+					instances = params.Instances.map(function(obj){
+						return {
+							InstanceId: obj.InstanceId,
 							State: 'InService'
-						}
-					]
+						};
+					});
+				}
+				return Promise.resolve({
+					InstanceStates: instances
 				});
 			}
 		};
@@ -320,17 +335,21 @@ describe('replace asg', function(){
 
 		const mock_elbv2 = {
 			describeTargetHealthAsync: function(params){
-				return Promise.resolve({
-					TargetHealthDescriptions: [
-						{
+				let targets= [];
+				if(params && params.Targets) {
+					targets = params.Targets.map(function(obj){
+						return {
 							Target: {
-								Id: 'fake-instance-id-2'
+								Id: obj.Id
 							},
 							TargetHealth: {
 								State: 'healthy'
 							}
-						}
-					]
+						};
+					});
+				}
+				return Promise.resolve({
+					TargetHealthDescriptions: targets
 				});
 			}
 		};
@@ -384,7 +403,7 @@ describe('replace asg', function(){
 				TerminationPolicies: ['ClosestToNextInstanceHour'],
 				MinSize: 0,
 				MaxSize: 2,
-				DesiredCapacity: 1,
+				DesiredCapacity: 2,
 				HealthCheckGracePeriod: 60,
 				Tags: [
 					{
@@ -493,6 +512,9 @@ describe('replace asg', function(){
 				Instances: [
 					{
 						InstanceId: 'fake-instance-id-1'
+					},
+					{
+						InstanceId: 'fake-instance-id-2'
 					}
 				]
 			});
@@ -501,10 +523,38 @@ describe('replace asg', function(){
 				Targets: [
 					{
 						Id: 'fake-instance-id-1'
+					},
+					{
+						Id: 'fake-instance-id-2'
 					}
 				]
 			});
 
+		});
+	});
+
+	it('should replace an asg with 0 instances in it', function(){
+		return replace(['us-east-1', 'us-west-2'], 'fake-vpc', 'fake-empty-asg', 'fake-new-empty-asg', 'fake-new-lc')
+		.then(function(){
+			expect(create_asg_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-new-empty-asg',
+				LaunchConfigurationName: 'fake-new-lc',
+				VPCZoneIdentifier: 'fake-subnet-1,fake-subnet-2',
+				TerminationPolicies: ['ClosestToNextInstanceHour'],
+				MinSize: 0,
+				MaxSize: 2,
+				DesiredCapacity: 0,
+				HealthCheckGracePeriod: 60,
+				Tags: [
+					{
+						Key: 'Name',
+						Value: 'fake-name'
+					}
+				],
+				HealthCheckType: 'ELB',
+				LoadBalancerNames: ['fake-elb1'],
+				TargetGroupARNs: ['fake-tg-arn']
+			});
 		});
 	});
 
