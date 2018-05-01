@@ -128,7 +128,7 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 								});
 						});
 				}).then(function(healthy){
-					if(healthy.length !== old_asg.DesiredCapacity) {
+					if(healthy.length !== new_asg.DesiredCapacity) {
 						Logger.info(`${region}: found ${healthy.length} healthy instances in load balancer, but we want (${new_asg.DesiredCapacity}) - waiting 30s`);
 						setTimeout(_check, _delay_ms);
 					} else if(new_asg.DesiredCapacity !== 0) {
