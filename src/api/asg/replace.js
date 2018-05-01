@@ -59,6 +59,9 @@ function _parse_lifecycle_hooks(hooks) {
 
 function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 	//first wait for asg to report that all the instances are healthy
+	if(old_asg.DesiredCapacity === 0 && new_asg.DesiredCapacity === 0) {
+		return Promise.resolve();
+	}
 	return new Promise(function(resolve, reject){
 		function _check() {
 			let new_ready_count = new_asg.Instances.filter(function(instance){
@@ -123,10 +126,10 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 								});
 						});
 				}).then(function(healthy){
-					if(healthy.length !== new_asg.DesiredCapacity && new_asg.DesiredCapacity !== 0) {
+					if(healthy.length !== old_asg.DesiredCapacity) {
 						Logger.info(`${region}: found ${healthy.length} healthy instances in load balancer, but we want (${new_asg.DesiredCapacity}) - waiting 30s`);
 						setTimeout(_check, _delay_ms);
-					} else {
+					} else if(new_asg.DesiredCapacity !== 0) {
 						Logger.info(`${region}: all hosts healthy in load balancer`);
 						resolve();
 					}
