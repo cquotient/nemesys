@@ -52,6 +52,10 @@ describe('replace asg', function(){
 							LifecycleState: 'InService',
 							HealthStatus: 'Healthy',
 							InstanceId: 'fake-instance-id-1'
+						},{
+							LifecycleState: 'InService',
+							HealthStatus: 'Healthy',
+							InstanceId: 'fake-instance-id-2'
 						}];
 					} else if(name === 'fake-old-asg') {
 						loadbalancernames = ['fake-elb1'];
@@ -68,7 +72,7 @@ describe('replace asg', function(){
 								LaunchConfigurationName: 'fake-asg-lc',
 								MinSize: 0,
 								MaxSize: 2,
-								DesiredCapacity: 1,
+								DesiredCapacity: 2,
 								DefaultCooldown: 120,
 								AvailabilityZones: [
 									'fake-az1',
@@ -384,7 +388,7 @@ describe('replace asg', function(){
 				TerminationPolicies: ['ClosestToNextInstanceHour'],
 				MinSize: 0,
 				MaxSize: 2,
-				DesiredCapacity: 1,
+				DesiredCapacity: 2,
 				HealthCheckGracePeriod: 60,
 				Tags: [
 					{
@@ -493,6 +497,9 @@ describe('replace asg', function(){
 				Instances: [
 					{
 						InstanceId: 'fake-instance-id-1'
+					},
+					{
+						InstanceId: 'fake-instance-id-2'
 					}
 				]
 			});
@@ -501,6 +508,9 @@ describe('replace asg', function(){
 				Targets: [
 					{
 						Id: 'fake-instance-id-1'
+					},
+					{
+						Id: 'fake-instance-id-2'
 					}
 				]
 			});

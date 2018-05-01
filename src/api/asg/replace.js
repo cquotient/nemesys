@@ -105,25 +105,25 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 							let result = [];
 							result = result.concat(elb_result
 								.filter(obj => {
-									return obj.State == 'InService';
+									return obj.State === 'InService';
 								}).map(instance => {
 									return instance.InstanceId;
 								})
 							);
 							result = result.concat(tg_result
 								.filter(obj => {
-									return obj.TargetHealth.State != 'healthy';
+									return obj.TargetHealth.State === 'healthy';
 								}).map(instance => {
 									return instance.Target.Id;
 								})
 							);
 							return result
 								.filter((item, pos, self) => {
-									return self.indexOf(item) == pos;
+									return self.indexOf(item) === pos;
 								});
 						});
 				}).then(function(healthy){
-					if(healthy.length != new_asg.DesiredCapacity && new_asg.DesiredCapacity != 0) {
+					if(healthy.length !== new_asg.DesiredCapacity && new_asg.DesiredCapacity !== 0) {
 						Logger.info(`${region}: found ${healthy.length} healthy instances in load balancer, but we want (${new_asg.DesiredCapacity}) - waiting 30s`);
 						setTimeout(_check, _delay_ms);
 					} else {
