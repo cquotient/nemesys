@@ -58,10 +58,12 @@ function _parse_lifecycle_hooks(hooks) {
 }
 
 function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
-	//first wait for asg to report that all the instances are healthy
+	//if old asg and new asg both have 0 desired instances, then we dont expect anything to become healthy, so
+	//we can basically skip this step
 	if(old_asg.DesiredCapacity === 0 && new_asg.DesiredCapacity === 0) {
 		return Promise.resolve();
 	}
+	//first wait for asg to report that all the instances are healthy
 	return new Promise(function(resolve, reject){
 		function _check() {
 			let new_ready_count = new_asg.Instances.filter(function(instance){
