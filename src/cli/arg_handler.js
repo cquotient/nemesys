@@ -11,7 +11,9 @@ function _handle_create(cmd) {
 			let optional = {
 				min: cmd.opts['min-instance-count'],
 				max: cmd.opts['max-instance-count'],
-				desired: cmd.opts['desired-instance-count']
+				desired: cmd.opts['desired-instance-count'],
+				elb_name: cmd.opts['elb-name'],
+				tg_arn: cmd.opts['tg-arn']
 			};
 			nemesys.asg.create(
 				cmd.opts['regions'],

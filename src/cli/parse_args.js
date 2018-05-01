@@ -128,6 +128,12 @@ function parse_args (args) {
 						.option('desired-instance-count', {
 							describe: 'Desired number of instances in ASG'
 						})
+						.option('elb-name', {
+							describe: 'Name of ELB to associate with ASG (if any)'
+						})
+						.option('tg-arn', {
+							describe: 'ARN of TG to associate with ASG (if any)'
+						})
 						.example('nemesys create asg -v my_vpc -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
 							'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
 						.help('h')
