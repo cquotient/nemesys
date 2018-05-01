@@ -1,6 +1,6 @@
 {
   "name": "nemesys",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "author": "CQuotient Engineering",
   "repository": "cquotient/nemesys",
   "scripts": {
@@ -19,7 +19,7 @@
     "nemesys": "bin/nemesys"
   },
   "engines": {
-    "node": "^6.10.3"
+    "node": "^6.10.3 ^8.11.1"
   },
   "license": "MIT",
   "devDependencies": {
