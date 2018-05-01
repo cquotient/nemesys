@@ -134,6 +134,10 @@ function _wait_for_health(region, new_asg_name, new_asg, old_asg) {
 					} else if(new_asg.DesiredCapacity !== 0) {
 						Logger.info(`${region}: all hosts healthy in load balancer`);
 						resolve();
+					} else {
+						//reject here, because this means something weird has happened and
+						//we dont want to just hang
+						reject(new Error('Unexpected empty asg found!'));
 					}
 				}).catch(reject);
 			}
