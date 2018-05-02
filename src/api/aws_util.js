@@ -15,7 +15,7 @@ function _get_asg(as, asg_name, throttle_retries, retry_timeout) {
 		if(err.code === 'Throttling' && throttle_retries > 0) {
 			throttle_retries--;
 			retry_timeout = retry_timeout ? retry_timeout : 60000;
-			Logger.info(`Handling aws throttle for describe asg, waiting 1 minute and retrying, up to ${throttle_retries} more times.`);
+			Logger.info(`Handling aws throttle for describe asg, waiting ${retry_timeout/1000} seconds and retrying, up to ${throttle_retries} more times.`);
 			return new Promise(function(resolve, reject){
 				setTimeout(() => _get_asg(as, asg_name, throttle_retries, retry_timeout).then(resolve).catch(reject), retry_timeout);
 			});
