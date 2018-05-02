@@ -108,7 +108,7 @@ describe('AWSUtil', function(){
 		it('should withstand a rate limiting error', function(){
 			// the first time describeAutoScalingGroups is called, it throws an error,
 			// so just making sure this succeeds tests that the error is handled
-			return AWSUtil.get_asg(mock_as, 'fake-as-name', 1, 1);
+			return AWSUtil.get_asg(mock_as, 'fake-as-name', 1);
 		});
 
 	});

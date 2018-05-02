@@ -6,7 +6,8 @@ const Logger = require('../logger');
 const BB = require('bluebird');
 const fs = BB.promisifyAll(require('fs'));
 
-function _get_asg(as, asg_name, throttle_retries, retry_timeout) {
+function _get_asg(as, asg_name, retry_timeout, throttle_retries) {
+	if(throttle_retries == null) throttle_retries = 1;
 	return as.describeAutoScalingGroupsAsync({
 		AutoScalingGroupNames: [asg_name]
 	}).then(function(data){
