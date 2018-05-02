@@ -1,14 +1,25 @@
 'use strict';
 
 const AWSProvider = require('./aws_provider');
+const Logger = require('../logger');
+
 const BB = require('bluebird');
 const fs = BB.promisifyAll(require('fs'));
 
-function _get_asg(as, asg_name) {
+function _get_asg(as, asg_name, retry_timeout = 60000, throttle_retries = 1) {
 	return as.describeAutoScalingGroupsAsync({
 		AutoScalingGroupNames: [asg_name]
 	}).then(function(data){
 		return data.AutoScalingGroups[0];
+	}).catch(function(err){
+		if(err.code === 'Throttling' && throttle_retries > 0) {
+			throttle_retries--;
+			Logger.info(`Handling aws throttle for describe asg, waiting ${retry_timeout/1000} seconds and retrying, up to ${throttle_retries} more times.`);
+			return new Promise(function(resolve, reject){
+				setTimeout(() => _get_asg(as, asg_name, throttle_retries, retry_timeout).then(resolve).catch(reject), retry_timeout);
+			});
+		}
+		return new Error(`Error describing asg: `, err);
 	});
 }
 

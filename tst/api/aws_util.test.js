@@ -7,7 +7,8 @@ describe('AWSUtil', function(){
 			expect,
 			sinon,
 			sandbox,
-			mock_ec2;
+			mock_ec2,
+			mock_as;
 
 	before(function(){
 		AWSUtil = require('../../src/api/aws_util');
@@ -34,9 +35,19 @@ describe('AWSUtil', function(){
 				})
 			)
 		};
+		let good_desc_asg_resp;
+		let desc_asg_stub = sandbox.stub();
+		desc_asg_stub.onCall(0).returns(Promise.reject({
+			code: 'Throttling'
+		}));
+		desc_asg_stub.onCall(1).returns(Promise.resolve());
+		mock_as = {
+			describeAutoScalingGroupsAsync: desc_asg_stub
+		};
 		let AWSProvider = require('../../src/api/aws_provider');
 		sandbox.stub(AWSProvider, 'get_iam', () => mock_iam);
 		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
 	});
 
 	afterEach(function(){
@@ -88,6 +99,16 @@ describe('AWSUtil', function(){
 						]
 					});
 				});
+		});
+
+	});
+
+	describe('#get_asg()', function(){
+
+		it('should withstand a rate limiting error', function(){
+			// the first time describeAutoScalingGroups is called, it throws an error,
+			// so just making sure this succeeds tests that the error is handled
+			return AWSUtil.get_asg(mock_as, 'fake-as-name', 1);
 		});
 
 	});

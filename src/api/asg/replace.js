@@ -23,11 +23,10 @@ function _parse_policies(policies) {
 	return policies.ScalingPolicies.map(function(policy){
 		let parsed = {
 			name: policy.PolicyName,
-			adjustment_type: policy.AdjustmentType,
-			alarm_names: policy.Alarms.map((alarm) => alarm.AlarmName)
+			policy_type: policy.PolicyType
 		};
 		if(policy.PolicyType === 'StepScaling') {
-			parsed.policy_type = 'StepScaling';
+			parsed.adjustment_type = policy.AdjustmentType,
 			parsed.aggregation_type = policy.MetricAggregationType;
 			parsed.step_adjustments = policy.StepAdjustments.map(function(step_adj){
 				return {
@@ -36,9 +35,14 @@ function _parse_policies(policies) {
 					adjustment: step_adj.ScalingAdjustment
 				};
 			});
+			parsed.alarm_names = policy.Alarms.map((alarm) => alarm.AlarmName);
+		} else if(policy.PolicyType === 'TargetTrackingScaling') {
+			parsed.target_tracking_config = policy.TargetTrackingConfiguration;
 		} else {
+			parsed.adjustment_type = policy.AdjustmentType,
 			parsed.adjustment = policy.ScalingAdjustment;
 			parsed.cooldown = policy.Cooldown;
+			parsed.alarm_names = policy.Alarms.map((alarm) => alarm.AlarmName);
 		}
 		return parsed;
 	});
