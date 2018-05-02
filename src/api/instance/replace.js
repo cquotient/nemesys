@@ -104,7 +104,7 @@ function attach_elastic_ip(region, source_instance_id, alloc_id) {
 
 	return AWSProvider
 		.get_ec2(region)
-		.associateAddress(params, function(err, data) {
+		.associateAddressAsync(params, function(err, data) {
 			if (err) {
 				console.log("Address Not Associated", err);
 				return false;
@@ -122,7 +122,7 @@ function detach_elastic_ip(region, assoc_id) {
 
 	return AWSProvider
 		.get_ec2(region)
-		.disassociateAddress(params, function(err, data) {
+		.disassociateAddressAsync(params, function(err, data) {
 			if (err) {
 				console.log(err, err.stack);
 				return false;
