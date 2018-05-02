@@ -8,7 +8,7 @@
     "test": "./node_modules/mocha/bin/mocha --recursive tst"
   },
   "dependencies": {
-    "aws-sdk": "2.41.0",
+    "aws-sdk": "2.230.1",
     "bluebird": "3.4.7",
     "js-yaml": "3.7.0",
     "validator": "4.4.0",

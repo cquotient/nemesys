@@ -118,11 +118,11 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 			let policy_promises = optional.scaling_policies.map(function(policy){
 				let policy_params = {
 					AutoScalingGroupName: asg_name,
-					PolicyName: policy.name,
-					AdjustmentType: policy.adjustment_type
+					PolicyName: policy.name
 				};
 				if(policy.policy_type === 'StepScaling') {
-					policy_params.PolicyType = 'StepScaling';
+					policy_params.PolicyType = policy.policy_type;
+					policy_params.AdjustmentType = policy.adjustment_type;
 					policy_params.MetricAggregationType = policy.aggregation_type;
 					policy_params.StepAdjustments = policy.step_adjustments.map(function(obj){
 						return {
@@ -131,30 +131,38 @@ function _do_create(region, vpc_name, asg_name, lc_name, instance_tags, error_to
 							ScalingAdjustment: obj.adjustment
 						};
 					});
+				} else if(policy.policy_type === 'TargetTrackingScaling') {
+					policy_params.PolicyType = policy.policy_type;
+					policy_params.TargetTrackingConfiguration = policy.target_tracking_config;
 				} else {
+					policy_params.AdjustmentType = policy.adjustment_type;
 					policy_params.ScalingAdjustment = policy.adjustment;
 					policy_params.Cooldown = policy.cooldown;
 				}
 				return AS.putScalingPolicyAsync(policy_params).then(function(put_policy_result){
-					return AWSProvider.get_cw(region).describeAlarmsAsync({
-						AlarmNames: policy.alarm_names
-					}).then(function(desc_alarm_result){
-						let alarm_promises = desc_alarm_result.MetricAlarms.map(function(alarm){
-							return AWSProvider.get_cw(region).putMetricAlarmAsync({
-								AlarmName: alarm.AlarmName,
-								MetricName: alarm.MetricName,
-								Namespace: alarm.Namespace,
-								Statistic: alarm.Statistic,
-								Period: alarm.Period,
-								Threshold: alarm.Threshold,
-								ComparisonOperator: alarm.ComparisonOperator,
-								Dimensions: alarm.Dimensions,
-								EvaluationPeriods: alarm.EvaluationPeriods,
-								AlarmActions: [put_policy_result.PolicyARN]
+					if(policy.alarm_names && policy.alarm_names.length > 0) {
+						return AWSProvider.get_cw(region).describeAlarmsAsync({
+							AlarmNames: policy.alarm_names
+						}).then(function(desc_alarm_result){
+							let alarm_promises = desc_alarm_result.MetricAlarms.map(function(alarm){
+								return AWSProvider.get_cw(region).putMetricAlarmAsync({
+									AlarmName: alarm.AlarmName,
+									MetricName: alarm.MetricName,
+									Namespace: alarm.Namespace,
+									Statistic: alarm.Statistic,
+									Period: alarm.Period,
+									Threshold: alarm.Threshold,
+									ComparisonOperator: alarm.ComparisonOperator,
+									Dimensions: alarm.Dimensions,
+									EvaluationPeriods: alarm.EvaluationPeriods,
+									AlarmActions: [put_policy_result.PolicyARN]
+								});
 							});
+							return BB.all(alarm_promises);
 						});
-						return BB.all(alarm_promises);
-					});
+					} else {
+						return Promise.resolve();
+					}
 				});
 			});
 			return BB.all(policy_promises).then(() => AWSUtil.get_asg(AS, asg_name));

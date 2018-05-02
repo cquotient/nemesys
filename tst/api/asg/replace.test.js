@@ -176,6 +176,33 @@ describe('replace asg', function(){
 									AlarmARN: 'fake-alarm-arn-2'
 								}
 							]
+						},
+						{
+							AutoScalingGroupName: params.AutoScalingGroupName,
+							PolicyName: 'fake-scaling-policy-3',
+							PolicyARN: 'fake-policy-arn-3',
+							PolicyType: "TargetTrackingScaling",
+							StepAdjustments: [],
+							Alarms: [
+									{
+											AlarmName: 'fake-alarm-3',
+											AlarmARN: 'fake-alarm-arn-3'
+									},
+									{
+											AlarmName: 'fake-alarm-4',
+											AlarmARN: 'fake-alarm-arn-4'
+									}
+							],
+							TargetTrackingConfiguration: {
+									CustomizedMetricSpecification: {
+											MetricName: "fake-metric-1",
+											Namespace: "fake-namespace",
+											Dimensions: [],
+											Statistic: "Average"
+									},
+									TargetValue: 80000,
+									DisableScaleIn: false
+							}
 						}
 					]
 				});
@@ -457,9 +484,25 @@ describe('replace asg', function(){
 					}
 				]
 			});
+			expect(put_scaling_policy_spy).to.have.been.calledWith({
+				AutoScalingGroupName: 'fake-new-asg',
+				PolicyName: 'fake-scaling-policy-3',
+				PolicyType: "TargetTrackingScaling",
+				TargetTrackingConfiguration: {
+						CustomizedMetricSpecification: {
+								MetricName: "fake-metric-1",
+								Namespace: "fake-namespace",
+								Dimensions: [],
+								Statistic: "Average"
+						},
+						TargetValue: 80000,
+						DisableScaleIn: false
+				}
+			});
 			expect(describe_alarms_spy).to.have.been.calledWith({
 				AlarmNames: ['fake-alarm-1']
 			});
+			expect(put_alarm_spy.callCount).to.eql(4);
 			expect(put_alarm_spy).to.have.been.calledWith({
 				AlarmName: 'fake-alarm-1',
 				MetricName: 'fake-metric-name-1',
