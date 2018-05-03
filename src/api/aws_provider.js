@@ -10,7 +10,7 @@ function _get_ec2(region) {
 	if(!ec2_conns[region]) {
 		ec2_conns[region] = BB.promisifyAll(new AWS.EC2({
 			region: region,
-			apiVersion: '2015-10-01'
+			apiVersion: '2016-11-15'
 		}));
 	}
 	return ec2_conns[region];
