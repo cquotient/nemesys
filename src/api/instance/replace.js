@@ -13,8 +13,7 @@ module.exports = function (regions, target_name, source_name) {
 };
 
 function replace(region, target_name, source_name, assign_elastic_ip) {
-	let target, source, lbName, elastic_ip, allocation_id;
-	assign_elastic_ip = assign_elastic_ip === 'true' : true ? false;
+	let target, source, lbName, allocation_id;
 
 	return Promise.all([
 		AWSUtil.get_instance_by_name(region, target_name),
@@ -41,39 +40,35 @@ function replace(region, target_name, source_name, assign_elastic_ip) {
 		return detach_from_lb(region, lbName, target.InstanceId);
 	}).then(function () {
 		if (assign_elastic_ip) {
-			return get_elastic_ip(region, target.InstanceId)
+			return get_elastic_ip(region, target.InstanceId);
 		}
-	}).then((eip, alloc_id, assoc_id) => {
+	}).then((alloc_id, assoc_id) => {
 		if (assign_elastic_ip) {
-			if (!eip || !alloc_id || !assoc_id) {
-				throw new Error(`Instance ${target_name} had no EIP, but one was expected`);
+			if (!alloc_id || !assoc_id) {
+				logger.warn(`Instance ${target_name} had no EIP, but one was expected`);
 			} else {
-				// Record eip for next step
-				elastic_ip = eip;
+				logger.info(`Alloc ID: ${alloc_id}`);
+				logger.info(`Assoc ID: ${assoc_id}`);
+
+				// Allocation ID needed to attach EIP in next step
 				allocation_id = alloc_id;
 
 				// Detach from target
-				return detach_elastic_ip(region, assoc_id)
+				logger.info(`Detach EIP from ${target_name}`);
+				return detach_elastic_ip(region, assoc_id);
 			}
 		}
-		return true;
-	}).then(detach_worked => {
-		if (assign_elastic_ip) {
-			if (detach_worked) {
-				// Attach to source
-				return attach_elastic_ip(region, source.InstanceId, allocation_id)
-			} else {
-				throw new Error(`Failed to detach elastic IP from ${target_name}`)
-			}
+		return Promise.resolve(true);
+	}).then(() => {
+		if (assign_elastic_ip && allocation_id) {
+			logger.info(`Attach EIP to ${source_name}`);
+			return attach_elastic_ip(region, source.InstanceId, allocation_id);
 		}
-		return true;
-	}).then(attach_worked => function () {
-		if (assign_elastic_ip && !attach_worked) {
-			throw new Error(`Failed to attach elastic IP to ${source_name}`)
-		}
+		return Promise.resolve(true);
+	}).then(() => {
 		logger.info(`Terminate ${target_name}`);
 		return terminate_instance(region, target.InstanceId);
-	});
+	}).catch(err => logger.error(err));
 }
 
 function wait_until_healthy(region, lbName, instanceId) {
@@ -97,7 +92,7 @@ function wait_until_healthy(region, lbName, instanceId) {
 }
 
 function attach_elastic_ip(region, source_instance_id, alloc_id) {
-	var params = {
+	let params = {
 		AllocationId: alloc_id,
 		InstanceId: source_instance_id
 	};
@@ -106,17 +101,17 @@ function attach_elastic_ip(region, source_instance_id, alloc_id) {
 		.get_ec2(region)
 		.associateAddressAsync(params, function(err, data) {
 			if (err) {
-				console.log("Address Not Associated", err);
-				return false;
+				logger.error(`Address was not associated to ${source_instance_id}`, err);
+				return Promise.reject(new Error(`Address was not associated to ${source_instance_id}`));
 			} else {
-				console.log("Address associated:", data.AssociationId);
-				return true;
+				logger.info(`Address associated to ${source_instance_id} via association ID ${data.AssociationId}`);
+				return Promise.resolve(true);
 			}
 		});
 }
 
 function detach_elastic_ip(region, assoc_id) {
-	var params = {
+	let params = {
 		AssociationId: assoc_id
 	};
 
@@ -124,20 +119,19 @@ function detach_elastic_ip(region, assoc_id) {
 		.get_ec2(region)
 		.disassociateAddressAsync(params, function(err, data) {
 			if (err) {
-				console.log(err, err.stack);
-				return false;
+				return Promise.reject(new Error(`Failed to detach elastic IP with association ID ${assoc_id}`));
 			} else {
-				return true;
+				return Promise.resolve(data);
 			}
 		});
 }
 
-function get_elastic_ip(region, instanceId) {
-	var params = {
+function get_elastic_ip(region, target_instance_id) {
+	let params = {
 		Filters: [
 			{
 				Name: 'instance-id',
-				Values: [instanceId]
+				Values: [target_instance_id]
 			}
 		]
 	};
@@ -146,36 +140,37 @@ function get_elastic_ip(region, instanceId) {
 		.get_ec2(region)
 		.describeInstancesAsync(params, function(err, data) {
 			if (err) {
-				console.log("Error", err);
+				logger.warn(`We were unable to get instance description for target ${target_instance_id}`);
 			} else {
 				if (data.Reservations && data.Reservations.length) {
 					if (data.Reservations[0].Instances && data.Reservations[0].Instances.length) {
-						 return data.Reservations[0].Instances[0].PublicIpAddress;
+						return data.Reservations[0].Instances[0].PublicIpAddress;
 					} else {
-						console.log("Had no elastic IP");
+						logger.info(`The target instance ${target_instance_id} had no elastic IP`);
 					}
 				} else {
-					console.log("Data had no length");
+					logger.warn("We received no data from describe instances while getting elastic IP info");
 				}
 			}
 		}).then(pub_address => {
 			params = {
 				PublicIps: [pub_address]
-			}
+			};
 			return AWSProvider
 				.get_ec2(region)
 				.describeAddressesAsync(params, function(err, data) {
 					if (err) {
-						console.log("Error", err);
+						logger.info(`We were unable to verify if the address ${pub_address} is an elastic IP`);
 					} else if (data.Addresses && data.Addresses.length) {
 						data.Addresses.forEach(address => {
 							if (address.AllocationId) {
-								 return (pub_address, address.AllocationId, address.AssociationId);
+								return Promise.resolve((address.AllocationId, address.AssociationId));
 							}
 						});
 					} else {
-						console.log("Data had no length");
+						logger.warn("We received no data from describe addresses while getting elastic IP info");
 					}
+					Promise.resolve();
 				});
 		});
 }
