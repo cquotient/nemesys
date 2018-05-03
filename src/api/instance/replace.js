@@ -58,13 +58,13 @@ function replace(region, target_name, source_name, assign_elastic_ip) {
 				return detach_elastic_ip(region, assoc_id);
 			}
 		}
-		return Promise.resolve(true);
+		return true;
 	}).then(() => {
 		if (assign_elastic_ip && allocation_id) {
 			logger.info(`Attach EIP to ${source_name}`);
 			return attach_elastic_ip(region, source.InstanceId, allocation_id);
 		}
-		return Promise.resolve(true);
+		return true;
 	}).then(() => {
 		logger.info(`Terminate ${target_name}`);
 		return terminate_instance(region, target.InstanceId);
