@@ -95,10 +95,7 @@ function attach_elastic_ip(region, source_instance_id, alloc_id) {
 
 	return AWSProvider
 		.get_ec2(region)
-		.associateAddressAsync(params)
-		.catch(err => {
-			Promise.reject(new Error(`${region}: Address was not associated to ${source_instance_id}: ${err}`));
-		});
+		.associateAddressAsync(params);
 }
 
 function detach_elastic_ip(region, assoc_id) {
@@ -108,10 +105,7 @@ function detach_elastic_ip(region, assoc_id) {
 
 	return AWSProvider
 		.get_ec2(region)
-		.disassociateAddressAsync(params)
-		.catch(err => {
-			Promise.reject(new Error(`${region}: Failed to detach elastic IP with association ID ${assoc_id}: ${err}`));
-		});
+		.disassociateAddressAsync(params);
 }
 
 function get_elastic_ip(region, target_instance_id) {
@@ -133,6 +127,9 @@ function get_elastic_ip(region, target_instance_id) {
 				return data.Reservations[0].Instances[0].PublicIpAddress;
 			}
 		}).then(pub_address => {
+			if (!pub_address) {
+				return;
+			}
 			params = {
 				PublicIps: [pub_address]
 			};
@@ -151,7 +148,7 @@ function get_elastic_ip(region, target_instance_id) {
 						}
 					}
 				});
-		}).catch(() => {});
+		});
 }
 
 function get_instance_lb(region, instanceId) {

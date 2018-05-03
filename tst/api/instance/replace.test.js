@@ -1,13 +1,7 @@
 'use strict';
 
 const Promise = require('bluebird');
-const chai = require('chai');
-const chaiAsPromised = require('chai-as-promised');
-
-chai.use(chaiAsPromised);
-
-const expect = chai.expect;
-
+const expect = require('chai').expect;
 const sinon = require('sinon');
 
 const AWSProvider = require('../../../src/api/aws_provider');
@@ -192,9 +186,7 @@ describe('instance replace', function () {
 	});
 
 	it('replaces an instance when associate elastic IP but instance description not found', function () {
-		mock_ec2.describeInstancesAsync = sandbox.stub().returns(
-			Promise.reject(new Error("Something wrong"))
-		);
+		mock_ec2.describeInstancesAsync = sandbox.stub().returns(Promise.resolve({}));
 		return instance
 			.replace(['us-east-1'], 'old-instance', 'new-instance', true)
 			.then(function () {
@@ -238,9 +230,7 @@ describe('instance replace', function () {
 	});
 
 	it('replaces an instance when associate elastic IP but EIP not found', function () {
-		mock_ec2.describeAddressesAsync = sandbox.stub().returns(
-			Promise.reject(new Error("Something wrong"))
-		);
+		mock_ec2.describeAddressesAsync = sandbox.stub().returns(Promise.resolve({}));
 		return instance
 			.replace(['us-east-1'], 'old-instance', 'new-instance', true)
 			.then(function () {
@@ -285,10 +275,10 @@ describe('instance replace', function () {
 			});
 	});
 
-	it.only('does not replace an instance when failure to detach EIP from target', function () {
-		let rejection_msg = "Something wrong";
+	it('does not replace an instance when failure to detach EIP from target', function () {
+		let err_msg = new Error('dang');
 		mock_ec2.disassociateAddressAsync = sandbox.stub().returns(
-			Promise.reject(new Error(rejection_msg))
+			Promise.reject(err_msg)
 		);
 		return instance
 			.replace(['us-east-1'], 'old-instance', 'new-instance', true)
@@ -328,32 +318,38 @@ describe('instance replace', function () {
 					PublicIps: [pub_ip]
 				});
 
-				expect(mock_ec2.disassociateAddressAsync).to.be.eventually.rejectedWith(Error, rejection_msg);
+				expect(mock_ec2.disassociateAddressAsync).to.have.been.calledWith({
+					AssociationId: assoc_id
+				});
 
 				expect(mock_ec2.associateAddressAsync).to.not.have.been.called;
 
 				expect(mock_ec2.terminateInstancesAsync).to.not.have.been.called;
+			})
+			.catch(err => {
+				expect(err).to.eql(err_msg);
 			});
 	});
 
-	it('should not replace an instance when failure to attach EIP to source', function () {
+	it('does not replace an instance when failure to attach EIP to source', function () {
+		let err_msg = new Error("Something wrong");
 		mock_ec2.associateAddressAsync = sandbox.stub().returns(
-			Promise.reject(new Error("Something wrong"))
+			Promise.reject(err_msg)
 		);
 		return instance
 			.replace(['us-east-1'], 'old-instance', 'new-instance', true)
 			.then(function () {
-				expect(mock_elb.registerInstancesWithLoadBalancerAsync.calledWith({
+				expect(mock_elb.registerInstancesWithLoadBalancerAsync).to.have.been.calledWith({
 					Instances: [{InstanceId: new_instance_id}],
 					LoadBalancerName: 'lb'
-				})).to.be.true;
+				});
 
-				expect(mock_elb.deregisterInstancesFromLoadBalancerAsync.calledWith({
+				expect(mock_elb.deregisterInstancesFromLoadBalancerAsync).to.have.been.calledWith({
 					Instances: [{InstanceId: old_instance_id}],
 					LoadBalancerName: 'lb'
-				})).to.be.true;
+				});
 
-				expect(mock_elb.waitForAsync.calledWith(
+				expect(mock_elb.waitForAsync).to.have.been.calledWith(
 					'instanceInService',
 					{
 						LoadBalancerName: 'lb',
@@ -363,33 +359,34 @@ describe('instance replace', function () {
 							}
 						]
 					}
-				)).to.be.true;
+				);
 
-				expect(mock_ec2.describeInstancesAsync.calledWith({
+				expect(mock_ec2.describeInstancesAsync).to.have.been.calledWith({
 					Filters: [
 						{
 							Name: 'instance-id',
 							Values: [old_instance_id]
 						}
 					]
-				})).to.be.true;
+				});
 
-				expect(mock_ec2.describeAddressesAsync.calledWith({
+				expect(mock_ec2.describeAddressesAsync).to.have.been.calledWith({
 					PublicIps: [pub_ip]
-				})).to.be.true;
+				});
 
-				expect(mock_ec2.disassociateAddressAsync.calledWith({
+				expect(mock_ec2.disassociateAddressAsync).to.have.been.calledWith({
 					AssociationId: assoc_id
-				})).to.be.true;
+				});
 
-				expect(mock_ec2.associateAddressAsync.calledWith({
+				expect(mock_ec2.associateAddressAsync).to.have.been.calledWith({
 					AllocationId: alloc_id,
 					InstanceId: new_instance_id
-				})).to.be.true;
+				});
 
-				expect(mock_ec2.terminateInstancesAsync.calledWith({
-					InstanceIds: [old_instance_id]
-				})).to.be.false;
+				expect(mock_ec2.terminateInstancesAsync).to.not.have.been.called;
+			})
+			.catch(err => {
+				expect(err).to.eql(err_msg);
 			});
 	});
 });
