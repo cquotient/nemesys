@@ -44,7 +44,7 @@ function replace(region, target_name, source_name, assign_elastic_ip) {
 		}
 	}).then(eip_hash => {
 		if (assign_elastic_ip) {
-			if (eip_hash.alloc_id && eip_hash.assoc_id) {
+			if (eip_hash && eip_hash.alloc_id && eip_hash.assoc_id) {
 				logger.info(`${region}: Alloc ID: ${eip_hash.alloc_id}`);
 				logger.info(`${region}: Assoc ID: ${eip_hash.assoc_id}`);
 
@@ -64,7 +64,7 @@ function replace(region, target_name, source_name, assign_elastic_ip) {
 	}).then(() => {
 		logger.info(`${region}: Terminate ${target_name}`);
 		return terminate_instance(region, target.InstanceId);
-	}).catch(err => logger.error(err));
+	});
 }
 
 function wait_until_healthy(region, lbName, instanceId) {
@@ -97,7 +97,7 @@ function attach_elastic_ip(region, source_instance_id, alloc_id) {
 		.get_ec2(region)
 		.associateAddressAsync(params)
 		.catch(err => {
-			return Promise.reject(new Error(`${region}: Address was not associated to ${source_instance_id}: ${err}`));
+			Promise.reject(new Error(`${region}: Address was not associated to ${source_instance_id}: ${err}`));
 		});
 }
 
@@ -110,7 +110,7 @@ function detach_elastic_ip(region, assoc_id) {
 		.get_ec2(region)
 		.disassociateAddressAsync(params)
 		.catch(err => {
-			return Promise.reject(new Error(`${region}: Failed to detach elastic IP with association ID ${assoc_id}: ${err}`));
+			Promise.reject(new Error(`${region}: Failed to detach elastic IP with association ID ${assoc_id}: ${err}`));
 		});
 }
 
@@ -151,7 +151,7 @@ function get_elastic_ip(region, target_instance_id) {
 						}
 					}
 				});
-		}).catch((err) => console.log(err));
+		}).catch(() => {});
 }
 
 function get_instance_lb(region, instanceId) {
