@@ -8,7 +8,7 @@
     "test": "./node_modules/mocha/bin/mocha --recursive tst"
   },
   "dependencies": {
-    "aws-sdk": "2.230.1",
+    "aws-sdk": "2.231.1",
     "bluebird": "3.4.7",
     "js-yaml": "3.7.0",
     "validator": "4.4.0",
@@ -23,7 +23,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "chai": "^3.5.0",
+    "chai": "^4.1.0",
     "eslint": "3.12.2",
     "mocha": "^3.0.1",
     "sinon": "^1.17.5",
