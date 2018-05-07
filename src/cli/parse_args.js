@@ -289,7 +289,9 @@ function parse_args (args) {
 						.option('optimize-ebs', {
 							describe: 'Use EBS optimization'
 						})
-
+						.option('elastic-ip', {
+							describe: 'The elastic IP to use. WARN: we will detach it if in use first.'
+						})
 						.example('');
 				})
 
