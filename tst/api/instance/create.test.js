@@ -196,13 +196,13 @@ describe('instance create', function () {
 			});
 	});
 
-	it('does not create an instance when attaching an EIP fails due to AWS error (or otherwise)', function () {
+	it('does not create tags and throws an exception when attaching an EIP fails due to AWS error (or otherwise)', function () {
 		let expected_err = new Error('Something wrong');
 		mock_ec2.associateAddressAsync = sandbox.stub().returns(
 			Promise.reject(expected_err)
 		);
 		return instance
-			.create(['us-east-1'], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], null, 'fake-network-interface-id', null, null, pub_ip)
+			.create(['us-east-1'], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], ['tag1'], 'fake-network-interface-id', null, null, pub_ip)
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync).to.have.been.calledWith(expected_run_args);
 
@@ -224,6 +224,8 @@ describe('instance create', function () {
 				});
 
 				expect(result).eql([instance_id]);
+
+				expect(mock_ec2.createTagsAsync).to.have.not.been.called;
 			})
 			.catch(err => {
 				expect(err).to.eql(expected_err);

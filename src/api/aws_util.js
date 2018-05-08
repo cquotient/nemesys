@@ -356,10 +356,10 @@ function _get_eip_info(region, pub_address) {
 		.then(data => {
 			if (data && data.Addresses && data.Addresses.length) {
 				for (let address of data.Addresses) {
-					if (address.AllocationId || address.AssociationId) {
+					if (address.AllocationId) {
 						return {
 							alloc_id: address.AllocationId,
-							assoc_id: address.AssociationId
+							assoc_id: address.AssociationId  // This may not be set, which is OK
 						};
 					}
 				}

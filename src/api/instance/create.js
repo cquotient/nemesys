@@ -49,19 +49,17 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 			return AWSUtil.get_eip_info(region, elastic_ip);
 		}
 	}).then(eip_hash => {
-		if (elastic_ip) {
-			if (eip_hash) {
-				if (eip_hash.assoc_id) {
-					Logger.info(`${region}: EIP is associated with assoc. ID: ${eip_hash.assoc_id}`);
-					Logger.info(`${region}: Detaching EIP`);
-					return AWSUtil.detach_elastic_ip(region, eip_hash.assoc_id)
-						.then(() => {
-							return eip_hash.alloc_id;
-						});
-				} else if (eip_hash.alloc_id) {
-					Logger.info(`${region}: EIP not currenlt associated`);
-					return eip_hash.alloc_id;
-				}
+		if (elastic_ip && eip_hash) {
+			if (eip_hash.assoc_id) {
+				Logger.info(`${region}: EIP is associated with assoc. ID: ${eip_hash.assoc_id}`);
+				Logger.info(`${region}: Detaching EIP`);
+				return AWSUtil.detach_elastic_ip(region, eip_hash.assoc_id)
+					.then(() => {
+						return eip_hash.alloc_id;
+					});
+			} else if (eip_hash.alloc_id) {
+				Logger.info(`${region}: EIP not currenlt associated`);
+				return eip_hash.alloc_id;
 			}
 		}
 	}).then((alloc_id) => {
