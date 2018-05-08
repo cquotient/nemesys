@@ -11,13 +11,14 @@ const instance = require('../../../src/api/instance');
 
 describe('instance replace', function () {
 	let sandbox, mock_elb, mock_ec2;
-	let old_instance_id = '456';
-	let new_instance_id = '123';
-	let alloc_id = 'aloc123';
-	let assoc_id = 'assoc123';
-	let pub_ip = '999.999.999.999';
 
 	beforeEach(function () {
+		let old_instance_id = '456';
+		let new_instance_id = '123';
+		let alloc_id = 'aloc123';
+		let assoc_id = 'assoc123';
+		let pub_ip = '999.999.999.999';
+
 		sandbox = sinon.sandbox.create();
 
 		mock_elb = {

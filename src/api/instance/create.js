@@ -53,7 +53,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 									return eip_hash.alloc_id;
 								});
 						} else if (eip_hash.alloc_id) {
-							Logger.info(`${region}: EIP not currenlt associated`);
+							Logger.info(`${region}: EIP not currently associated`);
 							return eip_hash.alloc_id;
 						}
 					}

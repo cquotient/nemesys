@@ -10,12 +10,13 @@ const instance = require('../../../src/api/instance');
 
 describe('instance create', function () {
 	let sandbox, mock_ec2, expected_run_args;
-	let alloc_id = 'aloc123';
-	let assoc_id = 'assoc123';
-	let pub_ip = '999.999.999.999';
-	let instance_id = '123';
 
 	beforeEach(function () {
+		let alloc_id = 'aloc123';
+		let assoc_id = 'assoc123';
+		let pub_ip = '999.999.999.999';
+		let instance_id = '123';
+
 		sandbox = sinon.sandbox.create();
 		sandbox.stub(AWSUtil, 'get_ami_id', (region, ami_name) => Promise.resolve(
 			ami_name
