@@ -8,7 +8,6 @@ const AWSProvider = require('../aws_provider');
 
 function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt, elastic_ip) {
 	let EC2 = AWSProvider.get_ec2(region);
-	let new_instance_id;
 	return BB.all([
 		AWSUtil.get_ami_id(region, ami),
 		AWSUtil.get_userdata_string(ud_files, env_vars, raw_ud_string),
@@ -42,34 +41,40 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 		return AWSUtil.wait_until_status(region, data.Instances[0].InstanceId, 'instanceExists');
 	})
 	.then(function(instance_id){
-		new_instance_id = instance_id;
-
 		if (elastic_ip) {
 			Logger.info(`${region}: getting info for EIP ${elastic_ip}`);
-			return AWSUtil.get_eip_info(region, elastic_ip);
+			return AWSUtil.get_eip_info(region, elastic_ip).then(eip_hash => {
+					if (elastic_ip && eip_hash) {
+						if (eip_hash.assoc_id) {
+							Logger.info(`${region}: EIP is associated with assoc. ID: ${eip_hash.assoc_id}`);
+							Logger.info(`${region}: Detaching EIP`);
+							return AWSUtil.detach_elastic_ip(region, eip_hash.assoc_id)
+								.then(() => {
+									return eip_hash.alloc_id;
+								});
+						} else if (eip_hash.alloc_id) {
+							Logger.info(`${region}: EIP not currenlt associated`);
+							return eip_hash.alloc_id;
+						}
+					}
+				})
+				.then(alloc_id => {
+					if (elastic_ip && alloc_id) {
+						Logger.info(`${region}: Attach EIP to ${instance_id}`);
+						return AWSUtil.attach_elastic_ip(region, instance_id, alloc_id)
+							.then(() => {
+								return instance_id;
+							});
+					} else {
+						return instance_id;
+					}
+				});
+		} else {
+			return instance_id;
 		}
-	}).then(eip_hash => {
-		if (elastic_ip && eip_hash) {
-			if (eip_hash.assoc_id) {
-				Logger.info(`${region}: EIP is associated with assoc. ID: ${eip_hash.assoc_id}`);
-				Logger.info(`${region}: Detaching EIP`);
-				return AWSUtil.detach_elastic_ip(region, eip_hash.assoc_id)
-					.then(() => {
-						return eip_hash.alloc_id;
-					});
-			} else if (eip_hash.alloc_id) {
-				Logger.info(`${region}: EIP not currenlt associated`);
-				return eip_hash.alloc_id;
-			}
-		}
-	}).then((alloc_id) => {
-		if (elastic_ip && alloc_id) {
-			Logger.info(`${region}: Attach EIP to ${new_instance_id}`);
-			return AWSUtil.attach_elastic_ip(region, new_instance_id, alloc_id);
-		}
-	}).then(() => {
+	}).then(instance_id => {
 		if (tags && tags.length > 0) {
-			Logger.info(`${region}: instance ${new_instance_id} is ready, applying tags`);
+			Logger.info(`${region}: instance ${instance_id} is ready, applying tags`);
 			tags = tags.map(function(tag_str){
 				let kv = tag_str.split('=');
 				return {
@@ -78,11 +83,11 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 				};
 			});
 			return EC2.createTagsAsync({
-				Resources: [new_instance_id],
+				Resources: [instance_id],
 				Tags: tags
-			}).then(() => new_instance_id);
+			}).then(() => instance_id);
 		} else {
-			return new_instance_id;
+			return instance_id;
 		}
 	});
 }
