@@ -325,6 +325,48 @@ function _wait_until_status(region, instanceId, state) {
 		});
 }
 
+function _attach_elastic_ip(region, source_instance_id, alloc_id) {
+	let params = {
+		AllocationId: alloc_id,
+		InstanceId: source_instance_id
+	};
+
+	return AWSProvider
+		.get_ec2(region)
+		.associateAddressAsync(params);
+}
+
+function _detach_elastic_ip(region, assoc_id) {
+	let params = {
+		AssociationId: assoc_id
+	};
+
+	return AWSProvider
+		.get_ec2(region)
+		.disassociateAddressAsync(params);
+}
+
+function _get_eip_info(region, pub_address) {
+	let params = {
+		PublicIps: [pub_address]
+	};
+	return AWSProvider
+		.get_ec2(region)
+		.describeAddressesAsync(params)
+		.then(data => {
+			if (data && data.Addresses && data.Addresses.length) {
+				for (let address of data.Addresses) {
+					if (address.AllocationId) {
+						return {
+							alloc_id: address.AllocationId,
+							assoc_id: address.AssociationId  // This may not be set, which is OK
+						};
+					}
+				}
+			}
+		});
+}
+
 
 exports.get_asg = _get_asg;
 exports.get_sg_id = _get_sg_id;
@@ -341,3 +383,6 @@ exports.get_network_interface = _get_network_interface;
 exports.get_eni_id = _get_eni_id;
 exports.get_ud_files = _get_ud_files;
 exports.wait_until_status = _wait_until_status;
+exports.attach_elastic_ip = _attach_elastic_ip;
+exports.detach_elastic_ip = _detach_elastic_ip;
+exports.get_eip_info = _get_eip_info;

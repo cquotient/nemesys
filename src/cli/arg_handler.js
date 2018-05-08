@@ -113,7 +113,8 @@ function _handle_create(cmd) {
 				cmd.opts['tags'],
 				cmd.opts['network-interface'],
 				cmd.opts['env'],
-				cmd.opts['optimize-ebs']
+				cmd.opts['optimize-ebs'],
+				cmd.opts['elastic-ip'] // The elastic IP to use. WARNING: we're going to disassociate it from the existing instance
 			).then(function(){
 				Logger.info('created instance');
 				process.exit(0);
