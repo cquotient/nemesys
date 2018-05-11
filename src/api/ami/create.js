@@ -6,33 +6,7 @@ const Logger = require('../../logger');
 const AWSProvider = require('../aws_provider');
 const AWSUtil = require('../aws_util');
 const create_instance = require('../instance/create');
-
-function _is_tag_present(tags, key, value) {
-	if(tags && tags.length > 0) {
-		for(let i=0 ; i<tags.length ; i++) {
-			if(tags[i].Key == key && tags[i].Value == value) return true;
-		}
-	}
-	return false;
-}
-
-function _wait_for_spinup_complete(region, instance_id) {
-	return new Promise(function(resolve, reject){
-		function _check(){
-			AWSProvider.get_ec2(region).describeInstancesAsync({InstanceIds: [instance_id]}).then(function(result){
-				if(result.Reservations.length === 1
-				&& result.Reservations[0].Instances.length === 1
-				&& _is_tag_present(result.Reservations[0].Instances[0].Tags, 'Spinup', 'complete')) {
-					resolve(instance_id);
-				} else {
-					Logger.info(`${region}: waiting for instance ${instance_id} spinup to complete with tag Spinup=complete`);
-					setTimeout(_check, 30000);
-				}
-			}).catch(reject);
-		}
-		_check();
-	});
-}
+const health_check = require('../health_checks');
 
 function _wait_for_image(region, image_id) {
 	Logger.info(`${region}: waiting for image ${image_id} to be available`);
@@ -44,7 +18,7 @@ function _wait_for_image(region, image_id) {
 }
 
 function _do_create(create_region, instance_id, copy_regions, ami_name, disks, preserve_instance){
-	return _wait_for_spinup_complete(create_region, instance_id)
+	return health_check.wait_for_spinup_complete(create_region, instance_id)
 	.then(function(instance_id){
 		Logger.info(`${create_region}: ${instance_id} ready, creating image ${ami_name}`);
 		return AWSUtil.get_bdms(create_region, disks).then(function(bdms){

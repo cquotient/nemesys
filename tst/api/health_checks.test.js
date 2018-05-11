@@ -31,6 +31,25 @@ describe('health checks', function () {
 						}
 					]
 				})
+			),
+			describeInstancesAsync: sandbox.stub().returns(
+				Promise.resolve({
+					Reservations: [
+						{
+							Instances: [
+								{
+									InstanceId: 'fake-instance-id-1',
+									Tags: [
+										{
+											Key: 'Spinup',
+											Value: 'complete'
+										}
+									]
+								}
+							]
+						}
+					]
+				})
 			)
 		};
 
@@ -82,6 +101,16 @@ describe('health checks', function () {
 						]
 					}
 				);
+			});
+	});
+
+	it('wait for spinup calls describeInstancesAsync', function () {
+		return health_checks
+			.wait_for_spinup_complete('us-east-1', 'fake-instance-id-1')
+			.then(function () {
+				expect(mock_ec2.describeInstancesAsync).to.have.been.calledWith({
+					InstanceIds: ['fake-instance-id-1']
+				});
 			});
 	});
 });
