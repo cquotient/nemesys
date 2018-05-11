@@ -25,4 +25,25 @@ function _wait_until_status(region, instanceId, state) {
 		});
 }
 
+function _wait_until_healthy(region, lbName, instanceId) {
+	return AWSProvider
+		.get_elb(region)
+		.waitForAsync('instanceInService', {
+			LoadBalancerName: lbName,
+			Instances: [
+				{
+					InstanceId: instanceId
+				}
+			]
+		})
+		.then(function (data) {
+			const state = data.InstanceStates[0];
+
+			if (state.State != 'InService') {
+				throw new Error(state.Description);
+			}
+		});
+}
+
 exports.wait_until_status = _wait_until_status;
+exports.wait_until_healthy = _wait_until_healthy;

@@ -8,7 +8,9 @@ const AWSProvider = require('../../src/api/aws_provider');
 const health_checks = require('../../src/api/health_checks');
 
 describe('health checks', function () {
-	let sandbox, mock_ec2;
+	let sandbox,
+		mock_ec2,
+		mock_elb;
 
 	beforeEach(function () {
 		sandbox = sinon.sandbox.create();
@@ -33,6 +35,20 @@ describe('health checks', function () {
 		};
 
 		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+
+		mock_elb = {
+			waitForAsync: sandbox.stub().returns(
+				Promise.resolve({
+					InstanceStates: [
+						{
+							State: 'InService'
+						}
+					]
+				})
+			)
+		};
+
+		sandbox.stub(AWSProvider, 'get_elb', () => mock_elb);
 	});
 
 	afterEach(function () {
@@ -48,6 +64,24 @@ describe('health checks', function () {
 				})).to.be.true;
 
 				expect(result).eql('123');
+			});
+	});
+
+	it('wait until healhty calls waitForAsync', function () {
+		return health_checks
+			.wait_until_healthy('us-east-1', 'lbname', '123')
+			.then(function () {
+				expect(mock_elb.waitForAsync).to.have.been.calledWith(
+					'instanceInService',
+					{
+						LoadBalancerName: 'lbname',
+						Instances: [
+							{
+								InstanceId: '123'
+							}
+						]
+					}
+				);
 			});
 	});
 });
