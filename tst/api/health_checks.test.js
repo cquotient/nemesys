@@ -86,7 +86,7 @@ describe('health checks', function () {
 			});
 	});
 
-	it('wait until healhty calls waitForAsync', function () {
+	it('wait until healthy calls waitForAsync', function () {
 		return health_checks
 			.wait_until_healthy('us-east-1', 'lbname', '123')
 			.then(function () {
