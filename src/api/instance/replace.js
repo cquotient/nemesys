@@ -5,6 +5,7 @@ const Promise = require('bluebird');
 const AWSProvider = require('../aws_provider');
 const AWSUtil = require('../aws_util');
 const logger = require('../../logger');
+const health_check = require('../health_checks');
 
 module.exports = function (regions, target_name, source_name, assign_elastic_ip) {
 	return Promise.all(regions.map(function (region) {
@@ -34,7 +35,7 @@ function replace(region, target_name, source_name, assign_elastic_ip) {
 		return attach_to_lb(region, lbName, source.InstanceId);
 	}).then(function () {
 		logger.info(`Health check for ${source_name}`);
-		return wait_until_healthy(region, lbName, source.InstanceId);
+		return health_check.wait_until_healthy(region, lbName, source.InstanceId);
 	}).then(function () {
 		logger.info(`Detach ${target_name} from ${lbName}`);
 		return detach_from_lb(region, lbName, target.InstanceId);
@@ -65,26 +66,6 @@ function replace(region, target_name, source_name, assign_elastic_ip) {
 		logger.info(`${region}: Terminate ${target_name}`);
 		return terminate_instance(region, target.InstanceId);
 	});
-}
-
-function wait_until_healthy(region, lbName, instanceId) {
-	return AWSProvider
-		.get_elb(region)
-		.waitForAsync('instanceInService', {
-			LoadBalancerName: lbName,
-			Instances: [
-				{
-					InstanceId: instanceId
-				}
-			]
-		})
-		.then(function (data) {
-			const state = data.InstanceStates[0];
-
-			if (state.State !== 'InService') {
-				throw new Error(state.Description);
-			}
-		});
 }
 
 function attach_elastic_ip(region, source_instance_id, alloc_id) {

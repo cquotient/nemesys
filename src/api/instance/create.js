@@ -5,6 +5,7 @@ const BB = require('bluebird');
 const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 const AWSProvider = require('../aws_provider');
+const health_check = require('../health_checks');
 
 function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_ud_string, disks, az, tags, eni_name, env_vars, ebs_opt) {
 	let EC2 = AWSProvider.get_ec2(region);
@@ -38,7 +39,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 		return EC2.runInstancesAsync(params);
 	})
 	.then(function(data){
-		return AWSUtil.wait_until_status(region, data.Instances[0].InstanceId, 'instanceExists');
+		return health_check.wait_until_status(region, data.Instances[0].InstanceId, 'instanceExists');
 	})
 	.then(function(instance_id){
 		if(tags && tags.length > 0) {
