@@ -18,7 +18,7 @@ function _wait_until_status(region, instanceId, state) {
 			// original function only checked for 'instanceRunning', and
 			// explicitly checked for 'running' State.Name.  Leave if for
 			// expected behavior.
-			if (state == 'instanceRunning' && instance.State.Name !== 'running') {
+			if (state === 'instanceRunning' && instance.State.Name !== 'running') {
 				throw new Error(instance.StateReason.Message);
 			}
 
