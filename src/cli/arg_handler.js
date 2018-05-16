@@ -113,7 +113,9 @@ function _handle_create(cmd) {
 				cmd.opts['tags'],
 				cmd.opts['network-interface'],
 				cmd.opts['env'],
-				cmd.opts['optimize-ebs']
+				cmd.opts['optimize-ebs'],
+				cmd.opts['elastic-ips'], // The elastic IPs to use (one per region).
+				cmd.opts['reassociate-eip'] // You need to be explicit in what this is going to do, if this is false we'll skip
 			).then(function(){
 				Logger.info('created instance');
 				process.exit(0);
@@ -245,7 +247,7 @@ function _handle_replace(cmd) {
 				cmd.opts['regions'],
 				cmd.opts['target'],
 				cmd.opts['source'],
-				cmd.opts['assign-elastic-ip']
+				cmd.opts['reassociate-eip']
 			).then(function () {
 				Logger.info('replace complete');
 				process.exit(0);

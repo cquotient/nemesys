@@ -7,18 +7,23 @@ const sinon = require('sinon');
 const AWSProvider = require('../../../src/api/aws_provider');
 const AWSUtil = require('../../../src/api/aws_util');
 const instance = require('../../../src/api/instance');
+const health_check = require('../../../src/api/health_checks');
 
 
 describe('instance replace', function () {
 	let sandbox, mock_elb, mock_ec2;
-	let old_instance_id = '456';
-	let new_instance_id = '123';
-	let alloc_id = 'aloc123';
-	let assoc_id = 'assoc123';
-	let pub_ip = '999.999.999.999';
+	let old_instance_id, new_instance_id, alloc_id, assoc_id, pub_ip;
 
 	beforeEach(function () {
+		old_instance_id = '456';
+		new_instance_id = '123';
+		alloc_id = 'aloc123';
+		assoc_id = 'assoc123';
+		pub_ip = '999.999.999.999';
+
 		sandbox = sinon.sandbox.create();
+
+		sandbox.stub(health_check, 'wait_until_status').returns(Promise.resolve(new_instance_id));
 
 		mock_elb = {
 			registerInstancesWithLoadBalancerAsync: sandbox.stub().returns(

@@ -289,7 +289,15 @@ function parse_args (args) {
 						.option('optimize-ebs', {
 							describe: 'Use EBS optimization'
 						})
-
+						.option('elastic-ips', {
+							describe: 'The elastic IPs to use (per region). We won\'t detach it if in use unless reassociate-eip is true'
+							array:    true
+						})
+						.option('reassociate-eip', {
+							describe: 'If true we\'ll detach the EIP from the existing instance.',
+							type: 'boolean',
+							default: false
+						})
 						.example('');
 				})
 
@@ -399,7 +407,7 @@ function parse_args (args) {
 						})
 						.option('i', ingress_rules_opt)
 						.option('e', {
-							alias: 'assign-elastic-ip',
+							alias: 'reassociate-eip',
 							describe: 'Boolean, whether to transfer an elastic IP from the old box to the new; defaults to true',
 							type: 'boolean',
 							default: true

@@ -96,7 +96,7 @@ function _get_ami_id(region, ami_name) {
 			}
 		]
 	};
-return AWSProvider.get_ec2(region).describeImagesAsync(params)
+	return AWSProvider.get_ec2(region).describeImagesAsync(params)
 	.then(function(data){
 		if(!data.hasOwnProperty('Images') || !data.Images.length) {
 			return null;
@@ -304,6 +304,71 @@ function _get_eni_id(region, vpc, az, eni_name) {
 	});
 }
 
+
+// uses waitFor to poll an instance for a specific state
+// state can be any state accepted by waitForAysnc
+// https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2.html#waitFor-property
+function _wait_until_status(region, instanceId, state) {
+	return AWSProvider
+		.get_ec2(region)
+		.waitForAsync(state, {
+			InstanceIds: [instanceId]
+		})
+		.then(function (data) {
+			const instance = data.Reservations[0].Instances[0];
+
+			if (state == 'instanceRunning' && instance.State.Name !== 'running') {
+				throw new Error(instance.StateReason.Message);
+			}
+
+			return instance.InstanceId;
+
+		});
+}
+
+function _attach_elastic_ip(region, source_instance_id, alloc_id) {
+	let params = {
+		AllocationId: alloc_id,
+		InstanceId: source_instance_id
+	};
+
+	return AWSProvider
+		.get_ec2(region)
+		.associateAddressAsync(params);
+}
+
+function _detach_elastic_ip(region, assoc_id) {
+	let params = {
+		AssociationId: assoc_id
+	};
+
+	return AWSProvider
+		.get_ec2(region)
+		.disassociateAddressAsync(params);
+}
+
+function _get_eip_info(region, pub_address) {
+	let params = {
+		PublicIps: [pub_address]
+	};
+	return AWSProvider
+		.get_ec2(region)
+		.describeAddressesAsync(params)
+		.then(data => {
+			if (data && data.Addresses && data.Addresses.length) {
+				for (let address of data.Addresses) {
+					if (address.AllocationId) {
+						return {
+							alloc_id: address.AllocationId,
+							assoc_id: address.AssociationId  // This may not be set, which is OK
+						};
+					}
+				}
+			}
+		});
+}
+
+
 exports.get_asg = _get_asg;
 exports.get_sg_id = _get_sg_id;
 exports.get_vpc_id = _get_vpc_id;
@@ -318,3 +383,7 @@ exports.get_instance_by_name = _get_instance_by_name;
 exports.get_network_interface = _get_network_interface;
 exports.get_eni_id = _get_eni_id;
 exports.get_ud_files = _get_ud_files;
+exports.wait_until_status = _wait_until_status;
+exports.attach_elastic_ip = _attach_elastic_ip;
+exports.detach_elastic_ip = _detach_elastic_ip;
+exports.get_eip_info = _get_eip_info;
