@@ -298,7 +298,7 @@ function parse_args (args) {
 							alias:    'reassociate-eip',
 							describe: 'If true we\'ll detach the EIP from the existing instance.',
 							type:     'boolean',
-							default:  undefined
+							default:  false
 						})
 						.example('');
 				})
@@ -552,8 +552,8 @@ function parse_args (args) {
 			dir = path.dirname(file);
 			try {
 				let doc = JSON.parse(fs.readFileSync(file));
+				argv = require('yargs').config(doc).argv;
 				del_undef(argv);
-				argv = Object.assign(doc, argv);
 			} catch (e) {
 				e.message = 'Failure loading ' + file + e.message;
 				throw e; // bubble it up
@@ -565,8 +565,8 @@ function parse_args (args) {
 			dir = path.dirname(file);
 			try {
 				let doc = yaml.safeLoad(fs.readFileSync(file));
+				argv = require('yargs').config(doc).argv;
 				del_undef(argv);
-				argv = Object.assign(doc, argv);
 			} catch (e) {
 				e.message = 'Failure loading ' + file + e.message;
 				throw e; // bubble it up
