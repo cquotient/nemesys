@@ -290,7 +290,7 @@ function parse_args (args) {
 							describe: 'Use EBS optimization'
 						})
 						.option('elastic-ips', {
-							describe: 'The elastic IPs to use (per region). We won\'t detach it if in use unless reassociate-eip is true',
+							describe: 'The elastic IPs to use (per AZ/Region). We won\'t detach it if in use unless reassociate-eip is true',
 							array:    true
 						})
 						.option('reassociate-eip', {

@@ -114,7 +114,7 @@ function _handle_create(cmd) {
 				cmd.opts['network-interface'],
 				cmd.opts['env'],
 				cmd.opts['optimize-ebs'],
-				cmd.opts['elastic-ips'], // The elastic IPs to use (one per region).
+				cmd.opts['elastic-ips'], // The elastic IPs to use (one per AZ/Region).
 				cmd.opts['reassociate-eip'] // You need to be explicit in what this is going to do, if this is false we'll skip
 			).then(function(){
 				Logger.info('created instance');

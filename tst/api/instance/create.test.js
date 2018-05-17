@@ -126,7 +126,7 @@ describe('instance create', function () {
 
 	it('creates an instance with no elastic ip', function () {
 		return instance
-			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], null, 'fake-network-interface-id', null, null, null, false)
+			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], null, 'fake-network-interface-id', null, null, [], false)
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync).to.have.been.calledWith(expected_run_args);
 
@@ -144,7 +144,7 @@ describe('instance create', function () {
 
 	it('creates an instance with an elastic ip when reassociate is true, and detaching and attaching succeeds', function () {
 		return instance
-			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, pub_ip, true)
+			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, [pub_ip], true)
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync).to.have.been.calledWith(expected_run_args);
 
@@ -174,7 +174,7 @@ describe('instance create', function () {
 
 	it('creates an instance without an elastic IP when reassociate is false and an EIP is already attached', function () {
 		return instance
-			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, pub_ip, false)
+			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, [pub_ip], false)
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync).to.have.been.calledWith(expected_run_args);
 
@@ -207,7 +207,7 @@ describe('instance create', function () {
 			})
 		);
 		return instance
-			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, pub_ip, false)
+			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, [pub_ip], false)
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync).to.have.been.calledWith(expected_run_args);
 
@@ -239,7 +239,7 @@ describe('instance create', function () {
 			Promise.reject(expected_err)
 		);
 		return instance
-			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, pub_ip, true)
+			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, [pub_ip], true)
 			.then(function (result) {
 				expect(mock_ec2.runInstancesAsync).to.have.been.calledWith(expected_run_args);
 
