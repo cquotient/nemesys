@@ -106,6 +106,7 @@ function create(regions, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file
 	if( !(az.length === 1 || az.length === regions.length) ) {
 		return Promise.reject(new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`));
 	}
+	console.log('REASSOCIATE EIP?', reassociate_eip);
 	let region_promises = regions.map(function(region, idx){
 		if(elastic_ips.length && reassociate_eip) {
 			let spinup_complete_ud = health_check.gen_spinup_complete_userdata(region);
