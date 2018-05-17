@@ -66,10 +66,14 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 						if (eip_hash.assoc_id) {
 							Logger.info(`${region}: EIP is associated with assoc. ID: ${eip_hash.assoc_id}`);
 							if (reassociate_eip) {
-								Logger.info(`${region}: Detaching EIP`);
-								return AWSUtil.detach_elastic_ip(region, eip_hash.assoc_id)
+								// Before we detach the existin EIP we should be sure that the new instance is good to go
+								return health_check.wait_for_spinup_complete(region, instance_id)
 									.then(() => {
-										return eip_hash.alloc_id;
+										Logger.info(`${region}: Detaching EIP`);
+										return AWSUtil.detach_elastic_ip(region, eip_hash.assoc_id)
+											.then(() => {
+												return eip_hash.alloc_id;
+											});
 									});
 							} else {
 								// Will return nothing, skipping the next step
@@ -103,6 +107,14 @@ function create(regions, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file
 		return Promise.reject(new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`));
 	}
 	let region_promises = regions.map(function(region, idx){
+		if(elastic_ips.length && reassociate_eip) {
+			let spinup_complete_ud = health_check.gen_spinup_complete_userdata(region);
+			if (raw_ud_string) {
+				raw_ud_string += spinup_complete_ud;
+			} else {
+				raw_ud_string = spinup_complete_ud;
+			}
+		}
 		let zone = az.length == regions.length ? az[idx] : az[0];
 		let userdata_files = AWSUtil.get_ud_files(ud_files, rud_files, idx);
 		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, userdata_files, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt, elastic_ips[idx], reassociate_eip);

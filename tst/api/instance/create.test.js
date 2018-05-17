@@ -34,6 +34,7 @@ describe('instance create', function () {
 		));
 
 		sandbox.stub(health_check, 'wait_until_status').returns(Promise.resolve(instance_id));
+		sandbox.stub(health_check, 'wait_for_spinup_complete').returns(Promise.resolve(instance_id));
 
 		mock_ec2 = {
 			runInstancesAsync: sandbox.stub().returns(
@@ -132,6 +133,8 @@ describe('instance create', function () {
 
 				expect(health_check.wait_until_status).to.have.been.calledWith(region, instance_id, 'instanceExists');
 
+				expect(health_check.wait_for_spinup_complete).to.have.not.been.called;
+
 				expect(mock_ec2.describeAddressesAsync).to.have.not.been.called;
 
 				expect(mock_ec2.disassociateAddressAsync).to.have.not.been.called;
@@ -154,6 +157,8 @@ describe('instance create', function () {
 					Resources: [instance_id],
 					Tags: [tag_key]
 				});
+
+				expect(health_check.wait_for_spinup_complete).to.have.been.calledWith(region, instance_id);
 
 				expect(mock_ec2.describeAddressesAsync).to.have.been.calledWith({
 					PublicIps: [pub_ip]
@@ -184,6 +189,8 @@ describe('instance create', function () {
 					Resources: [instance_id],
 					Tags: [tag_key]
 				});
+
+				expect(health_check.wait_for_spinup_complete).to.have.not.been.called;
 
 				expect(mock_ec2.describeAddressesAsync).to.have.been.calledWith({
 					PublicIps: [pub_ip]
@@ -218,6 +225,8 @@ describe('instance create', function () {
 					Tags: [tag_key]
 				});
 
+				expect(health_check.wait_for_spinup_complete).to.have.not.been.called;
+
 				expect(mock_ec2.describeAddressesAsync).to.have.been.calledWith({
 					PublicIps: [pub_ip]
 				});
@@ -249,6 +258,8 @@ describe('instance create', function () {
 					Resources: [instance_id],
 					Tags: [tag_key]
 				});
+
+				expect(health_check.wait_for_spinup_complete).to.have.not.been.called;
 
 				expect(mock_ec2.describeAddressesAsync).to.have.not.been.called;
 
