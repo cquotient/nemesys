@@ -66,7 +66,7 @@ function _do_create(region, vpc, ami, i_type, key_name, sg, iam, ud_files, raw_u
 						if (eip_hash.assoc_id) {
 							Logger.info(`${region}: EIP is associated with assoc. ID: ${eip_hash.assoc_id}`);
 							if (reassociate_eip) {
-								// Before we detach the existin EIP we should be sure that the new instance is good to go
+								// Before we detach the existing EIP we should be sure that the new instance is good to go
 								return health_check.wait_for_spinup_complete(region, instance_id)
 									.then(() => {
 										Logger.info(`${region}: Detaching EIP`);

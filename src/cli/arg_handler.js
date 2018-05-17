@@ -246,8 +246,7 @@ function _handle_replace(cmd) {
 			nemesys.instance.replace(
 				cmd.opts['regions'],
 				cmd.opts['target'],
-				cmd.opts['source'],
-				cmd.opts['reassociate-eip']
+				cmd.opts['source']
 			).then(function () {
 				Logger.info('replace complete');
 				process.exit(0);

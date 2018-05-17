@@ -406,12 +406,6 @@ function parse_args (args) {
 							describe: 'Target instance name'
 						})
 						.option('i', ingress_rules_opt)
-						.option('e', {
-							alias: 'reassociate-eip',
-							describe: 'Boolean, whether to transfer an elastic IP from the old box to the new; defaults to true',
-							type: 'boolean',
-							default: true
-						})
 						.example('nemesys replace instance -s source-instance-name -t target-instance-name -r us-east-1', 'Replaces target instance with src instance')
 						.help('h')
 						.alias('h', 'help');
