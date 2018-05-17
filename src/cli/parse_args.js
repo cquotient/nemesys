@@ -297,7 +297,8 @@ function parse_args (args) {
 						.option('p', {
 							alias:    'reassociate-eip',
 							describe: 'If true we\'ll detach the EIP from the existing instance.',
-							type:     'boolean'
+							type:     'boolean',
+							default:  undefined
 						})
 						.example('');
 				})
