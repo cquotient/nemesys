@@ -8,5 +8,5 @@
 	"regions": "us-east-1",
 	"user-data": "test",
 	"region-user-data": ["file1"],
-    "reassociate-eip": true
+	"reassociate-eip": true
 }
