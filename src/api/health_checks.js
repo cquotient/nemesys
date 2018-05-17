@@ -46,6 +46,10 @@ function _wait_until_healthy(region, lbName, instanceId) {
 		});
 }
 
+function _gen_spinup_complete_userdata(region) {
+	return `\naws ec2 create-tags --region ${region} --resources \`curl http:\/\/169.254.169.254\/latest\/meta-data\/instance-id\` --tags Key=Spinup,Value=complete\n`;
+}
+
 function _is_tag_present(tags, key, value) {
 	if(tags && tags.length > 0) {
 		for(let i=0; i<tags.length; i++) {
@@ -76,4 +80,5 @@ function _wait_for_spinup_complete(region, instance_id) {
 
 exports.wait_until_status = _wait_until_status;
 exports.wait_until_healthy = _wait_until_healthy;
+exports.gen_spinup_complete_userdata = _gen_spinup_complete_userdata;
 exports.wait_for_spinup_complete = _wait_for_spinup_complete;

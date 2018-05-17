@@ -7,13 +7,13 @@ const AWSUtil = require('../aws_util');
 const logger = require('../../logger');
 const health_check = require('../health_checks');
 
-module.exports = function (regions, target_name, source_name, assign_elastic_ip) {
+module.exports = function (regions, target_name, source_name) {
 	return Promise.all(regions.map(function (region) {
-		return replace(region, target_name, source_name, assign_elastic_ip);
+		return replace(region, target_name, source_name);
 	}));
 };
 
-function replace(region, target_name, source_name, assign_elastic_ip) {
+function replace(region, target_name, source_name) {
 	let target, source, lbName;
 
 	return Promise.all([
@@ -39,97 +39,10 @@ function replace(region, target_name, source_name, assign_elastic_ip) {
 	}).then(function () {
 		logger.info(`Detach ${target_name} from ${lbName}`);
 		return detach_from_lb(region, lbName, target.InstanceId);
-	}).then(function () {
-		if (assign_elastic_ip) {
-			return get_elastic_ip(region, target.InstanceId);
-		}
-	}).then(eip_hash => {
-		if (assign_elastic_ip) {
-			if (eip_hash && eip_hash.alloc_id && eip_hash.assoc_id) {
-				logger.info(`${region}: Alloc ID: ${eip_hash.alloc_id}`);
-				logger.info(`${region}: Assoc ID: ${eip_hash.assoc_id}`);
-
-				// Detach from target
-				logger.info(`${region}: Detach EIP from ${target_name}`);
-				return detach_elastic_ip(region, eip_hash.assoc_id)
-					.then(() => {
-						return eip_hash.alloc_id;
-					});
-			}
-		}
-	}).then((alloc_id) => {
-		if (assign_elastic_ip && alloc_id) {
-			logger.info(`${region}: Attach EIP to ${source_name}`);
-			return attach_elastic_ip(region, source.InstanceId, alloc_id);
-		}
 	}).then(() => {
 		logger.info(`${region}: Terminate ${target_name}`);
 		return terminate_instance(region, target.InstanceId);
 	});
-}
-
-function attach_elastic_ip(region, source_instance_id, alloc_id) {
-	let params = {
-		AllocationId: alloc_id,
-		InstanceId: source_instance_id
-	};
-
-	return AWSProvider
-		.get_ec2(region)
-		.associateAddressAsync(params);
-}
-
-function detach_elastic_ip(region, assoc_id) {
-	let params = {
-		AssociationId: assoc_id
-	};
-
-	return AWSProvider
-		.get_ec2(region)
-		.disassociateAddressAsync(params);
-}
-
-function get_elastic_ip(region, target_instance_id) {
-	let params = {
-		Filters: [
-			{
-				Name: 'instance-id',
-				Values: [target_instance_id]
-			}
-		]
-	};
-
-	return AWSProvider
-		.get_ec2(region)
-		.describeInstancesAsync(params)
-		.then(data => {
-			if (data && data.Reservations && data.Reservations.length &&
-				data.Reservations[0].Instances && data.Reservations[0].Instances.length) {
-				return data.Reservations[0].Instances[0].PublicIpAddress;
-			}
-		}).then(pub_address => {
-			if (!pub_address) {
-				return;
-			}
-			params = {
-				PublicIps: [pub_address]
-			};
-			return AWSProvider
-				.get_ec2(region)
-				.describeAddressesAsync(params)
-				.then(data => {
-					if (data && data.Addresses && data.Addresses.length) {
-						for (let address of data.Addresses) {
-							if (address.AllocationId && address.AssociationId) {
-								return {
-									alloc_id: address.AllocationId,
-									assoc_id: address.AssociationId
-								};
-							}
-						}
-					}
-				});
-		});
 }
 
 function get_instance_lb(region, instanceId) {

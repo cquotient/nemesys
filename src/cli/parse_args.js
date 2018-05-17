@@ -289,7 +289,17 @@ function parse_args (args) {
 						.option('optimize-ebs', {
 							describe: 'Use EBS optimization'
 						})
-
+						.option('e', {
+							alias:    'elastic-ips',
+							describe: 'The elastic IPs to use (per AZ/Region). We won\'t detach it if in use unless reassociate-eip is true',
+							array:    true
+						})
+						.option('p', {
+							alias:    'reassociate-eip',
+							describe: 'If true we\'ll detach the EIP from the existing instance.',
+							type:     'boolean',
+							default:  undefined
+						})
 						.example('');
 				})
 
@@ -398,12 +408,6 @@ function parse_args (args) {
 							describe: 'Target instance name'
 						})
 						.option('i', ingress_rules_opt)
-						.option('e', {
-							alias: 'assign-elastic-ip',
-							describe: 'Boolean, whether to transfer an elastic IP from the old box to the new; defaults to true',
-							type: 'boolean',
-							default: true
-						})
 						.example('nemesys replace instance -s source-instance-name -t target-instance-name -r us-east-1', 'Replaces target instance with src instance')
 						.help('h')
 						.alias('h', 'help');

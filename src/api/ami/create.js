@@ -59,15 +59,11 @@ function _do_create(create_region, instance_id, copy_regions, ami_name, disks, p
 	});
 }
 
-function _gen_spinup_complete_ud(region) {
-	return `\naws ec2 create-tags --region ${region} --resources \`curl http:\/\/169.254.169.254\/latest\/meta-data\/instance-id\` --tags Key=Spinup,Value=complete\n`;
-}
-
 function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, disks, az, preserve_instance){
-	let spinup_complete_ud = _gen_spinup_complete_ud(regions[0]);
+	let spinup_complete_ud = health_check.gen_spinup_complete_userdata(regions[0]);
 	let tags = [`Name=nemesys-create-ami::${ami_name}`];
 	// create in first region, then copy to others
-	return create_instance([regions[0]], vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, spinup_complete_ud, disks, az, tags)
+	return create_instance([regions[0]], vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, spinup_complete_ud, disks, az, tags, null, null, false, [], false)
 	.then(function(instance_ids){ //create_instance is for many regions, so result is an array of ids
 		Logger.info(`${regions[0]}: instance (${instance_ids[0]}) created`);
 		return _do_create(regions[0], instance_ids[0], regions.slice(1), ami_name, disks, preserve_instance);
