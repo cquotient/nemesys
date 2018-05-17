@@ -6,3 +6,4 @@ ssh-key-pair: mykeys
 availability-zone: q
 vpc: testVpc
 regions: us-east-1
+reassociate-eip: true
