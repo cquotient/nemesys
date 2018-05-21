@@ -68,7 +68,7 @@ function parse_args (args) {
 			yargs
 
 				.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function (yargs) {
-					yargs
+					_common_args(yargs)
 						.option('g', group_opt)
 						.option('l', lc_opt)
 						.example('nemesys update asg -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
