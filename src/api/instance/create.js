@@ -107,17 +107,21 @@ function create(regions, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_file
 		return Promise.reject(new Error(`Must pass either one AZ or one per region. Found ${az.length} for ${regions.length} region(s)`));
 	}
 	let region_promises = regions.map(function(region, idx){
-		if(elastic_ips.length && reassociate_eip) {
-			let spinup_complete_ud = health_check.gen_spinup_complete_userdata(region);
-			if (raw_ud_string) {
-				raw_ud_string += spinup_complete_ud;
-			} else {
-				raw_ud_string = spinup_complete_ud;
+		let eip;
+		if(elastic_ips && elastic_ips.length) {
+			eip = elastic_ips[idx];
+			if (reassociate_eip) {
+				let spinup_complete_ud = health_check.gen_spinup_complete_userdata(region);
+				if (raw_ud_string) {
+					raw_ud_string += spinup_complete_ud;
+				} else {
+					raw_ud_string = spinup_complete_ud;
+				}
 			}
 		}
 		let zone = az.length == regions.length ? az[idx] : az[0];
 		let userdata_files = AWSUtil.get_ud_files(ud_files, rud_files, idx);
-		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, userdata_files, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt, elastic_ips[idx], reassociate_eip);
+		return _do_create(region, vpc, ami, i_type, key_name, sg, iam, userdata_files, raw_ud_string, disks, zone, tags, eni_name, env_vars, ebs_opt, eip, reassociate_eip);
 	});
 	return BB.all(region_promises);
 }
