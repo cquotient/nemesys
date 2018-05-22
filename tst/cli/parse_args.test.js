@@ -102,7 +102,6 @@ describe('parse_args', function(){
 			it('takes command line arguments ahead of YAML and JSON files', function(){
 				let commands = ['create', 'instance'],
 					opts = [
-						'--yaml-config=' + __dirname + '/create_instance_example.yaml',
 						'--json-config=' + __dirname + '/create_instance_example.json',
 						'--reassociate-eip=false',
 					];
@@ -114,23 +113,6 @@ describe('parse_args', function(){
 				assert.equal(actual.opts['vpc'], 'testVpc');
 				assert.equal(actual.opts['regions'], 'us-east-1');
 				assert.equal(actual.opts['reassociate-eip'], false);
-			});
-
-			it('loads multiple files, merging with commandline', function(){
-				let commands = ['create', 'instance'],
-					opts = [
-						'--yaml-config=' + __dirname + '/create_instance_partial1.yaml',
-						'--json-config=' + __dirname + '/create_instance_partial1.json',
-						'--instance-type=xxxxxxxxxxxTestPartial',
-					];
-				let actual = testee.parse_args(commands.concat(opts));
-				assert.notCalled(process.exit);
-				assert.equal(actual.opts.ami, 'test_ami');
-				assert.equal(actual.opts['instance-type'], 'xxxxxxxxxxxTestPartial');
-				assert.equal(actual.opts['ssh-key-pair'], 'mykeys');
-				assert.equal(actual.opts['availability-zone'], 'q');
-				assert.equal(actual.opts['vpc'], 'testVpc');
-				assert.equal(actual.opts['regions'], 'us-east-1');
 			});
 
 			it('overrides files with command line', function(){

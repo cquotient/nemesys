@@ -3,7 +3,8 @@
 //TODO use yargs auto completion feature!
 
 const path = require('path');
-
+const yaml = require('js-yaml');
+const fs = require('fs');
 
 const Logger = require('../logger');
 
@@ -44,7 +45,13 @@ function _common_args(yargs) {
 		})
 		.config('json-config', {
 			describe: 'List of JSON files with parameters'
-		});
+		})
+		.config('yaml-config', {
+			describe: 'List of YAML files with parameters'
+		},function(config_path){
+			return yaml.safeLoad(fs.readFileSync(config_path));
+		})
+		.conflicts('json-config', 'yaml-config');
 }
 
 function parse_args (args) {
