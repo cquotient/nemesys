@@ -3,8 +3,7 @@
 //TODO use yargs auto completion feature!
 
 const path = require('path');
-const yaml = require('js-yaml');
-const fs   = require('fs');
+
 
 const Logger = require('../logger');
 
@@ -43,13 +42,8 @@ function _common_args(yargs) {
 			array: true,
 			choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'] // TODO - let's not hardcode this :) http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html
 		})
-		.option('json-config', {
-			describe: 'List of JSON files with parameters',
-			array: true
-		})
-		.option('yaml-config', {
-			describe: 'List of YAML files with parameters',
-			array: true
+		.config('json-config', {
+			describe: 'List of JSON files with parameters'
 		});
 }
 
@@ -545,34 +539,8 @@ function parse_args (args) {
 		.alias('h', 'help')
 		.argv;
 
+	let dir = argv['json-config'] ? path.dirname(argv['json-config']) : __dirname;
 
-	let dir = './';
-	if (argv['json-config']) {
-		for (let file of argv['json-config']) {
-			dir = path.dirname(file);
-			try {
-				let doc = JSON.parse(fs.readFileSync(file));
-				argv = require('yargs').config(doc).argv;
-				del_undef(argv);
-			} catch (e) {
-				e.message = 'Failure loading ' + file + e.message;
-				throw e; // bubble it up
-			}
-		}
-	}
-	if (argv['yaml-config']) {
-		for (let file of argv['yaml-config']) {
-			dir = path.dirname(file);
-			try {
-				let doc = yaml.safeLoad(fs.readFileSync(file));
-				argv = require('yargs').config(doc).argv;
-				del_undef(argv);
-			} catch (e) {
-				e.message = 'Failure loading ' + file + e.message;
-				throw e; // bubble it up
-			}
-		}
-	}
 	['user-data-files', 'region-user-data'].forEach((path_arg) => {
 		if(argv[path_arg]) {
 			argv[path_arg] = argv[path_arg].map((file) => {
@@ -592,11 +560,6 @@ function parse_args (args) {
 	}
 
 	return command;
-}
-
-//deletes undefined properties, so we don't override things in the config file w/ "undefined" just because it is defined as an option
-function del_undef(obj) {
-	Object.keys(obj).filter((key) => obj[key] === undefined).forEach((key) => delete obj[key]);
 }
 
 function _validate(command) {
