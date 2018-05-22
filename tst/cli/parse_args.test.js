@@ -163,17 +163,14 @@ describe('parse_args', function(){
 			it('errors if missing args', function(){
 				commands = ['create', 'instance'];
 				opts = [
-					'--az=a',
+					'--z=a',
 					'--ami=test_ami',
 					'--instance-type=xxxxxxxxxxxTest',
 				];
+				let test_spy = sinon.spy(testee._validate_dependent_args);
 				let actual = testee.parse_args(commands.concat(opts));
 				assert.calledOnce(process.exit);
-				assert.match(Logger.error.args[0][0], /Missing required arguments:/);
-				assert.match(Logger.error.args[0][0], /regions/);
-				assert.match(Logger.error.args[0][0], /ssh-key-pair/);
-				assert.match(Logger.error.args[0][0], /availability-zone/);
-				assert.match(Logger.error.args[0][0], /availability-zone/);
+				assert.notCalled(test_spy);
 			});
 
 			it('errors if missing required envs', function(){

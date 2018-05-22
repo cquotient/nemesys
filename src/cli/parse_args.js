@@ -41,14 +41,11 @@ function _common_args(yargs) {
 			alias: 'regions',
 			describe: 'EC2 regions to operate in',
 			array: true,
-			choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'] // TODO - let's not hardcode this :) http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html
+			choices: ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'], // TODO - let's not hardcode this :) http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeRegions.html
+			demandOption: true
 		})
-		.config('json-config', {
-			describe: 'List of JSON files with parameters'
-		})
-		.config('yaml-config', {
-			describe: 'List of YAML files with parameters'
-		},function(config_path){
+		.config('json-config')
+		.config('yaml-config', function(config_path){
 			return yaml.safeLoad(fs.readFileSync(config_path));
 		})
 		.conflicts('json-config', 'yaml-config');
@@ -70,8 +67,10 @@ function parse_args (args) {
 
 				.command('asg', 'Update an Autoscaling Group with a new Launch Configuration', function (yargs) {
 					_common_args(yargs)
+
 						.option('g', group_opt)
 						.option('l', lc_opt)
+						.demandOption(['g', 'l'], 'Please provide an autoscaling group and launch config')
 						.example('nemesys update asg -g tracking_asg -l tracking_lc_2015_12_03 -r us-east-1 us-west-2',
 							'Updates the launch config for an ASG called tracking_asg to be tracking_lc_2015_12_03 in us-east-1, us-west-2, and eu-west-1')
 						.help('h')
@@ -80,9 +79,11 @@ function parse_args (args) {
 
 				.command('sg', 'Update a Security Group', function (yargs) {
 					_common_args(yargs)
+
 						.option('s', {
 							alias:    'security-group',
-							describe: 'Name of the Security Group'
+							describe: 'Name of the Security Group',
+							demandOption: true
 						})
 						.option('i', {
 							alias:    'ingress-rules',
@@ -95,7 +96,7 @@ function parse_args (args) {
 						});
 				})
 
-				.demand(2)
+				.demandCommand(2)
 
 				.help('h')
 				.alias('h', 'help');
@@ -129,6 +130,7 @@ function parse_args (args) {
 						.option('desired-instance-count', {
 							describe: 'Desired number of instances in ASG'
 						})
+						.demandOption(['v', 'g', 'l'], 'Please provide a VPC, autoscaling group, and launch config')
 						.example('nemesys create asg -v my_vpc -g tracking_asg -l tracking_lc -t Client=all -t Name=tracking-asg -t Task=tracking -e cq-pixel-error -r us-west-2',
 							'Creates a new ASG in us-west-2 called tracking_asg with launch config tracking_lc, error topic "cq-pixel-error", and some tags')
 						.help('h')
@@ -158,11 +160,13 @@ function parse_args (args) {
 						.option('options', {
 							alias: 's',
 							describe: 'JSON string of options map (just use a file!)'
-						});
+						})
+						.demandOption(['v', 'name', 'security-group'], 'Please provide a VPC, ALB name, and security group');
 				})
 
 				.command('sg', 'Create a Security Group', function (yargs) {
 					_common_args(yargs)
+
 						.option('v', vpc_opt)
 						.option('s', {
 							alias:    'security-group',
@@ -173,7 +177,7 @@ function parse_args (args) {
 							describe: 'Description of the Security Group'
 						})
 						.option('i', ingress_rules_opt)
-
+						.demandOption(['v', 's'], 'Please provide a VPC and security group')
 						.example('nemesys create sg -s ssh-access -c ~/x6/Automation/nemesys/regions.json -r ap-southeast-1',
 							'Creates a security group in ap-southeast-1 called "ssh-access", using regions.json to discover the vpc to use');
 				})
@@ -221,7 +225,7 @@ function parse_args (args) {
 							alias:    'clone-spot-price',
 							describe: 'Create a clone of this Launch Configuration with the given spot price. The spot clone will have "_spot" appended to the name'
 						})
-
+						.demandOption(['l', 'a', 'i', 'k'], 'Please provide a launch config, AMI name, instance type, and ssh key-pair')
 						.example('nemesys create lc -r ap-southeast-1 -l test-lc -a my_ami_name -i c3.large -k key_name -I my_role -s my_sg -u ~/userdata.sh --region-user-data ~/region_userdata.sh -d /dev/sda1:ebs:24:gp2 /dev/sdb:ephemeral:ephemeral0 -S 0.02',
 							'Creates a Launch Configuration with the given parameters, with a clone using spot instances at the given spot price');
 				})
@@ -240,6 +244,12 @@ function parse_args (args) {
 						.option('k', {
 							alias:    'ssh-key-pair',
 							describe: 'Name of the ssh key pair to use for instances using this Launch Configuration'
+						})
+						.option('v', vpc_opt)
+						.option('z', {
+							alias:    'availability-zone',
+							describe: 'Availability zone to launch the instance in. If more than one, will be used in order of regions arg',
+							array:    true
 						})
 						.option('I', {
 							alias:    'iam-role',
@@ -264,12 +274,6 @@ function parse_args (args) {
 							describe: 'Disks to attach to instances using this Launch Configuration',
 							array:    true
 						})
-						.option('z', {
-							alias:    'availability-zone',
-							describe: 'Availability zone to launch the instance in. If more than one, will be used in order of regions arg',
-							array:    true
-						})
-						.option('v', vpc_opt)
 						.option('n', {
 							alias:    'network-interface',
 							describe: 'Name of existing Elastic Network Interface to attach to this instance'
@@ -301,68 +305,69 @@ function parse_args (args) {
 							type:     'boolean',
 							default:  false
 						})
+						.demandOption(['a', 'i', 'k', 'v', 'z'], 'Please provide an AMI name, instance type, ssh key-pair, VPC, and availability zone')
 						.example('');
 				})
 
 				.command('ami', 'Create an AMI', function (yargs) {
 					_common_args(yargs)
 
-					.option('a', {
-						alias:       'ami',
-						description: 'AMI name'
-					})
-					.option('b', {
-						alias: 'base-ami',
-						description: 'Name of the base AMI to build a new one on top of'
-					})
-					.option('i', {
-						alias:    'instance-type',
-						describe: 'EC2 API name of the instance type to use (ie, m3.large)'
-					})
-					.option('k', {
-						alias:    'ssh-key-pair',
-						describe: 'Name of the ssh key pair to use for instances using this Launch Configuration'
-					})
-					.option('I', {
-						alias:    'iam-role',
-						describe: 'IAM role for launched instances'
-					})
-					.option('s', {
-						alias:    'security-groups',
-						describe: 'Name of the Security Group(s) to apply to instances using this Launch Configuration',
-						array:    true
-					})
-					.option('u', {
-						alias:    'user-data-files',
-						describe: 'Shell script files to combine to form the user data',
-						array:    true
-					})
-					.option('region-user-data', {
-						describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
-						array:    true
-					})
-					.option('d', {
-						alias:    'disks',
-						describe: 'Disks to attach to instances using this Launch Configuration',
-						array:    true
-					})
-					.option('z', {
-						alias:    'availability-zone',
-						describe: 'Availability zone to launch the instance in. If more than one, will be used in order of regions arg',
-						array:    true
-					})
-					.option('v', vpc_opt)
-					.option('preserve-instance', {
-						describe: 'Keep instance running after creating AMI',
-						type: 'boolean',
-						default: false
-					})
-
-					.help('h')
-					.alias('h', 'help');
+						.option('a', {
+							alias:       'ami',
+							description: 'AMI name'
+						})
+						.option('b', {
+							alias: 'base-ami',
+							description: 'Name of the base AMI to build a new one on top of'
+						})
+						.option('i', {
+							alias:    'instance-type',
+							describe: 'EC2 API name of the instance type to use (ie, m3.large)'
+						})
+						.option('k', {
+							alias:    'ssh-key-pair',
+							describe: 'Name of the ssh key pair to use for instances using this Launch Configuration'
+						})
+						.option('z', {
+							alias:    'availability-zone',
+							describe: 'Availability zone to launch the instance in. If more than one, will be used in order of regions arg',
+							array:    true
+						})
+						.option('v', vpc_opt)
+						.option('I', {
+							alias:    'iam-role',
+							describe: 'IAM role for launched instances'
+						})
+						.option('s', {
+							alias:    'security-groups',
+							describe: 'Name of the Security Group(s) to apply to instances using this Launch Configuration',
+							array:    true
+						})
+						.option('u', {
+							alias:    'user-data-files',
+							describe: 'Shell script files to combine to form the user data',
+							array:    true
+						})
+						.option('region-user-data', {
+							describe: 'Region-specific user data files, which will appear BEFORE all other user data in the resulting script. This must be in the same order as the regions passed in via --regions',
+							array:    true
+						})
+						.option('d', {
+							alias:    'disks',
+							describe: 'Disks to attach to instances using this Launch Configuration',
+							array:    true
+						})
+						.option('preserve-instance', {
+							describe: 'Keep instance running after creating AMI',
+							type: 'boolean',
+							default: false
+						})
+						.demandOption(['a', 'b', 'i', 'k', 'z', 'v'], 'Please provide an AMI name, base AMI, instance type, ssh key-pair, VPC, and availability zone')
+						.help('h')
+						.alias('h', 'help');
 				})
 
-				.demand(2)
+				.demandCommand(2)
 				.help('h')
 				.alias('h', 'help');
 		})
@@ -372,6 +377,7 @@ function parse_args (args) {
 
 				.command('asg', 'Replace an Autoscaling Group', function (yargs) {
 					_common_args(yargs)
+
 						.option('v', vpc_opt)
 						.option('g', group_opt)
 						.option('l', lc_opt)
@@ -379,6 +385,7 @@ function parse_args (args) {
 							alias:    'old-group',
 							describe: 'Name of the Autoscaling Group to replace. Only applies to `replace` command'
 						})
+						.demandOption(['v', 'g', 'l', 'o'], 'Please provide a VPC, autoscaling group, launch configuration, and the old autoscaling group')
 						.example('nemesys replace -o tracking_asg_2015_12_03 -g tracking_asg_2015_12_04 -l tracking_2015_12_04_spot -r eu-west-1',
 							'Replaces ASG tracking_asg_2015_12_03 with a new one called tracking_asg_2015_12_04, with launch config tracking_2015_12_04_spot')
 						.help('h')
@@ -387,11 +394,13 @@ function parse_args (args) {
 
 				.command('sg', 'Replace the rules on an existing Security Group', function (yargs) {
 					_common_args(yargs)
+
 						.option('s', {
 							alias:    'security-group',
 							describe: 'Name of the Security Group'
 						})
 						.option('i', ingress_rules_opt)
+						.demandOption(['s', 'i'], 'Please provide a security group and ingress rules')
 						.example('nemesys replace sg -s cassandra-node -i logconsumer-server:9042 -r us-east-1',
 							'Replaces the rules in SG "cassandra-node" with just one rule allowing access from logconsumer-server on port 9042 (tcp)')
 						.help('h')
@@ -400,6 +409,7 @@ function parse_args (args) {
 
 				.command('instance', 'Replace instance with another', function (yargs) {
 					_common_args(yargs)
+
 						.option('s', {
 							alias:    'source',
 							describe: 'Source instance name'
@@ -409,12 +419,13 @@ function parse_args (args) {
 							describe: 'Target instance name'
 						})
 						.option('i', ingress_rules_opt)
+						.demandOption(['s', 't'], 'Please provide a source and target instance name')
 						.example('nemesys replace instance -s source-instance-name -t target-instance-name -r us-east-1', 'Replaces target instance with src instance')
 						.help('h')
 						.alias('h', 'help');
 				})
 
-				.demand(2)
+				.demandCommand(2)
 				.help('h')
 				.alias('h', 'help');
 		})
@@ -423,7 +434,9 @@ function parse_args (args) {
 			yargs
 				.command('asg', 'Delete an Autoscaling Group', function (yargs) {
 					_common_args(yargs)
+
 						.option('g', group_opt)
+						.demandOption(['g'], 'Please provide an autoscaling group')
 						.example('nemesys delete asg -v my_vpc -g my_asg')
 						.help('h')
 						.alias('h', 'help');
@@ -438,6 +451,7 @@ function parse_args (args) {
 							describe: 'Look for and delete the "spot clone" of this Launch Configuration',
 							type:     'boolean'
 						})
+						.demandOption(['l'], 'Please provide a launch configuration')
 
 						.example('nemesys delete lc -l test-lc -r ap-southeast-1 us-east-1');
 				})
@@ -447,7 +461,8 @@ function parse_args (args) {
 
 						.option('s', {
 							alias:    'security-group',
-							describe: 'Name of the Security Group'
+							describe: 'Name of the Security Group',
+							demandOption: true
 						})
 
 						.example('nemesys delete sg -s my-sg');
@@ -456,15 +471,16 @@ function parse_args (args) {
 				.command('ami', 'Delete an AMI', function(yargs){
 					_common_args(yargs)
 
-					.option('a', {
-						alias:       'ami',
-						description: 'AMI name'
-					})
+						.option('a', {
+							alias:       'ami',
+							description: 'AMI name',
+							demandOption: true
+						})
 
-					.example('nemesys delete ami -r us-east-1 us-west-2 -a my-old-ami');
+						.example('nemesys delete ami -r us-east-1 us-west-2 -a my-old-ami');
 				})
 
-				.demand(2)
+				.demandCommand(2)
 				.help('h')
 				.alias('h', 'help');
 		})
@@ -473,6 +489,7 @@ function parse_args (args) {
 			yargs
 				.command('instance', 'Copy an instance', function (yargs) {
 					_common_args(yargs)
+
 						.option('i', {
 							alias: 'instance',
 							describe: 'Instance name'
@@ -536,12 +553,13 @@ function parse_args (args) {
 							describe: 'Tags to apply, in the form of Name=value',
 							array:    true
 						})
+						.demandOption(['i', 'n'], 'Please provide an instance name and a new instance name')
 						.example('nemesys copy instance -i instance-name -n new-instance-name -r us-east-1 -t m4.2xlarge')
 						.help('h')
 						.alias('h', 'help');
 				});
 		})
-		.demand(2)
+		.demandCommand(2)
 		.help('h')
 		.alias('h', 'help')
 		.argv;
@@ -562,52 +580,11 @@ function parse_args (args) {
 		opts:    argv
 	};
 
-	if (!_validate(command)) {
+	if (!_validate_dependent_args(command.opts)) {
 		process.exit(1);
 	}
 
 	return command;
-}
-
-function _validate(command) {
-	// TODO - I really think this validation belongs to the actual commands themselves and not the arg parser
-	const demands = {
-		'update asg':       ['regions', 'group', 'launch-config'],
-		'update sg':        ['regions', 'security-group'],
-		'create asg':       ['regions', 'vpc', 'group', 'launch-config'],
-		'create sg':        ['regions', 'vpc', 'security-group'],
-		'create alb':       ['regions', 'vpc', 'security-group', 'name'],
-		'create lc':        ['regions', 'launch-config', 'ami', 'instance-type', 'ssh-key-pair'],
-		'create instance':  ['regions', 'ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
-		'create ami':       ['regions', 'ami', 'base-ami', 'instance-type', 'ssh-key-pair', 'availability-zone', 'vpc'],
-		'replace asg':      ['regions', 'vpc', 'group', 'launch-config', 'old-group'],
-		'replace sg':       ['regions', 'security-group', 'ingress-rules'],
-		'replace instance': ['regions', 'source', 'target'],
-		'delete asg':       ['regions', 'group'],
-		'delete lc':        ['regions', 'launch-config'],
-		'delete sg':        ['regions', 'security-group'],
-		'delete ami':       ['regions', 'ami'],
-		'copy instance':    ['regions', 'instance', 'rename']
-	};
-
-	let missing = [],
-		demand = demands[command.command + ' ' + command.target];
-
-	if (!demand || !demand.length) {
-		Logger.error(`Unknown command or target '${command.command} ${command.target}'`);
-		return false;
-	}
-
-	for (let opt of demand) {
-		if (!command.opts[opt]) {
-			missing.push(opt);
-		}
-	}
-	if (missing.length) {
-		Logger.error('Missing required arguments: ' + missing.join(', '));
-		return false;
-	}
-	return _validate_dependent_args(command.opts);
 }
 
 function _validate_dependent_args(argv) {
