@@ -248,8 +248,10 @@ describe('instance create', function () {
 			Promise.reject(expected_err)
 		);
 		return instance
-			.create([region], null, 'image_id', null, null, null, 'iam', null, null, null, null, ['e'], [tag], 'fake-network-interface-id', null, null, [pub_ip], true)
+			.create([region], null, 'image_id', null, null, null, 'iam', ['main-ud-file'], ['us-east-1-rud'], null, null, ['e'], [tag], 'fake-network-interface-id', null, null, [pub_ip], true)
 			.then(function (result) {
+
+				expect(AWSUtil.get_userdata_string).to.have.been.calledWith(['us-east-1-rud','main-ud-file'], null, null);
 				expect(mock_ec2.runInstancesAsync).to.have.been.calledWith(expected_run_args);
 
 				expect(health_check.wait_until_status).to.have.been.calledWith(region, instance_id, 'instanceExists');
