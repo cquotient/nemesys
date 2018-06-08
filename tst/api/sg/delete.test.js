@@ -28,10 +28,10 @@ describe('delete sg', function(){
 					]
 				});
 			}),
-			deleteSecurityGroupAsync: sandbox.stub().callsFake(() => Promise.resolve())
+			deleteSecurityGroupAsync: sandbox.stub().returns(Promise.resolve())
 		};
 		let AWSProvider = require('../../../src/api/aws_provider');
-		sandbox.stub(AWSProvider, 'get_ec2').callsFake(() => ec2_mock);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(ec2_mock);
 	});
 
 	afterEach(function(){

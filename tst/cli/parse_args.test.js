@@ -19,7 +19,7 @@ describe('parse_args', function(){
 	});
 
 	beforeEach(function(){
-		sandbox = sinon.sandbox.create();
+		sandbox = sinon.createSandbox();
 		testee = require('../../src/cli/parse_args');
 	});
 

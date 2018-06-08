@@ -12,11 +12,9 @@ describe('instance copy', function () {
 	let sandbox, mock_ec2, expected_run_args;
 
 	beforeEach(function () {
-		sandbox = sinon.sandbox.create();
-		sandbox.stub(AWSUtil, 'get_instance_by_name', () => Promise.resolve({
-			InstanceId: '123'
-		}));
-		sandbox.stub(AWSUtil, 'get_ami_id', (region, ami_name) => Promise.resolve(
+		sandbox = sinon.createSandbox();
+		sandbox.stub(AWSUtil, 'get_instance_by_name').returns(Promise.resolve({InstanceId: '123'}));
+		sandbox.stub(AWSUtil, 'get_ami_id').callsFake((region, ami_name) => Promise.resolve(
 			ami_name
 		));
 
@@ -146,7 +144,7 @@ describe('instance copy', function () {
 			NetworkInterfaces: [],
 			UserData: 'user_data'
 		};
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 	});
 
 	afterEach(function () {

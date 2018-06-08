@@ -17,7 +17,7 @@ describe('AWSUtil', function(){
 	});
 
 	beforeEach(function(){
-		sandbox = sinon.sandbox.create();
+		sandbox = sinon.createSandbox();
 		const mock_iam = {
 			getUserAsync: function(){
 				return Promise.resolve({
@@ -45,9 +45,9 @@ describe('AWSUtil', function(){
 			describeAutoScalingGroupsAsync: desc_asg_stub
 		};
 		let AWSProvider = require('../../src/api/aws_provider');
-		sandbox.stub(AWSProvider, 'get_iam', () => mock_iam);
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
-		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
+		sandbox.stub(AWSProvider, 'get_iam').returns(mock_iam);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
+		sandbox.stub(AWSProvider, 'get_as').returns(mock_as);
 	});
 
 	afterEach(function(){

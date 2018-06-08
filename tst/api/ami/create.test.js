@@ -21,7 +21,7 @@ describe('create ami', function(){
 	});
 
 	beforeEach(function(){
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 		//mock ec2
 		const mock_ec2 = {
 			runInstancesAsync: function(){
@@ -127,7 +127,7 @@ describe('create ami', function(){
 		};
 
 		let AWSProvider = require('../../../src/api/aws_provider');
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 		run_instances_spy = sandbox.spy(mock_ec2, 'runInstancesAsync');
 		describe_sg_spy = sandbox.spy(mock_ec2, 'describeSecurityGroupsAsync');
 		describe_instances_spy = sandbox.spy(mock_ec2, 'describeInstancesAsync');
@@ -137,7 +137,7 @@ describe('create ami', function(){
 		terminate_spy = sandbox.spy(mock_ec2, 'terminateInstancesAsync');
 
 		//mock fs
-		sandbox.stub(require('fs'), 'readFileAsync', function(file){
+		sandbox.stub(require('fs'), 'readFileAsync').callsFake(function(file){
 			if(file === 'fake-file-1') {
 				return Promise.resolve('echo "hi there"\n');
 			} else if(file === 'fake-file-2') {
