@@ -4,6 +4,7 @@
   "author": "CQuotient Engineering",
   "repository": "cquotient/nemesys",
   "scripts": {
+    "pretest": "./node_modules/eslint/bin/eslint.js .",
     "test": "./node_modules/mocha/bin/mocha --recursive tst"
   },
   "dependencies": {
