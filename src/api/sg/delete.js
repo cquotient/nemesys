@@ -1,8 +1,8 @@
 'use strict';
 
 const BB = require('bluebird');
-const AWS = require('aws-sdk');
 
+const AWSProvider = require('../aws_provider');
 const Logger = require('../../logger');
 const AWSUtil = require('../aws_util');
 
@@ -10,10 +10,7 @@ function _do_delete(region, sg_name) {
 	return AWSUtil.get_sg_id(region, sg_name)
 	.then(function(sg_id) {
 		Logger.info(`${region}: deleting security group ${sg_name} (${sg_id})`);
-		let EC2 = BB.promisifyAll(new AWS.EC2({
-			region: region,
-			apiVersion: '2015-10-01'
-		}));
+		let EC2 = AWSProvider.get_ec2(region);
 		return EC2.deleteSecurityGroupAsync({
 			DryRun: false,
 			GroupId: sg_id
