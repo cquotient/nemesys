@@ -17,7 +17,7 @@ describe('delete ami', function(){
 	});
 
 	beforeEach(function(){
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 
 		const mock_ec2 = {
 			describeImagesAsync: function(){
@@ -56,7 +56,7 @@ describe('delete ami', function(){
 		};
 
 		let AWSProvider = require('../../../src/api/aws_provider');
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 		deregister_spy = sandbox.spy(mock_ec2, 'deregisterImageAsync');
 		delete_snap_spy = sandbox.spy(mock_ec2, 'deleteSnapshotAsync');
 	});

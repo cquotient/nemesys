@@ -12,7 +12,7 @@ describe('replace sg', function(){
 
 	beforeEach(function(){
 		replace = require('../../../src/api/sg/replace');
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 		let chai = require('chai');
 		sinon_chai = require('sinon-chai');
 		chai.use(sinon_chai);
@@ -181,9 +181,7 @@ describe('replace sg', function(){
 		describe_sg_spy = sandbox.spy(ec2_mock, 'describeSecurityGroupsAsync');
 		authorize_sg_spy = sandbox.spy(ec2_mock, 'authorizeSecurityGroupIngressAsync');
 		revoke_sg_spy = sandbox.spy(ec2_mock, 'revokeSecurityGroupIngressAsync');
-		sandbox.stub(AWSProvider, 'get_ec2', function(region){
-			return ec2_mock;
-		});
+		sandbox.stub(AWSProvider, 'get_ec2').returns(ec2_mock);
 	});
 
 	afterEach(function(){

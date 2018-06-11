@@ -15,7 +15,7 @@ describe('arg_handler', function(){
 	});
 
 	beforeEach(function(){
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 	});
 
 	afterEach(function(){
@@ -28,7 +28,7 @@ describe('arg_handler', function(){
 			let update_sg_stub;
 
 			beforeEach(function(){
-				update_sg_stub = sandbox.stub(require('../../src/api/sg'), 'update', () => Promise.resolve());
+				update_sg_stub = sandbox.stub(require('../../src/api/sg'), 'update').returns(Promise.resolve());
 			});
 
 			it('should invoke sg update', function(){
