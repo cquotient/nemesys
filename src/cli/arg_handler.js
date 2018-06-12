@@ -4,6 +4,11 @@ const nemesys = require('../');
 
 const Logger = require('../logger');
 
+function _generic_error_handler(err) {
+	Logger.error(err.stack);
+	process.exit(1);
+}
+
 function _handle_create(cmd) {
 	switch(cmd.target) {
 
@@ -25,10 +30,7 @@ function _handle_create(cmd) {
 			).then(function(){
 				Logger.info('create complete');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 
 		case 'alb':
@@ -52,10 +54,7 @@ function _handle_create(cmd) {
 			).then(function(){
 				Logger.info('create ALB complete');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 
 		case 'sg':
@@ -68,10 +67,7 @@ function _handle_create(cmd) {
 			).then(function(){
 				Logger.info('created security group');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 
 		case 'lc':
@@ -90,10 +86,7 @@ function _handle_create(cmd) {
 			).then(function(){
 				Logger.info('created launch configuration');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 
 		case 'instance':
@@ -119,10 +112,7 @@ function _handle_create(cmd) {
 			).then(function(){
 				Logger.info('created instance');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 
 		case 'ami':
@@ -143,10 +133,7 @@ function _handle_create(cmd) {
 			).then(function(){
 				Logger.info('created ami');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 
 		default:
@@ -164,10 +151,7 @@ function _handle_delete(cmd) {
 			).then(function(){
 				Logger.info('deleted autoscaling group');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		case 'lc':
 			nemesys.lc.delete(
@@ -177,10 +161,7 @@ function _handle_delete(cmd) {
 			).then(function(){
 				Logger.info('deleted launch config');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		case 'sg':
 			nemesys.sg.delete(
@@ -189,10 +170,7 @@ function _handle_delete(cmd) {
 			).then(function(){
 				Logger.info('deleted security group');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		case 'ami':
 			nemesys.ami.delete(
@@ -201,10 +179,7 @@ function _handle_delete(cmd) {
 			).then(function(){
 				Logger.info('deleted ami');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		default:
 			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
@@ -224,10 +199,7 @@ function _handle_replace(cmd) {
 			).then(function(){
 				Logger.info('replace complete');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		case 'sg':
 			nemesys.sg.replace(
@@ -237,10 +209,7 @@ function _handle_replace(cmd) {
 			).then(function(){
 				Logger.info('replace complete');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		case 'instance':
 			nemesys.instance.replace(
@@ -250,10 +219,7 @@ function _handle_replace(cmd) {
 			).then(function () {
 				Logger.info('replace complete');
 				process.exit(0);
-			}).catch(function (err) {
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		default:
 			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
@@ -271,10 +237,7 @@ function _handle_update(cmd) {
 			).then(function(){
 				Logger.info('update complete');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		case 'sg':
 			nemesys.sg.update(
@@ -285,10 +248,7 @@ function _handle_update(cmd) {
 			).then(function(){
 				Logger.info('updated security group');
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		default:
 			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
@@ -322,10 +282,7 @@ function _handle_copy(cmd) {
 			).then(function (id) {
 				Logger.info(`copied instance to ${id}`);
 				process.exit(0);
-			}).catch(function(err){
-				Logger.error(err.stack);
-				process.exit(1);
-			});
+			}).catch(_generic_error_handler);
 			break;
 		default:
 			Logger.info(`Unrecognized command: ${cmd.command} ${cmd.target}`);
