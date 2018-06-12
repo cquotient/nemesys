@@ -152,10 +152,6 @@ describe('create ami', function(){
 		sandbox.restore();
 	});
 
-	function _run_test(regions) {
-
-	}
-
 	it('should create an ami in all regions', function(){
 		this.timeout(10000);
 		let ud_files = ['fake-file-1', 'fake-file-2'];
