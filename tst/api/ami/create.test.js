@@ -152,6 +152,10 @@ describe('create ami', function(){
 		sandbox.restore();
 	});
 
+	function _run_test(regions) {
+
+	}
+
 	it('should create an ami in all regions', function(){
 		this.timeout(10000);
 		let ud_files = ['fake-file-1', 'fake-file-2'];
@@ -241,6 +245,166 @@ describe('create ami', function(){
 			expect(terminate_spy).to.have.been.calledWith({
 				InstanceIds: ['fake-instance-id-1']
 			});
+		});
+	});
+
+	it('should create an ami in one region', function(){
+		let ud_files = ['fake-file-1', 'fake-file-2'];
+		let disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
+		return create(['us-east-1'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1']).then(function(result){
+			let expected_ud = '#!/bin/bash\n\n';
+			expected_ud += 'set -o pipefail\n';
+			expected_ud += 'set -e -x\n';
+			expected_ud += 'exec >> /tmp/exec.log 2>&1\n\n';
+
+			expected_ud += 'echo "hi there"\n';
+			expected_ud += 'echo "my friend"\n';
+			expected_ud += '\naws ec2 create-tags --region us-east-1 --resources `curl http://169.254.169.254/latest/meta-data/instance-id` --tags Key=Spinup,Value=complete\n';
+
+			expect(run_instances_spy).to.have.been.calledWith({
+				BlockDeviceMappings: [
+					{
+						DeviceName: "/dev/sda1",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "24", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdj",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "200", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdb", VirtualName: "ephemeral0"
+					}
+				],
+				EbsOptimized: false,
+				IamInstanceProfile: {
+					Name: 'fake-iam'
+				},
+				ImageId: 'fake-base-image-id-1',
+				InstanceType: 'c4.large',
+				KeyName: 'fake-key',
+				MaxCount: 1,
+				MinCount: 1,
+				Monitoring: {
+					Enabled: true
+				},
+				NetworkInterfaces: [{
+					AssociatePublicIpAddress: true,
+					DeviceIndex: 0,
+					Groups: ["fake-sg-id-1"],
+					SubnetId: "fake-subnet-id-1"
+				}],
+				UserData: (new Buffer(expected_ud).toString('base64'))
+			});
+
+			//
+			expect(describe_instances_spy).to.have.been.calledWith({
+				InstanceIds: ['fake-instance-id-1']
+			});
+
+			expect(create_image_spy).to.have.been.calledWith({
+				InstanceId: 'fake-instance-id-1',
+				Name: 'fake-ami',
+				BlockDeviceMappings: [
+					{
+						DeviceName: "/dev/sda1",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "24", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdj",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "200", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdb", VirtualName: "ephemeral0"
+					}
+				]
+			});
+
+			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
+				ImageIds: ['fake-image-id-1']
+			});
+
+			expect(terminate_spy).to.have.been.calledWith({
+				InstanceIds: ['fake-instance-id-1']
+			});
+		});
+	});
+
+	it('should create an ami and preserve the instance', function(){
+		let ud_files = ['fake-file-1', 'fake-file-2'];
+		let disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
+		return create(['us-east-1'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1'], true).then(function(result){
+			let expected_ud = '#!/bin/bash\n\n';
+			expected_ud += 'set -o pipefail\n';
+			expected_ud += 'set -e -x\n';
+			expected_ud += 'exec >> /tmp/exec.log 2>&1\n\n';
+
+			expected_ud += 'echo "hi there"\n';
+			expected_ud += 'echo "my friend"\n';
+			expected_ud += '\naws ec2 create-tags --region us-east-1 --resources `curl http://169.254.169.254/latest/meta-data/instance-id` --tags Key=Spinup,Value=complete\n';
+
+			expect(run_instances_spy).to.have.been.calledWith({
+				BlockDeviceMappings: [
+					{
+						DeviceName: "/dev/sda1",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "24", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdj",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "200", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdb", VirtualName: "ephemeral0"
+					}
+				],
+				EbsOptimized: false,
+				IamInstanceProfile: {
+					Name: 'fake-iam'
+				},
+				ImageId: 'fake-base-image-id-1',
+				InstanceType: 'c4.large',
+				KeyName: 'fake-key',
+				MaxCount: 1,
+				MinCount: 1,
+				Monitoring: {
+					Enabled: true
+				},
+				NetworkInterfaces: [{
+					AssociatePublicIpAddress: true,
+					DeviceIndex: 0,
+					Groups: ["fake-sg-id-1"],
+					SubnetId: "fake-subnet-id-1"
+				}],
+				UserData: (new Buffer(expected_ud).toString('base64'))
+			});
+
+			//
+			expect(describe_instances_spy).to.have.been.calledWith({
+				InstanceIds: ['fake-instance-id-1']
+			});
+
+			expect(create_image_spy).to.have.been.calledWith({
+				InstanceId: 'fake-instance-id-1',
+				Name: 'fake-ami',
+				BlockDeviceMappings: [
+					{
+						DeviceName: "/dev/sda1",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "24", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdj",
+						Ebs: { DeleteOnTermination: true, VolumeSize: "200", VolumeType: "gp2" }
+					},
+					{
+						DeviceName: "/dev/sdb", VirtualName: "ephemeral0"
+					}
+				]
+			});
+
+			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
+				ImageIds: ['fake-image-id-1']
+			});
+
+			expect(terminate_spy).to.not.have.been.called;
 		});
 	});
 
