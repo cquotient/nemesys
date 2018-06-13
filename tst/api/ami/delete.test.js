@@ -17,38 +17,52 @@ describe('delete ami', function(){
 	});
 
 	beforeEach(function(){
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 
 		const mock_ec2 = {
-			describeImagesAsync: function(){
-				return Promise.resolve({
-					Images: [
-						{
-							ImageId: 'test-ami-id-1',
-							BlockDeviceMappings: [
-								{
-									VirtualName: 'ephemeral0',
-									DeviceName: '/dev/sdb'
-								},
-								{
-									VirtualName: 'ephemeral1',
-									DeviceName: '/dev/sdc'
-								},
-								{
-									DeviceName: '/dev/sdj',
-									Ebs: {
-										SnapshotId: 'test-snapshot-id-1'
-									}
-								},
-								{
-									DeviceName: '/dev/sdk',
-									Ebs: {
-										SnapshotId: 'test-snapshot-id-2'
-									}
+			describeImagesAsync: function(params){
+				let ami_responses = {
+					'test-ami-name-1': {
+						ImageId: 'test-ami-id-1',
+						BlockDeviceMappings: [
+							{
+								VirtualName: 'ephemeral0',
+								DeviceName: '/dev/sdb'
+							},
+							{
+								VirtualName: 'ephemeral1',
+								DeviceName: '/dev/sdc'
+							},
+							{
+								DeviceName: '/dev/sdj',
+								Ebs: {
+									SnapshotId: 'test-snapshot-id-1'
 								}
-							]
-						}
-					]
+							},
+							{
+								DeviceName: '/dev/sdk',
+								Ebs: {
+									SnapshotId: 'test-snapshot-id-2'
+								}
+							}
+						]
+					},
+					'test-ami-name-2': {
+						ImageId: 'test-ami-id-2',
+						BlockDeviceMappings: [
+							{
+								VirtualName: 'ephemeral0',
+								DeviceName: '/dev/sdb'
+							},
+							{
+								VirtualName: 'ephemeral1',
+								DeviceName: '/dev/sdc'
+							}
+						]
+					}
+				};
+				return Promise.resolve({
+					Images: [ami_responses[params.Filters[0].Values[0]]]
 				});
 			},
 			deregisterImageAsync: () => Promise.resolve(),
@@ -56,7 +70,7 @@ describe('delete ami', function(){
 		};
 
 		let AWSProvider = require('../../../src/api/aws_provider');
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 		deregister_spy = sandbox.spy(mock_ec2, 'deregisterImageAsync');
 		delete_snap_spy = sandbox.spy(mock_ec2, 'deleteSnapshotAsync');
 	});
@@ -78,6 +92,17 @@ describe('delete ami', function(){
 			expect(delete_snap_spy).to.have.been.calledWith({
 				SnapshotId: 'test-snapshot-id-2'
 			});
+		});
+	});
+
+	it('should delete an ami in all regions, with no ebs', function(){
+		let r = ['us-east-1', 'us-west-2'];
+		let ami = 'test-ami-name-2';
+		return delete_ami(r, ami).then(function(){
+			expect(deregister_spy).to.have.been.calledWith({
+				ImageId: 'test-ami-id-2'
+			});
+			expect(delete_snap_spy).to.not.have.been.called;
 		});
 	});
 

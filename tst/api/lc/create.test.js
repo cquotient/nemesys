@@ -18,17 +18,17 @@ describe('create lc', function(){
 	beforeEach(function(){
 		const AWSUtil = require('../../../src/api/aws_util');
 		const AWSProvider = require('../../../src/api/aws_provider');
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 		create_lc_stub = sandbox.stub();
 		const mock_as = {
 			createLaunchConfigurationAsync: create_lc_stub
 		};
-		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
-		sandbox.stub(AWSUtil, 'get_userdata_string', (ud_files, env_vars, raw_ud_string) => Promise.resolve(
+		sandbox.stub(AWSProvider, 'get_as').returns(mock_as);
+		sandbox.stub(AWSUtil, 'get_userdata_string').callsFake((ud_files, env_vars, raw_ud_string) => Promise.resolve(
 			'userdata_string'
 		));
-		sandbox.stub(AWSUtil, 'get_sg_ids', () => Promise.resolve(['fake-sg-id']));
-		sandbox.stub(AWSUtil, 'get_ami_id', () => Promise.resolve('fake-ami-id'));
+		sandbox.stub(AWSUtil, 'get_sg_ids').returns(Promise.resolve(['fake-sg-id']));
+		sandbox.stub(AWSUtil, 'get_ami_id').returns(Promise.resolve('fake-ami-id'));
 	});
 
 	afterEach(function(){

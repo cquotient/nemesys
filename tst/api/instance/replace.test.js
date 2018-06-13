@@ -15,15 +15,11 @@ describe('instance replace', function () {
 	let new_instance_id = '123';
 
 	beforeEach(function () {
-		sandbox = sinon.sandbox.create();
+		sandbox = sinon.createSandbox();
 
 		mock_elb = {
-			registerInstancesWithLoadBalancerAsync: sandbox.stub().returns(
-				Promise.resolve({})
-			),
-			deregisterInstancesFromLoadBalancerAsync: sandbox.stub().returns(
-				Promise.resolve({})
-			),
+			registerInstancesWithLoadBalancerAsync: sandbox.stub().returns(Promise.resolve({})),
+			deregisterInstancesFromLoadBalancerAsync: sandbox.stub().returns(Promise.resolve({})),
 			describeLoadBalancersAsync: sandbox.stub().returns(
 				Promise.resolve({
 					LoadBalancerDescriptions: [
@@ -53,9 +49,9 @@ describe('instance replace', function () {
 			)
 		};
 
-		sandbox.stub(AWSProvider, 'get_elb', () => mock_elb);
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
-		sandbox.stub(AWSUtil, 'get_instance_by_name', (region, name) => {
+		sandbox.stub(AWSProvider, 'get_elb').returns(mock_elb);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
+		sandbox.stub(AWSUtil, 'get_instance_by_name').callsFake((region, name) => {
 			if (name === 'old-instance') {
 				return Promise.resolve({
 					InstanceId: old_instance_id
