@@ -136,15 +136,21 @@ describe('create ami', function(){
 		copy_image_spy = sandbox.spy(mock_ec2, 'copyImageAsync');
 		terminate_spy = sandbox.spy(mock_ec2, 'terminateInstancesAsync');
 
+
 		//mock fs
 		sandbox.stub(require('fs'), 'readFileAsync', function(file){
-			if(file === 'fake-file-1') {
-				return Promise.resolve('echo "hi there"\n');
-			} else if(file === 'fake-file-2') {
-				return Promise.resolve('echo "my friend"\n');
-			} else {
-				return Promise.reject(new Error(`uh oh! we arent ready to test for file name ${file}!`));
+			const mocked_files = {
+				"fake-file-1": 'echo "hi there"\n',
+				"fake-file-2": 'echo "my friend"\n',
+				"fake-rud-file-1": 'echo "region one"\n',
+				"fake-rud-file-2": 'echo "region two"\n'
+			};
+
+			if (mocked_files.hasOwnProperty(file)) {
+				return Promise.resolve(`${mocked_files[file]}`);
 			}
+
+			return Promise.reject(new Error(`uh oh! we arent ready to test for file name ${file}!`));
 		});
 	});
 
@@ -152,7 +158,7 @@ describe('create ami', function(){
 		sandbox.restore();
 	});
 
-	it('should create an ami in all regions', function(){
+	it('should create an ami then copy to all regions', function(){
 		this.timeout(10000);
 		let ud_files = ['fake-file-1', 'fake-file-2'];
 		let disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
@@ -201,7 +207,6 @@ describe('create ami', function(){
 				UserData: (new Buffer(expected_ud).toString('base64'))
 			});
 
-			//
 			expect(describe_instances_spy).to.have.been.calledWith({
 				InstanceIds: ['fake-instance-id-1']
 			});
@@ -244,4 +249,17 @@ describe('create ami', function(){
 		});
 	});
 
+	it('should create an ami in both regions - two rud files', function(){
+		this.timeout(10000);
+		const ud_files = ['fake-file-1', 'fake-file-2'];
+		const rud_files = ['fake-rud-file-1', 'fake-rud-file-2'];
+		const disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
+		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, rud_files, disks, ['fake-az-1', 'fake-az-2']).then(function(result){
+			expect(run_instances_spy).to.have.been.called.twice;
+			expect(create_image_spy).to.have.been.called.twice;
+			expect(wait_for_spy).to.have.been.called.twice;
+			expect(copy_image_spy).to.not.have.been.called;
+			expect(terminate_spy).to.have.been.called.twice;
+		});
+	});
 });
