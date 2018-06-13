@@ -162,7 +162,7 @@ describe('create ami', function(){
 		this.timeout(10000);
 		let ud_files = ['fake-file-1', 'fake-file-2'];
 		let disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
-		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1']).then(function(result){
+		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1'], false, false).then(function(result){
 			let expected_ud = '#!/bin/bash\n\n';
 			expected_ud += 'set -o pipefail\n';
 			expected_ud += 'set -e -x\n';
@@ -249,12 +249,25 @@ describe('create ami', function(){
 		});
 	});
 
-	it('should create an ami in both regions - two rud files', function(){
+	it('should create an ami in both regions - two rud files, distinct_regions false', function(){
 		this.timeout(10000);
 		const ud_files = ['fake-file-1', 'fake-file-2'];
 		const rud_files = ['fake-rud-file-1', 'fake-rud-file-2'];
 		const disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
-		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, rud_files, disks, ['fake-az-1', 'fake-az-2']).then(function(result){
+		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, rud_files, disks, ['fake-az-1', 'fake-az-2'], false, false).then(function(result){
+			expect(run_instances_spy).to.have.been.called.twice;
+			expect(create_image_spy).to.have.been.called.twice;
+			expect(wait_for_spy).to.have.been.called.twice;
+			expect(copy_image_spy).to.not.have.been.called;
+			expect(terminate_spy).to.have.been.called.twice;
+		});
+	});
+
+	it('should create an ami in both regions - no rud files, distinct_regions true', function(){
+		this.timeout(10000);
+		const ud_files = ['fake-file-1', 'fake-file-2'];
+		const disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
+		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1', 'fake-az-2'], false, true).then(function(result){
 			expect(run_instances_spy).to.have.been.called.twice;
 			expect(create_image_spy).to.have.been.called.twice;
 			expect(wait_for_spy).to.have.been.called.twice;

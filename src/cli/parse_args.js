@@ -362,6 +362,11 @@ function parse_args (args) {
 							type: 'boolean',
 							default: false
 						})
+						.option('create-in-all-regions', {
+							describe: 'Create an instance in each region for image creation, instead of create one instance and copy to other regions',
+							type: 'boolean',
+							default: false
+						})
 						.demandOption(['a', 'b', 'i', 'k', 'z', 'v'], 'Please provide an AMI name, base AMI, instance type, ssh key-pair, VPC, and availability zone')
 						.help('h')
 						.alias('h', 'help');

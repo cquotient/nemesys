@@ -54,9 +54,14 @@ function _terminate_instance(region, instance_id) {
 	});
 }
 
-function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, disks, az, preserve_instance) {
-	const use_copy_strategy = rud_files && rud_files.length > 1 ? false : true;
-	Logger.info(`${use_copy_strategy}`);
+function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, disks, az, preserve_instance, create_in_all_regions) {
+
+	// set use_copy_strategy to false if create_in_all_regions is true. We are creating regional AMIs
+	let use_copy_strategy = !create_in_all_regions;
+	// set use_copy_strategy false if regional userdata files are given
+	if (use_copy_strategy) {
+		use_copy_strategy = rud_files && rud_files.length > 1 ? false : true;
+	}
 	const tags = [`Name=nemesys-create-ami::${ami_name}`];
 
 	if (use_copy_strategy) {
@@ -90,7 +95,6 @@ function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files
 			return Promise.reject(new Error(`Number of AZ and regions must match.  Found ${az.length} for ${regions.length} region(s)`));
 		}
 
-		let instance_created;
 		let region_promises = regions.map(function(region, idx){
 			const spinup_complete_ud = health_check.gen_spinup_complete_userdata(region);
 
@@ -100,16 +104,17 @@ function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files
 			const userdata_files = AWSUtil.get_ud_files(ud_files, rud_files, idx);
 			return create_instance([region], vpc, ami, i_type, key_name, sg, iam, userdata_files, null, spinup_complete_ud, disks, [az[idx]], tags, null, null, false, [], false)
 				.then(function(instance_ids){
-					instance_created = instance_ids[0];
-					Logger.info(`${region}: instance (${instance_created}) created`);
-					return _do_create(region, instance_created, ami_name, disks);
-				}).then(function() {
-					if (preserve_instance) {
-						Logger.info(`${regions}: ${instance_created} will remain online`);
-						return Promise.resolve();
-					}
+					const instance_id = instance_ids[0];
+					Logger.info(`${region}: instance (${instance_id}) created`);
+					return _do_create(region, instance_id, ami_name, disks)
+						.then(function() {
+							if (preserve_instance) {
+								Logger.info(`${region}: ${instance_id} will remain online`);
+								return Promise.resolve();
+							}
 
-					return _terminate_instance(regions, instance_created);
+							return _terminate_instance(region, instance_id);
+						});
 				});
 		});
 		return BB.all(region_promises);

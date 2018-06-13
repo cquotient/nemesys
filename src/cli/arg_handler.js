@@ -139,7 +139,8 @@ function _handle_create(cmd) {
 				cmd.opts['region-user-data'] || [], //yargs default breaks merging command line args w/ config file, so do it here
 				cmd.opts['disks'],
 				cmd.opts['availability-zone'],
-				cmd.opts['preserve-instance']
+				cmd.opts['preserve-instance'],
+				cmd.opts['create-in-all-regions']
 			).then(function(){
 				Logger.info('created ami');
 				process.exit(0);
