@@ -67,28 +67,26 @@ function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files
 	if (use_copy_strategy) {
 		const spinup_complete_ud = health_check.gen_spinup_complete_userdata(regions[0]);
 
-		// Keep track of unique instance ids from creation to termination
-		let instance_created;
-
 		// create in first region, then copy to others
 		return create_instance([regions[0]], vpc, ami, i_type, key_name, sg, iam, ud_files, rud_files, spinup_complete_ud, disks, az, tags, null, null, false, [], false)
 			.then(function(instance_ids){ //create_instance is for many regions, so result is an array of ids
-				instance_created = instance_ids[0];
+				const instance_created = instance_ids[0];
 				Logger.info(`${regions[0]}: instance (${instance_created}) created`);
-				return _do_create(regions[0], instance_created, ami_name, disks);
-			}).then(function(image_id) {
-				if (regions.slice(1).length > 0) {
-					return _do_copy(regions[0], regions.slice(1), ami_name, image_id);
-				} else {
-					return Promise.resolve();
-				}
-			}).then(function() {
+				return _do_create(regions[0], instance_created, ami_name, disks)
+					.then(function(image_id) {
+						if (regions.slice(1).length > 0) {
+							return _do_copy(regions[0], regions.slice(1), ami_name, image_id);
+						} else {
+							return Promise.resolve();
+						}
+					}).then(() => instance_created);
+			}).then(function(instance_id) {
 				if (preserve_instance) {
-					Logger.info(`${regions[0]}: ${instance_created} will remain online`);
+					Logger.info(`${regions[0]}: ${instance_id} will remain online`);
 					return Promise.resolve();
 				}
 
-				return _terminate_instance(regions[0], instance_created);
+				return _terminate_instance(regions[0], instance_id);
 			});
 	} else {
 		if ( !(az.length > 1 && az.length === regions.length) ) {
