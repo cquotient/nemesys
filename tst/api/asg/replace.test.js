@@ -35,7 +35,7 @@ describe('replace asg', function(){
 	});
 
 	beforeEach(function(){
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 		const mock_as = {
 			describeAutoScalingGroupsAsync: function(params) {
 
@@ -271,7 +271,7 @@ describe('replace asg', function(){
 		del_sched_act_spy = sandbox.spy(mock_as, 'deleteScheduledActionAsync');
 		del_policy_spy = sandbox.spy(mock_as, 'deletePolicyAsync');
 		let AWSProvider = require('../../../src/api/aws_provider');
-		sandbox.stub(AWSProvider, 'get_as', () => mock_as);
+		sandbox.stub(AWSProvider, 'get_as').returns(mock_as);
 
 		const mock_ec2 = {
 			describeVpcsAsync: function(params){
@@ -301,7 +301,7 @@ describe('replace asg', function(){
 				});
 			}
 		};
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 		describe_vpcs_spy = sandbox.spy(mock_ec2, 'describeVpcsAsync');
 		describe_subnets_spy = sandbox.spy(mock_ec2, 'describeSubnetsAsync');
 
@@ -312,7 +312,7 @@ describe('replace asg', function(){
 				});
 			}
 		};
-		sandbox.stub(AWSProvider, 'get_iam', () => mock_iam);
+		sandbox.stub(AWSProvider, 'get_iam').returns(mock_iam);
 
 		const mock_cloudwatch = {
 			describeAlarmsAsync: function(params){
@@ -336,7 +336,7 @@ describe('replace asg', function(){
 				return Promise.resolve({});
 			}
 		};
-		sandbox.stub(AWSProvider, 'get_cw', () => mock_cloudwatch);
+		sandbox.stub(AWSProvider, 'get_cw').returns(mock_cloudwatch);
 		describe_alarms_spy = sandbox.spy(mock_cloudwatch, 'describeAlarmsAsync');
 		put_alarm_spy = sandbox.spy(mock_cloudwatch, 'putMetricAlarmAsync');
 
@@ -357,7 +357,7 @@ describe('replace asg', function(){
 				});
 			}
 		};
-		sandbox.stub(AWSProvider, 'get_elb', () => mock_elb);
+		sandbox.stub(AWSProvider, 'get_elb').returns(mock_elb);
 		desc_inst_health_spy = sandbox.spy(mock_elb, 'describeInstanceHealthAsync');
 
 		const mock_elbv2 = {
@@ -380,7 +380,7 @@ describe('replace asg', function(){
 				});
 			}
 		};
-		sandbox.stub(AWSProvider, 'get_elbv2', () => mock_elbv2);
+		sandbox.stub(AWSProvider, 'get_elbv2').returns(mock_elbv2);
 		desc_target_health_spy = sandbox.spy(mock_elbv2, 'describeTargetHealthAsync');
 	});
 

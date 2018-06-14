@@ -8,7 +8,7 @@ describe('update sg', function(){
 
 	beforeEach(function(){
 		update = require('../../../src/api/sg/update');
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 		let chai = require('chai');
 		let sinon_chai = require('sinon-chai');
 		chai.use(sinon_chai);
@@ -41,10 +41,10 @@ describe('update sg', function(){
 			}
 		};
 		authorize_sg_spy = sandbox.spy(ec2_mock, 'authorizeSecurityGroupIngressAsync');
-		sandbox.stub(AWSProvider, 'get_ec2', () => ec2_mock);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(ec2_mock);
 		let EventEmitter = require('events');
 		class fake_emitter extends EventEmitter {}
-		sandbox.stub(require('https'), 'get', function(url, cb){
+		sandbox.stub(require('https'), 'get').callsFake(function(url, cb){
 			let obj = new fake_emitter();
 			cb(obj);
 			obj.emit('data', 'fake_ip');

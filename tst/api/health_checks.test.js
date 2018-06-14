@@ -13,7 +13,7 @@ describe('health checks', function () {
 		mock_elb;
 
 	beforeEach(function () {
-		sandbox = sinon.sandbox.create();
+		sandbox = sinon.createSandbox();
 
 		mock_ec2 = {
 			waitForAsync: sandbox.stub().returns(
@@ -53,7 +53,7 @@ describe('health checks', function () {
 			)
 		};
 
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 
 		mock_elb = {
 			waitForAsync: sandbox.stub().returns(
@@ -67,7 +67,7 @@ describe('health checks', function () {
 			)
 		};
 
-		sandbox.stub(AWSProvider, 'get_elb', () => mock_elb);
+		sandbox.stub(AWSProvider, 'get_elb').returns(mock_elb);
 	});
 
 	afterEach(function () {

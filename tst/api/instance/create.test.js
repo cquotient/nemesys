@@ -22,14 +22,14 @@ describe('instance create', function () {
 		pub_ip = '999.999.999.999';
 		instance_id = '123';
 
-		sandbox = sinon.sandbox.create();
-		sandbox.stub(AWSUtil, 'get_ami_id', (region, ami_name) => Promise.resolve(
+		sandbox = sinon.createSandbox();
+		sandbox.stub(AWSUtil, 'get_ami_id').callsFake((region, ami_name) => Promise.resolve(
 			ami_name
 		));
-		sandbox.stub(AWSUtil, 'get_userdata_string', (ud_files, env_vars, raw_ud_string) => Promise.resolve(
+		sandbox.stub(AWSUtil, 'get_userdata_string').callsFake((ud_files, env_vars, raw_ud_string) => Promise.resolve(
 			'userdata_string'
 		));
-		sandbox.stub(AWSUtil, 'get_network_interface', (region, vpc, az, eni_name, sg) => Promise.resolve(
+		sandbox.stub(AWSUtil, 'get_network_interface').callsFake((region, vpc, az, eni_name, sg) => Promise.resolve(
 			eni_name
 		));
 
@@ -118,7 +118,7 @@ describe('instance create', function () {
 			NetworkInterfaces: ['fake-network-interface-id'],
 			UserData: new Buffer('userdata_string').toString('base64')
 		};
-		sandbox.stub(AWSProvider, 'get_ec2', () => mock_ec2);
+		sandbox.stub(AWSProvider, 'get_ec2').returns(mock_ec2);
 	});
 
 	afterEach(function () {

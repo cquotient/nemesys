@@ -1,6 +1,6 @@
 {
   "name": "nemesys",
-  "version": "0.17.1",
+  "version": "0.17.3",
   "author": "CQuotient Engineering",
   "repository": "cquotient/nemesys",
   "scripts": {
@@ -23,10 +23,11 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "chai": "^4.1.0",
+    "chai": "^4.1.2",
     "eslint": "3.12.2",
+    "istanbul": "^0.4.5",
     "mocha": "^3.0.1",
-    "sinon": "^1.17.5",
-    "sinon-chai": "^2.8.0"
+    "sinon": "^5.1.0",
+    "sinon-chai": "^3.1.0"
   }
 }

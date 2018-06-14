@@ -14,7 +14,7 @@ describe('create alb', function () {
 	});
 
 	beforeEach(function () {
-		sandbox = require('sinon').sandbox.create();
+		sandbox = require('sinon').createSandbox();
 	});
 
 	afterEach(function () {
@@ -257,5 +257,3 @@ describe('create alb', function () {
 			});
 	});
 });
-
-
