@@ -58,10 +58,15 @@ function create(regions, ami_name, vpc, ami, i_type, key_name, sg, iam, ud_files
 
 	// set use_copy_strategy to false if create_in_all_regions is true. We are creating regional AMIs
 	let use_copy_strategy = !create_in_all_regions;
+
 	// set use_copy_strategy false if regional userdata files are given
 	if (use_copy_strategy) {
-		use_copy_strategy = rud_files && rud_files.length > 1 ? false : true;
+		if (rud_files && rud_files.length) {
+			Logger.info(`${rud_files.length} regional user data files found.  Using create-in-all-regions strategy`);
+			use_copy_strategy = false;
+		}
 	}
+
 	const tags = [`Name=nemesys-create-ami::${ami_name}`];
 
 	if (use_copy_strategy) {
