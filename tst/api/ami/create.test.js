@@ -138,7 +138,7 @@ describe('create ami', function(){
 
 
 		//mock fs
-		sandbox.stub(require('fs'), 'readFileAsync', function(file){
+		sandbox.stub(require('fs'), 'readFileAsync').callsFake(function(file){
 			const mocked_files = {
 				"fake-file-1": 'echo "hi there"\n',
 				"fake-file-2": 'echo "my friend"\n',
@@ -256,11 +256,10 @@ describe('create ami', function(){
 		const rud_files = ['fake-rud-file-1', 'fake-rud-file-2'];
 		const disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
 		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, rud_files, disks, ['fake-az-1', 'fake-az-2'], false, false).then(function(result){
-			expect(run_instances_spy).to.have.been.called.twice;
-			expect(create_image_spy).to.have.been.called.twice;
-			expect(wait_for_spy).to.have.been.called.twice;
+			expect(run_instances_spy).to.have.been.calledTwice;
+			expect(create_image_spy).to.have.been.calledTwice;
 			expect(copy_image_spy).to.not.have.been.called;
-			expect(terminate_spy).to.have.been.called.twice;
+			expect(terminate_spy).to.have.been.calledTwice;
 		});
 	});
 
@@ -346,10 +345,9 @@ describe('create ami', function(){
 				}],
 				UserData: (new Buffer(ud_header + us_west_2_rud + base_ud + usw2_spinup_complete_ud).toString('base64'))
 			});
-			expect(create_image_spy).to.have.been.called.twice;
-			expect(wait_for_spy).to.have.been.called.twice;
+			expect(create_image_spy).to.have.been.calledTwice;
 			expect(copy_image_spy).to.not.have.been.called;
-			expect(terminate_spy).to.have.been.called.twice;
+			expect(terminate_spy).to.have.been.calledTwice;
 		});
 	});
 
@@ -358,11 +356,10 @@ describe('create ami', function(){
 		const ud_files = ['fake-file-1', 'fake-file-2'];
 		const disks = ['/dev/sda1:ebs:24:gp2', '/dev/sdj:ebs:200:gp2', '/dev/sdb:ephemeral:ephemeral0'];
 		return create(['us-east-1', 'us-west-2'], 'fake-ami', 'fake-vpc', 'fake-ami', 'c4.large', 'fake-key', ['fake-sg'], 'fake-iam', ud_files, null, disks, ['fake-az-1', 'fake-az-2'], false, true).then(function(result){
-			expect(run_instances_spy).to.have.been.called.twice;
-			expect(create_image_spy).to.have.been.called.twice;
-			expect(wait_for_spy).to.have.been.called.twice;
+			expect(run_instances_spy).to.have.been.calledTwice;
+			expect(create_image_spy).to.have.been.calledTwice;
 			expect(copy_image_spy).to.not.have.been.called;
-			expect(terminate_spy).to.have.been.called.twice;
+			expect(terminate_spy).to.have.been.calledTwice;
 		});
 	});
 
