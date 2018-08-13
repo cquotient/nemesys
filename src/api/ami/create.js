@@ -13,7 +13,7 @@ function _wait_for_image(region, image_id) {
 	return AWSProvider.get_ec2(region).waitForAsync('imageAvailable', {
 		ImageIds: [image_id],
 		$waiter: {
-			maxAttempts : 30,
+			maxAttempts : 90,
 			delay: 60
 		}
 	}).then(function(){
