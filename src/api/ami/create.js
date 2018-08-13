@@ -11,7 +11,11 @@ const health_check = require('../health_checks');
 function _wait_for_image(region, image_id) {
 	Logger.info(`${region}: waiting for image ${image_id} to be available`);
 	return AWSProvider.get_ec2(region).waitForAsync('imageAvailable', {
-		ImageIds: [image_id]
+		ImageIds: [image_id],
+		$waiter: {
+			maxAttempts : 90,
+			delay: 60
+		}
 	}).then(function(){
 		Logger.info(`${region}: image ${image_id} is available`);
 	}).then(() => image_id);
