@@ -231,7 +231,7 @@ describe('create ami', function(){
 			});
 
 			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
-				ImageIds: ['fake-image-id-1']
+				ImageIds: ['fake-image-id-1'], $waiter: { delay: 60, maxAttempts: 30 }
 			});
 
 			expect(copy_image_spy).to.have.been.calledWith({
@@ -241,7 +241,7 @@ describe('create ami', function(){
 			});
 
 			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
-				ImageIds: ['fake-image-id-2']
+				ImageIds: ['fake-image-id-2'], $waiter: { delay: 60, maxAttempts: 30 }
 			});
 
 			expect(terminate_spy).to.have.been.calledWith({
@@ -435,7 +435,7 @@ describe('create ami', function(){
 			});
 
 			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
-				ImageIds: ['fake-image-id-1']
+				ImageIds: ['fake-image-id-1'], $waiter: { delay: 60, maxAttempts: 30 }
 			});
 
 			expect(terminate_spy).to.have.been.calledWith({
@@ -516,7 +516,7 @@ describe('create ami', function(){
 			});
 
 			expect(wait_for_spy).to.have.been.calledWith('imageAvailable', {
-				ImageIds: ['fake-image-id-1']
+				ImageIds: ['fake-image-id-1'], $waiter: { delay: 60, maxAttempts: 30 }
 			});
 
 			expect(terminate_spy).to.not.have.been.called;
